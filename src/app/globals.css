@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #FAF8F5;
+  --foreground: #2D2D2D;
+  --brand-gold: #F5A623;
+  --brand-teal: #2AAAA0;
+  --neutral-white: #FFFFFF;
+  --neutral-off-white: #FAF8F5;
+  --neutral-charcoal: #2D2D2D;
+  --neutral-medium-gray: #6B6B6B;
+  --neutral-light-gray: #B0B0B0;
+  --neutral-silver: #E8E8E8;
+  --warm-sand: #E8DDD4;
+}
+
+@layer base {
+  body {
+    @apply bg-[#FAF8F5] text-[#2D2D2D] antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
