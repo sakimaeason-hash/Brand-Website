@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,135 +22,148 @@ import {
 const categories = [
   { id: "all", label: "All Products" },
   { id: "wheelchair", label: "Electric Wheelchairs" },
+  { id: "scooter", label: "Electric Scooters" },
   { id: "accessories", label: "Accessories" },
 ];
 
-const products = [
+interface Product {
+  id: string;
+  name: string;
+  tagline: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  badge?: string;
+  rating: number;
+  reviews: number;
+  images: string[];
+  colors: string[];
+  features: string[];
+  weight?: string;
+  maxSpeed?: string;
+  warranty?: string;
+  amazonLink?: string;
+}
+
+const products: Product[] = [
   {
     id: "1",
-    name: "GoldSeason Explorer Pro",
-    tagline: "All-Terrain Mobility",
-    price: 2499,
-    originalPrice: 2899,
+    name: "Travel Air W 03",
+    tagline: "Travel Ready • Ultra Lightweight",
+    price: 599.99,
+    originalPrice: 799.99,
     category: "wheelchair",
-    badge: "BESTSELLER",
-    rating: 4.9,
-    reviews: 128,
-    images: ["Front View", "Side View", "Folded", "Detail"],
-    colors: ["#2D2D2D", "#C9A961", "#4A5568"],
-    features: ["25 Mile Range", "All-Terrain", "Folds in 3s"],
-    weight: "33 lbs",
+    badge: "NEW",
+    rating: 4.8,
+    reviews: 89,
+    images: ["/products/Travel Air W 03C.png", "/products/Travel Air W 03E.png"],
+    colors: ["#2D2D2D", "#C9A961"],
+    features: ["Airline Approved", "Ultra Light 19lbs", "15 Mile Range"],
+    weight: "19 lbs",
     maxSpeed: "4 mph",
-    warranty: "5 Years",
+    warranty: "3 Years",
+    amazonLink: "https://www.amazon.com/dp/B0FB7YWS4C?th=1",
   },
   {
     id: "2",
-    name: "GoldSeason City Glide",
-    tagline: "Urban Mobility Redefined",
-    price: 1899,
-    originalPrice: 2199,
+    name: "Travel Air W 21",
+    tagline: "Travel Ready • Compact Fold",
+    price: 899.99,
     category: "wheelchair",
-    badge: "POPULAR",
-    rating: 4.8,
-    reviews: 96,
-    images: ["Front View", "Side View", "Folded", "Detail"],
-    colors: ["#2D2D2D", "#2AAAA0", "#E8E8E8"],
-    features: ["18 Mile Range", "Lightweight", "Compact Fold"],
-    weight: "29 lbs",
-    maxSpeed: "4 mph",
-    warranty: "5 Years",
-  },
-  {
-    id: "3",
-    name: "GoldSeason Traveler",
-    tagline: "Your Perfect Travel Companion",
-    price: 1599,
-    originalPrice: 1899,
-    category: "wheelchair",
-    badge: "NEW",
     rating: 4.7,
     reviews: 64,
-    images: ["Front View", "Side View", "Folded", "Detail"],
-    colors: ["#C9A961", "#2D2D2D"],
-    features: ["Airline Approved", "Ultra Light", "15 Mile Range"],
-    weight: "19 lbs",
+    images: ["/products/Travel Air W 21A.png", "/products/Travel Air W 21H.png"],
+    colors: ["#2D2D2D", "#2AAAA0"],
+    features: ["Airline Approved", "Lightweight", "18 Mile Range"],
+    weight: "22 lbs",
     maxSpeed: "4 mph",
     warranty: "3 Years",
   },
   {
-    id: "4",
-    name: "GoldSeason Comfort Plus",
-    tagline: "Premium Comfort & Style",
-    price: 2899,
-    originalPrice: 3299,
+    id: "3",
+    name: "Travel Air W 26",
+    tagline: "Travel Ready • Premium Build",
+    price: 649.99,
+    originalPrice: 899.99,
     category: "wheelchair",
-    badge: "PREMIUM",
-    rating: 5.0,
-    reviews: 42,
-    images: ["Front View", "Side View", "Folded", "Detail"],
-    colors: ["#2D2D2D", "#8B7355", "#C9A961"],
-    features: ["30 Mile Range", "Luxury Seat", "Dual Motors"],
-    weight: "38 lbs",
+    badge: "POPULAR",
+    rating: 4.9,
+    reviews: 112,
+    images: ["/products/Travel Air W 26A.png", "/products/Travel Air W 26B.png"],
+    colors: ["#C9A961", "#2D2D2D"],
+    features: ["Airline Approved", "Compact Fold", "20 Mile Range"],
+    weight: "21 lbs",
+    maxSpeed: "4 mph",
+    warranty: "3 Years",
+    amazonLink: "https://www.amazon.com/dp/B0GY88QR65?th=1",
+  },
+  {
+    id: "4",
+    name: "Power Max 01",
+    tagline: "All-Terrain • Powerful Performance",
+    price: 1099.99,
+    originalPrice: 1399.99,
+    category: "wheelchair",
+    badge: "BESTSELLER",
+    rating: 4.9,
+    reviews: 128,
+    images: ["/products/Power Max 01A.png", "/products/Power Max 01B.png"],
+    colors: ["#2D2D2D", "#4A5568"],
+    features: ["25 Mile Range", "All-Terrain", "Folds in 3s"],
+    weight: "33 lbs",
+    maxSpeed: "4 mph",
+    warranty: "5 Years",
+    amazonLink: "https://www.amazon.com/Electric-Wheelchair-Wheelchairs-Lightweight-All-Terrain/dp/B0FB8NRDPC/ref=ast_sto_dp_puis",
+  },
+  {
+    id: "5",
+    name: "Power Max 16",
+    tagline: "All-Terrain • Extended Range",
+    price: 1099.99,
+    originalPrice: 1499.99,
+    category: "wheelchair",
+    rating: 4.8,
+    reviews: 76,
+    images: ["/products/Power Max 16H.png", "/products/Power Max 16K.png", "/products/Power Max 16L.png"],
+    colors: ["#2D2D2D", "#C9A961", "#4A5568"],
+    features: ["28 Mile Range", "Dual Motors", "All-Terrain"],
+    weight: "35 lbs",
     maxSpeed: "5 mph",
     warranty: "5 Years",
   },
   {
-    id: "5",
-    name: "Premium Travel Bag",
-    tagline: "Protect Your Investment",
-    price: 79,
-    category: "accessories",
-    rating: 4.6,
-    reviews: 215,
-    images: ["Bag View", "Open", "Detail"],
-    colors: ["#2D2D2D"],
-    features: ["Water Resistant", "Padded", "Universal Fit"],
-    weight: "2 lbs",
-    warranty: "1 Year",
-  },
-  {
     id: "6",
-    name: "Extended Battery Pack",
-    tagline: "Double Your Range",
-    price: 199,
-    originalPrice: 249,
-    category: "accessories",
-    badge: "SALE",
-    rating: 4.8,
-    reviews: 178,
-    images: ["Battery", "Installed", "Detail"],
-    colors: ["#2D2D2D"],
-    features: ["25 Mile Extra", "Quick Install", "TSA Approved"],
-    weight: "3 lbs",
-    warranty: "1 Year",
+    name: "Spacious Pro 15",
+    tagline: "Extra Wide • Heavy Duty",
+    price: 699.99,
+    originalPrice: 999.99,
+    category: "wheelchair",
+    badge: "PREMIUM",
+    rating: 5.0,
+    reviews: 42,
+    images: ["/products/Spacious Pro 15B.png", "/products/Spacious Pro 15F.png"],
+    colors: ["#2D2D2D", "#8B7355"],
+    features: ["30 Mile Range", "Luxury Seat", "Dual Motors"],
+    weight: "38 lbs",
+    maxSpeed: "5 mph",
+    warranty: "5 Years",
+    amazonLink: "https://www.amazon.com/dp/B0G5WH7KLL?th=1",
   },
   {
     id: "7",
-    name: "All-Weather Cover",
-    tagline: "Protection in Any Season",
-    price: 49,
-    category: "accessories",
-    rating: 4.5,
-    reviews: 89,
-    images: ["Cover", "On Chair", "Detail"],
-    colors: ["#2D2D2D", "#4A5568"],
-    features: ["Waterproof", "UV Protection", "Breathable"],
-    weight: "1 lb",
-    warranty: "90 Days",
-  },
-  {
-    id: "8",
-    name: "Universal Cup Holder",
-    tagline: "Stay Hydrated On The Go",
-    price: 29,
-    category: "accessories",
-    rating: 4.7,
-    reviews: 156,
-    images: ["Holder", "Installed", "Detail"],
-    colors: ["#2D2D2D", "#C9A961"],
-    features: ["360° Rotation", "Adjustable", "No-Tool Install"],
-    weight: "0.5 lb",
-    warranty: "90 Days",
+    name: "Basic 13",
+    tagline: "Reliable • Everyday Use",
+    price: 399.99,
+    category: "scooter",
+    rating: 4.6,
+    reviews: 215,
+    images: ["/products/Basic 13A.png", "/products/Basic 13L.png", "/products/Basic 13N.png"],
+    colors: ["#2D2D2D"],
+    features: ["15 Mile Range", "Lightweight", "Easy to Use"],
+    weight: "28 lbs",
+    maxSpeed: "4 mph",
+    warranty: "3 Years",
+    amazonLink: "https://www.amazon.com/dp/B0H1BKC9GQ",
   },
 ];
 
@@ -168,7 +182,6 @@ const sortOptions = [
 ];
 
 type SortOption = typeof sortOptions[number];
-type Product = typeof products[number];
 
 export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -283,7 +296,7 @@ export default function ProductsPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               Engineered for independence, designed for comfort. Explore our
-              award-winning collection of electric wheelchairs and accessories.
+              award-winning collection of electric wheelchairs and scooters.
             </motion.p>
 
             <motion.div
@@ -366,35 +379,6 @@ export default function ProductsPage() {
             </Floating>
           ))}
         </motion.div>
-      </section>
-
-      {/* Highlights Bar */}
-      <section className="bg-[#2D2D2D] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {highlights.map((item, i) => (
-              <StaggerItem key={i}>
-                <motion.div
-                  className="flex items-center gap-3 text-white"
-                  whileHover={{ x: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <motion.span
-                    className="text-2xl"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                  >
-                    {item.icon}
-                  </motion.span>
-                  <div>
-                    <p className="font-semibold text-sm">{item.title}</p>
-                    <p className="text-xs text-white/70">{item.desc}</p>
-                  </div>
-                </motion.div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
       </section>
 
       {/* Products Section */}
@@ -499,9 +483,11 @@ export default function ProductsPage() {
                           animate={{ scale: hoveredProduct === product.id ? 1.05 : 1 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <span className="text-[#6B6B6B] text-lg">
-                            {product.images[selectedImages[product.id] || 0]}
-                          </span>
+                          <img
+                            src={product.images[selectedImages[product.id] || 0]}
+                            alt={product.name}
+                            className="w-full h-full object-contain p-4"
+                          />
                         </motion.div>
 
                         {/* Badges */}
@@ -519,6 +505,8 @@ export default function ProductsPage() {
                                     ? "bg-[#C95959] text-white"
                                     : product.badge === "NEW"
                                     ? "bg-[#2AAAA0] text-white"
+                                    : product.badge === "PREMIUM"
+                                    ? "bg-[#8B7355] text-white"
                                     : "bg-[#F5A623] text-[#2D2D2D]"
                                 }`}
                               >
@@ -586,7 +574,7 @@ export default function ProductsPage() {
                         </motion.div>
 
                         {/* Image Dots */}
-                        <div className="absolute bottom-3 right-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {product.images.map((_, idx) => (
                             <button
                               key={idx}
@@ -668,10 +656,12 @@ export default function ProductsPage() {
               <div className="grid md:grid-cols-2 gap-8 p-8">
                 {/* Image */}
                 <div className="relative">
-                  <div className="aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] rounded-xl flex items-center justify-center">
-                    <span className="text-[#6B6B6B] text-2xl">
-                      {quickViewProduct.images[0]}
-                    </span>
+                  <div className="aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] rounded-xl flex items-center justify-center overflow-hidden">
+                    <img
+                      src={quickViewProduct.images[0]}
+                      alt={quickViewProduct.name}
+                      className="w-full h-full object-contain p-4"
+                    />
                   </div>
                   {quickViewProduct.badge && (
                     <Badge
@@ -680,6 +670,8 @@ export default function ProductsPage() {
                           ? "bg-[#C95959] text-white"
                           : quickViewProduct.badge === "NEW"
                           ? "bg-[#2AAAA0] text-white"
+                          : quickViewProduct.badge === "PREMIUM"
+                          ? "bg-[#8B7355] text-white"
                           : "bg-[#F5A623] text-[#2D2D2D]"
                       }`}
                     >
@@ -777,19 +769,21 @@ export default function ProductsPage() {
                     >
                       Add to Cart
                     </Button>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      asChild
-                    >
-                      <a
-                        href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    {quickViewProduct.amazonLink && (
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        asChild
                       >
-                        Buy on Amazon
-                      </a>
-                    </Button>
+                        <a
+                          href={quickViewProduct.amazonLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Buy on Amazon
+                        </a>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

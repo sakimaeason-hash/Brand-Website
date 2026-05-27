@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Floating, StaggerContainer, StaggerItem, HoverScale, Magnetic } from "@/components/animations";
+import { StaggerContainer, StaggerItem, HoverScale, Magnetic } from "@/components/animations";
 
 const featuredProducts = [
   {
@@ -34,29 +34,6 @@ const featuredProducts = [
     badge: "NEW",
     image: "Traveler",
     color: "#C9A961",
-  },
-];
-
-const valueProps = [
-  {
-    icon: "⚡",
-    title: "Lightweight Design",
-    desc: "Under 10kg. Easy to lift, easy to travel.",
-  },
-  {
-    icon: "🔋",
-    title: "Long Battery Life",
-    desc: "Up to 30 miles on a single charge.",
-  },
-  {
-    icon: "✈️",
-    title: "Travel Ready",
-    desc: "FAA compliant for airline travel.",
-  },
-  {
-    icon: "🛡️",
-    title: "5-Year Warranty",
-    desc: "Complete coverage for peace of mind.",
   },
 ];
 
@@ -141,33 +118,26 @@ const easyToLearn = [
   },
 ];
 
-const trustBadges = [
-  { name: "FDA Registered", icon: "🏥" },
-  { name: "FAA Compliant", icon: "✈️" },
-  { name: "ISO 13485", icon: "✓" },
-  { name: "5-Year Warranty", icon: "🛡️" },
-  { name: "30-Day Returns", icon: "↩️" },
-];
-
 export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center bg-gradient-to-br from-[#FAF8F5] via-white to-[#E8DDD4] overflow-hidden">
-        <motion.div
-          className="absolute top-20 right-10 w-96 h-96 bg-[#F5A623]/10 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-20 left-10 w-72 h-72 bg-[#2AAAA0]/10 rounded-full blur-3xl"
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
+        {/* Full-width background image */}
+        <div className="absolute inset-0">
+          <img
+            src="/hero-scene.jpg"
+            alt="GoldSeason Explorer Pro Electric Wheelchair"
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center' }}
+          />
+          {/* Left side blur overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent lg:w-3/5" />
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="text-center lg:text-left">
+            <div className="text-center lg:text-left relative z-10">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -245,89 +215,7 @@ export default function HomePage() {
                 </Magnetic>
               </motion.div>
             </div>
-
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <div className="relative aspect-square max-w-lg mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#F5A623]/20 to-[#2AAAA0]/20 rounded-full blur-3xl" />
-                <motion.div
-                  className="absolute inset-8 bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <img
-                    src="/hero-scene.jpg"
-                    alt="GoldSeason Explorer Pro Electric Wheelchair"
-                    className="w-full h-full object-cover"
-                  />
-                </motion.div>
-
-                <Floating duration={3} distance={8}>
-                  <motion.div
-                    className="absolute -top-4 -right-4 bg-white rounded-xl px-4 py-2 shadow-lg"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <p className="text-2xl font-bold text-[#F5A623]">10kg</p>
-                    <p className="text-xs text-[#6B6B6B]">Ultra Light</p>
-                  </motion.div>
-                </Floating>
-                <Floating duration={4} distance={10}>
-                  <motion.div
-                    className="absolute -bottom-4 -left-4 bg-white rounded-xl px-4 py-2 shadow-lg"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <p className="text-2xl font-bold text-[#2AAAA0]">30mi</p>
-                    <p className="text-xs text-[#6B6B6B]">Long Range</p>
-                  </motion.div>
-                </Floating>
-              </div>
-            </motion.div>
           </div>
-        </div>
-
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 border-2 border-[#6B6B6B] rounded-full flex justify-center">
-            <motion.div
-              className="w-1.5 h-1.5 bg-[#6B6B6B] rounded-full mt-2"
-              animate={{ y: [0, 12, 0], opacity: [1, 0, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Value Props Bar */}
-      <section className="bg-[#2D2D2D] py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {valueProps.map((item, i) => (
-              <StaggerItem key={i}>
-                <motion.div
-                  className="text-center"
-                  whileHover={{ y: -5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <motion.span
-                    className="text-4xl mb-3 block"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
-                  >
-                    {item.icon}
-                  </motion.span>
-                  <h3 className="text-white font-semibold mb-1">{item.title}</h3>
-                  <p className="text-white/70 text-sm">{item.desc}</p>
-                </motion.div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
         </div>
       </section>
 
@@ -711,36 +599,6 @@ export default function HomePage() {
               </Button>
             </motion.div>
           </div>
-        </div>
-      </section>
-
-      {/* Trust Badges */}
-      <section className="py-12 bg-[#FAF8F5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#6B6B6B] mb-6">
-              Trusted & Certified
-            </p>
-            <div className="flex flex-wrap justify-center gap-6 lg:gap-8">
-              {trustBadges.map((badge, i) => (
-                <motion.div
-                  key={i}
-                  className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <span className="text-2xl">{badge.icon}</span>
-                  <span className="text-sm font-medium text-[#2D2D2D]">{badge.name}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </div>
       </section>
 
