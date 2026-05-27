@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +10,6 @@ import { useCart } from "@/context/CartContext";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import {
   MotionWrapper,
-  StaggerContainer,
-  StaggerItem,
   HoverScale,
   Floating,
   AnimatedCounter,
