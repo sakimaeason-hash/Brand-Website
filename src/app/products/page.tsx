@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ const categories = [
   { id: "all", label: "All Products" },
   { id: "wheelchair", label: "Electric Wheelchairs" },
   { id: "accessories", label: "Accessories" },
-  { id: "parts", label: "Replacement Parts" },
 ];
 
 const products = [
@@ -39,6 +38,9 @@ const products = [
     images: ["Front View", "Side View", "Folded", "Detail"],
     colors: ["#2D2D2D", "#C9A961", "#4A5568"],
     features: ["25 Mile Range", "All-Terrain", "Folds in 3s"],
+    weight: "33 lbs",
+    maxSpeed: "4 mph",
+    warranty: "5 Years",
   },
   {
     id: "2",
@@ -53,6 +55,9 @@ const products = [
     images: ["Front View", "Side View", "Folded", "Detail"],
     colors: ["#2D2D2D", "#2AAAA0", "#E8E8E8"],
     features: ["18 Mile Range", "Lightweight", "Compact Fold"],
+    weight: "29 lbs",
+    maxSpeed: "4 mph",
+    warranty: "5 Years",
   },
   {
     id: "3",
@@ -67,6 +72,9 @@ const products = [
     images: ["Front View", "Side View", "Folded", "Detail"],
     colors: ["#C9A961", "#2D2D2D"],
     features: ["Airline Approved", "Ultra Light", "15 Mile Range"],
+    weight: "19 lbs",
+    maxSpeed: "4 mph",
+    warranty: "3 Years",
   },
   {
     id: "4",
@@ -81,6 +89,9 @@ const products = [
     images: ["Front View", "Side View", "Folded", "Detail"],
     colors: ["#2D2D2D", "#8B7355", "#C9A961"],
     features: ["30 Mile Range", "Luxury Seat", "Dual Motors"],
+    weight: "38 lbs",
+    maxSpeed: "5 mph",
+    warranty: "5 Years",
   },
   {
     id: "5",
@@ -93,6 +104,8 @@ const products = [
     images: ["Bag View", "Open", "Detail"],
     colors: ["#2D2D2D"],
     features: ["Water Resistant", "Padded", "Universal Fit"],
+    weight: "2 lbs",
+    warranty: "1 Year",
   },
   {
     id: "6",
@@ -107,6 +120,8 @@ const products = [
     images: ["Battery", "Installed", "Detail"],
     colors: ["#2D2D2D"],
     features: ["25 Mile Extra", "Quick Install", "TSA Approved"],
+    weight: "3 lbs",
+    warranty: "1 Year",
   },
   {
     id: "7",
@@ -119,6 +134,8 @@ const products = [
     images: ["Cover", "On Chair", "Detail"],
     colors: ["#2D2D2D", "#4A5568"],
     features: ["Waterproof", "UV Protection", "Breathable"],
+    weight: "1 lb",
+    warranty: "90 Days",
   },
   {
     id: "8",
@@ -131,6 +148,8 @@ const products = [
     images: ["Holder", "Installed", "Detail"],
     colors: ["#2D2D2D", "#C9A961"],
     features: ["360° Rotation", "Adjustable", "No-Tool Install"],
+    weight: "0.5 lb",
+    warranty: "90 Days",
   },
 ];
 
@@ -141,42 +160,46 @@ const highlights = [
   { icon: "🛡️", title: "5-Year Warranty", desc: "Complete coverage" },
 ];
 
-const reviews = [
-  {
-    name: "Michael R.",
-    location: "Florida, USA",
-    rating: 5,
-    text: "The Explorer Pro has completely changed my life. I can now go on hiking trails with my family!",
-    avatar: "M",
-  },
-  {
-    name: "Sarah K.",
-    location: "California, USA",
-    rating: 5,
-    text: "Lightweight, easy to fold, and the customer service is outstanding. Highly recommend!",
-    avatar: "S",
-  },
-  {
-    name: "James L.",
-    location: "Texas, USA",
-    rating: 5,
-    text: "Best investment I've made. The battery life is incredible and it's so comfortable.",
-    avatar: "J",
-  },
+const sortOptions = [
+  { id: "featured", label: "Featured" },
+  { id: "price-low", label: "Price: Low to High" },
+  { id: "price-high", label: "Price: High to Low" },
+  { id: "rating", label: "Highest Rated" },
 ];
+
+type SortOption = typeof sortOptions[number];
+type Product = typeof products[number];
 
 export default function ProductsPage() {
   const [activeCategory, setActiveCategory] = useState("all");
+  const [sortBy, setSortBy] = useState<SortOption["id"]>("featured");
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [selectedImages, setSelectedImages] = useState<Record<string, number>>({});
+  const [compareList, setCompareList] = useState<string[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const { addItem } = useCart();
 
-  const filteredProducts =
-    activeCategory === "all"
-      ? products
+  const filteredAndSortedProducts = useMemo(() => {
+    const result = activeCategory === "all"
+      ? [...products]
       : products.filter((p) => p.category === activeCategory);
 
-  const handleAddToCart = (product: (typeof products)[0]) => {
+    switch (sortBy) {
+      case "price-low":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        result.sort((a, b) => b.rating - a.rating);
+        break;
+    }
+    return result;
+  }, [activeCategory, sortBy]);
+
+  const handleAddToCart = (product: Product) => {
     addItem({
       id: product.id,
       name: product.name,
@@ -184,11 +207,28 @@ export default function ProductsPage() {
     });
   };
 
+  const toggleCompare = (productId: string) => {
+    setCompareList((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : prev.length < 3
+        ? [...prev, productId]
+        : prev
+    );
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
   return (
     <div>
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-[#FAF8F5] via-white to-[#FAF8F5] py-20 lg:py-28 overflow-hidden">
-        {/* Animated Background Elements */}
         <motion.div
           className="absolute top-20 right-10 w-64 h-64 bg-[#F5A623]/10 rounded-full blur-3xl"
           animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -202,7 +242,6 @@ export default function ProductsPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-3xl mx-auto">
-            {/* Badge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -247,7 +286,6 @@ export default function ProductsPage() {
               award-winning collection of electric wheelchairs and accessories.
             </motion.p>
 
-            {/* Countdown */}
             <motion.div
               className="flex flex-col items-center gap-4 mb-10"
               initial={{ opacity: 0, y: 20 }}
@@ -259,12 +297,11 @@ export default function ProductsPage() {
                 animate={{ scale: [1, 1.02, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                🎉 Spring Sale Ends In:
+                🔥 Summer Sale Ends In:
               </motion.p>
-              <CountdownTimer targetDate="2025-05-31T23:59:59" />
+              <CountdownTimer targetDate="2026-08-31T23:59:59" />
             </motion.div>
 
-            {/* CTA Buttons */}
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center"
               initial={{ opacity: 0, y: 20 }}
@@ -300,7 +337,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Floating Stats */}
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden lg:flex gap-8"
           initial={{ opacity: 0, y: 50 }}
@@ -364,7 +400,6 @@ export default function ProductsPage() {
       {/* Products Section */}
       <section id="products" className="py-16 lg:py-24 bg-[#FAF8F5]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
           <MotionWrapper className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
             <div>
               <motion.h2
@@ -386,50 +421,72 @@ export default function ProductsPage() {
               </motion.p>
             </div>
 
-            {/* Category Filter */}
-            <motion.div
-              className="flex flex-wrap gap-2"
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {categories.map((cat, i) => (
-                <motion.button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    activeCategory === cat.id
-                      ? "bg-[#F5A623] text-[#2D2D2D]"
-                      : "bg-white text-[#6B6B6B] hover:bg-[#F5A623]/10"
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Sort Dropdown */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption["id"])}
+                className="px-4 py-2 rounded-lg border border-[#E8E8E8] bg-white text-sm focus:outline-none focus:border-[#2AAAA0]"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Category Filter */}
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat, i) => (
+                  <motion.button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      activeCategory === cat.id
+                        ? "bg-[#F5A623] text-[#2D2D2D]"
+                        : "bg-white text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    {cat.label}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Compare Button */}
+              {compareList.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCompareList([])}
+                  className="text-[#2AAAA0] border-[#2AAAA0]"
                 >
-                  {cat.label}
-                </motion.button>
-              ))}
-            </motion.div>
+                  Compare ({compareList.length})
+                </Button>
+              )}
+            </div>
           </MotionWrapper>
 
           {/* Products Grid */}
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeCategory}
+              key={`${activeCategory}-${sortBy}`}
               className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {filteredProducts.map((product, i) => (
+              {filteredAndSortedProducts.map((product, i) => (
                 <motion.div
                   key={product.id}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.05 }}
                   onMouseEnter={() => setHoveredProduct(product.id)}
                   onMouseLeave={() => setHoveredProduct(null)}
                 >
@@ -437,12 +494,9 @@ export default function ProductsPage() {
                     <Card className="overflow-hidden group bg-white hover:shadow-xl transition-all duration-300">
                       {/* Image Area */}
                       <div className="relative aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] overflow-hidden">
-                        {/* Main Image Display */}
                         <motion.div
                           className="absolute inset-0 flex items-center justify-center"
-                          animate={{
-                            scale: hoveredProduct === product.id ? 1.05 : 1,
-                          }}
+                          animate={{ scale: hoveredProduct === product.id ? 1.05 : 1 }}
                           transition={{ duration: 0.3 }}
                         >
                           <span className="text-[#6B6B6B] text-lg">
@@ -450,7 +504,7 @@ export default function ProductsPage() {
                           </span>
                         </motion.div>
 
-                        {/* Badge */}
+                        {/* Badges */}
                         <AnimatePresence>
                           {product.badge && (
                             <motion.div
@@ -474,6 +528,36 @@ export default function ProductsPage() {
                           )}
                         </AnimatePresence>
 
+                        {/* Wishlist & Compare */}
+                        <div className="absolute top-3 right-3 flex flex-col gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleWishlist(product.id);
+                            }}
+                            className={`w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-all hover:scale-110 ${
+                              wishlist.includes(product.id) ? "text-[#C95959]" : "text-[#6B6B6B]"
+                            }`}
+                          >
+                            <svg className="w-4 h-4" fill={wishlist.includes(product.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleCompare(product.id);
+                            }}
+                            className={`w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-all hover:scale-110 ${
+                              compareList.includes(product.id) ? "text-[#2AAAA0]" : "text-[#6B6B6B]"
+                            }`}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                          </button>
+                        </div>
+
                         {/* Quick Actions */}
                         <motion.div
                           className="absolute bottom-3 left-3 right-3 flex gap-2"
@@ -495,120 +579,59 @@ export default function ProductsPage() {
                             size="sm"
                             variant="outline"
                             className="bg-white/90 border-0"
-                            asChild
+                            onClick={() => setQuickViewProduct(product)}
                           >
-                            <Link href={`/products/${product.id}`}>View</Link>
+                            View
                           </Button>
                         </motion.div>
 
-                        {/* Thumbnail Dots */}
-                        <div className="absolute top-3 right-3 flex flex-col gap-1">
+                        {/* Image Dots */}
+                        <div className="absolute bottom-3 right-3 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {product.images.map((_, idx) => (
-                            <motion.button
+                            <button
                               key={idx}
                               onClick={() =>
-                                setSelectedImages({
-                                  ...selectedImages,
-                                  [product.id]: idx,
-                                })
+                                setSelectedImages({ ...selectedImages, [product.id]: idx })
                               }
                               className={`rounded-full transition-all ${
                                 (selectedImages[product.id] || 0) === idx
-                                  ? "bg-[#F5A623]"
-                                  : "bg-white/70 hover:bg-white"
+                                  ? "w-3 h-3 bg-[#F5A623]"
+                                  : "w-2 h-2 bg-white/70"
                               }`}
-                              animate={{
-                                width:
-                                  (selectedImages[product.id] || 0) === idx
-                                    ? 16
-                                    : 8,
-                                height: 8,
-                              }}
-                              transition={{ duration: 0.2 }}
                             />
                           ))}
                         </div>
                       </div>
 
                       <CardContent className="p-4">
-                        {/* Rating */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <motion.svg
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < Math.floor(product.rating)
-                                    ? "text-[#F5A623] fill-[#F5A623]"
-                                    : "text-[#E8E8E8]"
-                                }`}
-                                viewBox="0 0 20 20"
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: i * 0.05 }}
-                              >
-                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                              </motion.svg>
-                            ))}
-                          </div>
+                        <div className="flex items-center gap-1 mb-2">
+                          <svg className="w-3 h-3 text-[#F5A623] fill-[#F5A623]" viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                          </svg>
                           <span className="text-xs text-[#6B6B6B]">
-                            ({product.reviews})
+                            {product.rating} ({product.reviews})
                           </span>
                         </div>
 
-                        {/* Product Info */}
-                        <motion.p
-                          className="text-xs text-[#2AAAA0] font-medium mb-1"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.2 }}
-                        >
+                        <p className="text-xs text-[#2AAAA0] font-medium mb-1">
                           {product.tagline}
-                        </motion.p>
-                        <h3 className="font-bold text-[#2D2D2D] mb-2 group-hover:text-[#2AAAA0] transition-colors">
+                        </p>
+                        <h3 className="font-bold text-[#2D2D2D] mb-2 group-hover:text-[#2AAAA0] transition-colors line-clamp-1">
                           {product.name}
                         </h3>
 
-                        {/* Features */}
                         <div className="flex flex-wrap gap-1 mb-3">
-                          {product.features.map((feature, idx) => (
-                            <motion.span
-                              key={idx}
-                              className="text-[10px] bg-[#FAF8F5] text-[#6B6B6B] px-2 py-0.5 rounded"
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: idx * 0.05 }}
-                            >
+                          {product.features.slice(0, 2).map((feature, idx) => (
+                            <span key={idx} className="text-[10px] bg-[#FAF8F5] text-[#6B6B6B] px-2 py-0.5 rounded">
                               {feature}
-                            </motion.span>
+                            </span>
                           ))}
                         </div>
 
-                        {/* Color Options */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-xs text-[#6B6B6B]">Colors:</span>
-                          <div className="flex gap-1">
-                            {product.colors.map((color, idx) => (
-                              <motion.div
-                                key={idx}
-                                className="w-4 h-4 rounded-full border border-[#E8E8E8]"
-                                style={{ backgroundColor: color }}
-                                whileHover={{ scale: 1.3 }}
-                                transition={{ type: "spring", stiffness: 400 }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Price */}
                         <div className="flex items-center gap-2">
-                          <motion.span
-                            className="text-xl font-bold text-[#F5A623]"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                          >
+                          <span className="text-lg font-bold text-[#F5A623]">
                             ${product.price.toLocaleString()}
-                          </motion.span>
+                          </span>
                           {product.originalPrice && (
                             <span className="text-sm text-[#B0B0B0] line-through">
                               ${product.originalPrice.toLocaleString()}
@@ -625,91 +648,164 @@ export default function ProductsPage() {
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <MotionWrapper className="text-center mb-12">
-            <motion.h2
-              className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              What Our Customers Say
-            </motion.h2>
+      {/* Quick View Modal */}
+      <AnimatePresence>
+        {quickViewProduct && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+            onClick={() => setQuickViewProduct(null)}
+          >
             <motion.div
-              className="flex items-center justify-center gap-2"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <motion.svg
-                    key={i}
-                    className="w-6 h-6 text-[#F5A623] fill-[#F5A623]"
-                    viewBox="0 0 20 20"
-                    initial={{ opacity: 0, scale: 0 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.1, type: "spring" }}
-                  >
-                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                  </motion.svg>
-                ))}
-              </div>
-              <span className="text-lg font-bold text-[#2D2D2D]">4.9/5</span>
-              <span className="text-[#6B6B6B]">from 2,000+ reviews</span>
-            </motion.div>
-          </MotionWrapper>
+              <div className="grid md:grid-cols-2 gap-8 p-8">
+                {/* Image */}
+                <div className="relative">
+                  <div className="aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] rounded-xl flex items-center justify-center">
+                    <span className="text-[#6B6B6B] text-2xl">
+                      {quickViewProduct.images[0]}
+                    </span>
+                  </div>
+                  {quickViewProduct.badge && (
+                    <Badge
+                      className={`absolute top-4 left-4 ${
+                        quickViewProduct.badge === "SALE"
+                          ? "bg-[#C95959] text-white"
+                          : quickViewProduct.badge === "NEW"
+                          ? "bg-[#2AAAA0] text-white"
+                          : "bg-[#F5A623] text-[#2D2D2D]"
+                      }`}
+                    >
+                      {quickViewProduct.badge}
+                    </Badge>
+                  )}
+                </div>
 
-          <StaggerContainer className="grid md:grid-cols-3 gap-6">
-            {reviews.map((review, i) => (
-              <StaggerItem key={i}>
-                <motion.div
-                  whileHover={{ y: -10, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card className="bg-[#FAF8F5] border-0 h-full">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <motion.div
-                          className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F5A623] to-[#E09520] flex items-center justify-center text-white font-bold text-lg"
-                          whileHover={{ scale: 1.1, rotate: 5 }}
+                {/* Details */}
+                <div>
+                  <p className="text-[#2AAAA0] font-medium mb-2">{quickViewProduct.tagline}</p>
+                  <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4">{quickViewProduct.name}</h2>
+
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <svg
+                          key={i}
+                          className={`w-5 h-5 ${
+                            i < Math.floor(quickViewProduct.rating)
+                              ? "text-[#F5A623] fill-[#F5A623]"
+                              : "text-[#E8E8E8]"
+                          }`}
+                          viewBox="0 0 20 20"
                         >
-                          {review.avatar}
-                        </motion.div>
-                        <div>
-                          <p className="font-semibold text-[#2D2D2D]">
-                            {review.name}
-                          </p>
-                          <p className="text-sm text-[#6B6B6B]">
-                            {review.location}
-                          </p>
-                        </div>
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-[#6B6B6B]">
+                      {quickViewProduct.rating} ({quickViewProduct.reviews} reviews)
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline gap-3 mb-6">
+                    <span className="text-4xl font-bold text-[#F5A623]">
+                      ${quickViewProduct.price.toLocaleString()}
+                    </span>
+                    {quickViewProduct.originalPrice && (
+                      <span className="text-xl text-[#B0B0B0] line-through">
+                        ${quickViewProduct.originalPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-[#6B6B6B] mb-6">
+                    {quickViewProduct.features.join(" • ")}
+                  </p>
+
+                  {/* Specs */}
+                  <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-[#FAF8F5] rounded-xl">
+                    {quickViewProduct.weight && (
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-[#2D2D2D]">{quickViewProduct.weight}</p>
+                        <p className="text-xs text-[#6B6B6B]">Weight</p>
                       </div>
-                      <div className="flex mb-3">
-                        {[...Array(review.rating)].map((_, idx) => (
-                          <motion.svg
-                            key={idx}
-                            className="w-4 h-4 text-[#F5A623] fill-[#F5A623]"
-                            viewBox="0 0 20 20"
-                            initial={{ opacity: 0, scale: 0 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: idx * 0.1 }}
-                          >
-                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                          </motion.svg>
-                        ))}
+                    )}
+                    {quickViewProduct.maxSpeed && (
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-[#2D2D2D]">{quickViewProduct.maxSpeed}</p>
+                        <p className="text-xs text-[#6B6B6B]">Max Speed</p>
                       </div>
-                      <p className="text-[#6B6B6B]">&ldquo;{review.text}&rdquo;</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
+                    )}
+                    {quickViewProduct.warranty && (
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-[#2D2D2D]">{quickViewProduct.warranty}</p>
+                        <p className="text-xs text-[#6B6B6B]">Warranty</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Colors */}
+                  <div className="mb-6">
+                    <p className="text-sm text-[#6B6B6B] mb-2">Colors:</p>
+                    <div className="flex gap-2">
+                      {quickViewProduct.colors.map((color, idx) => (
+                        <div
+                          key={idx}
+                          className="w-8 h-8 rounded-full border-2 border-[#E8E8E8]"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-4">
+                    <Button
+                      size="lg"
+                      className="flex-1 bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520]"
+                      onClick={() => {
+                        handleAddToCart(quickViewProduct);
+                        setQuickViewProduct(null);
+                      }}
+                    >
+                      Add to Cart
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      asChild
+                    >
+                      <a
+                        href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Buy on Amazon
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setQuickViewProduct(null)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-[#FAF8F5]"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* CTA Section */}
       <section className="py-16 lg:py-24 bg-gradient-to-r from-[#2D2D2D] to-[#1a1a1a]">

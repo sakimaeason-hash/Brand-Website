@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { useCart } from "@/context/CartContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
   { href: "/products", label: "Products" },
@@ -12,9 +14,62 @@ const navLinks = [
   { href: "/support", label: "Support" },
 ];
 
+const searchData = [
+  { type: "Product", title: "Explorer Pro", desc: "All-terrain mobility wheelchair" },
+  { type: "Product", title: "City Glide", desc: "Urban mobility redefined" },
+  { type: "Product", title: "Traveler", desc: "Your perfect travel companion" },
+  { type: "Page", title: "Home Guides", desc: "Kitchen, Bedroom & Outdoor accessibility" },
+  { type: "Page", title: "Support", desc: "Warranty, repairs & FAQ" },
+  { type: "Page", title: "About Us", desc: "Our story and values" },
+];
+
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<typeof searchData>([]);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { totalItems } = useCart();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = searchData.filter(
+        (item) =>
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.desc.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setSearchResults(filtered);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSearchOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (searchOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [searchOpen]);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-[#E8E8E8]">
@@ -49,13 +104,19 @@ export default function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <button className="p-2 text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors">
+            {/* Search Button */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-2 text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors"
+              aria-label="Search"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
+
             <a
-              href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80?lp_asin=B0FB7YWS4C&ref_=ast_bln&store_ref=bl_ast_dp_brandlogo_sto"
+              href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-1 text-sm text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors"
@@ -79,6 +140,62 @@ export default function Header() {
                 </span>
               )}
             </Link>
+
+            {/* User Menu */}
+            {status === "loading" ? (
+              <div className="w-8 h-8 rounded-full bg-[#E8E8E8] animate-pulse" />
+            ) : session ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 p-2 text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F5A623] to-[#2AAAA0] flex items-center justify-center text-white text-sm font-bold">
+                    {session.user?.name?.charAt(0) || "U"}
+                  </div>
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-[#E8E8E8] py-2 z-50">
+                    <div className="px-4 py-2 border-b border-[#E8E8E8]">
+                      <p className="font-medium text-[#2D2D2D] text-sm">{session.user?.name}</p>
+                      <p className="text-xs text-[#6B6B6B]">{session.user?.email}</p>
+                    </div>
+                    <Link
+                      href="/account"
+                      className="block px-4 py-2 text-sm text-[#6B6B6B] hover:bg-[#FAF8F5] hover:text-[#2D2D2D]"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      My Account
+                    </Link>
+                    <Link
+                      href="/orders"
+                      className="block px-4 py-2 text-sm text-[#6B6B6B] hover:bg-[#FAF8F5] hover:text-[#2D2D2D]"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      Order History
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-[#C95959] hover:bg-[#FAF8F5]"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/auth/signin"
+                className="p-2 text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </Link>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -118,7 +235,7 @@ export default function Header() {
                 </Link>
               ))}
               <a
-                href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80?lp_asin=B0FB7YWS4C&ref_=ast_bln&store_ref=bl_ast_dp_brandlogo_sto"
+                href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-3 text-[#2D2D2D] hover:bg-[#FAF8F5] rounded-lg transition-colors sm:hidden"
@@ -130,6 +247,99 @@ export default function Header() {
           </div>
         )}
       </div>
+
+      {/* Search Modal */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 bg-black/50"
+            onClick={() => setSearchOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-4 p-4 border-b border-[#E8E8E8]">
+                <svg className="w-5 h-5 text-[#6B6B6B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search products, pages, guides..."
+                  className="flex-1 text-lg outline-none placeholder:text-[#B0B0B0]"
+                />
+                <button
+                  onClick={() => setSearchOpen(false)}
+                  className="p-2 text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="max-h-96 overflow-y-auto">
+                {searchResults.length > 0 ? (
+                  <div className="p-2">
+                    {searchResults.map((item, index) => (
+                      <Link
+                        key={index}
+                        href={item.type === "Product" ? "/products" : `/${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                        onClick={() => {
+                          setSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="flex items-start gap-4 p-3 rounded-lg hover:bg-[#FAF8F5] transition-colors"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-[#FAF8F5] flex items-center justify-center shrink-0">
+                          <span className="text-lg">
+                            {item.type === "Product" ? "🪑" : "📄"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-[#2D2D2D]">{item.title}</p>
+                          <p className="text-sm text-[#6B6B6B]">{item.desc}</p>
+                          <p className="text-xs text-[#2AAAA0] mt-1">{item.type}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : searchQuery.trim() ? (
+                  <div className="p-8 text-center text-[#6B6B6B]">
+                    <p className="text-lg mb-2">No results found</p>
+                    <p className="text-sm">Try searching for &quot;Explorer Pro&quot;, &quot;support&quot;, or &quot;guides&quot;</p>
+                  </div>
+                ) : (
+                  <div className="p-4">
+                    <p className="text-sm text-[#6B6B6B] mb-3">Popular searches</p>
+                    <div className="flex flex-wrap gap-2">
+                      {["Explorer Pro", "City Glide", "support", "guides", "about"].map((term) => (
+                        <button
+                          key={term}
+                          onClick={() => setSearchQuery(term)}
+                          className="px-3 py-1.5 bg-[#FAF8F5] text-[#6B6B6B] text-sm rounded-full hover:bg-[#2AAAA0]/10 hover:text-[#2AAAA0] transition-colors"
+                        >
+                          {term}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
