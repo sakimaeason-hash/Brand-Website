@@ -21,14 +21,8 @@ const tableOfContents = [
 function ImagePlaceholder({ src, alt, caption }: { src: string; alt: string; caption: string }) {
   return (
     <figure className="my-8">
-      <div className="relative bg-[#f0fffe] border-2 border-dashed border-[#2AAAA0]/40 rounded-2xl overflow-hidden">
-        <img src={src} alt={alt} className="w-full h-64 object-cover opacity-60 blur-sm" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="bg-white/90 rounded-2xl px-6 py-4 text-center shadow-sm">
-            <p className="text-[#2AAAA0] font-semibold text-sm">{alt}</p>
-            <p className="text-[#6B6B6B] text-xs mt-1">Image placeholder — please upload photo</p>
-          </div>
-        </div>
+      <div className="relative rounded-2xl overflow-hidden">
+        <img src={src} alt={alt} className="w-full" />
       </div>
       {caption && <figcaption className="text-center text-sm text-[#6B6B6B] mt-3 italic">{caption}</figcaption>}
     </figure>
@@ -114,7 +108,7 @@ export default function OutdoorGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/outdoor/site-assessment.jpg"
+                src="/Homeguide/Outdoor Accessibility/Measuring elevation change and surface type at a home entrance for outdoor accessibility planning.jpg"
                 alt="Measuring elevation change and surface type at a home entrance for outdoor accessibility planning"
                 caption="Start by documenting: how much elevation change exists at each entry point, what surface types are present, and the path from door to key destinations."
               />
@@ -164,7 +158,7 @@ export default function OutdoorGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/outdoor/accessible-ramp.jpg"
+                src="/Homeguide/Outdoor Accessibility/Modular aluminum threshold ramp at a standard 4-inch door threshold.jpg"
                 alt="Modular aluminum threshold ramp at a standard 4-inch door threshold — lightweight, portable, ADA-compliant"
                 caption="Threshold ramps bridge small elevation changes (1–6 inches) at doorways. Modular aluminum ramps can be permanent fixtures that blend with the home exterior."
               />
@@ -227,7 +221,7 @@ export default function OutdoorGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/outdoor/pathway-surfaces.jpg"
+                src="/Homeguide/Outdoor Accessibility/Comparison of outdoor pathway surfaces.jpg"
                 alt="Comparison of outdoor pathway surfaces — smooth concrete, pavers, and deck boards showing accessibility differences"
                 caption="Left to right: smooth broom-finished concrete (best), interlocking pavers with narrow gaps (acceptable), and wooden deck boards (moderate — gaps can catch small wheels)."
               />
@@ -291,7 +285,7 @@ export default function OutdoorGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/outdoor/raised-garden-bed.jpg"
+                src="/Homeguide/Outdoor Accessibility/accessible raised garden beds.jpg"
                 alt="Three accessible raised garden beds at different heights for wheelchair users — low (24 inches), mid (30 inches), and high (36 inches)"
                 caption="Accessible raised beds should be no wider than 24 inches from edge to center (arm's reach from a seated position). Knee clearance below allows wheelchair approach from any direction."
               />
@@ -338,7 +332,7 @@ export default function OutdoorGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/outdoor/outdoor-seating.jpg"
+                src="/Homeguide/Outdoor Accessibility/Accessible outdoor seating area with one side open for wheelchair parking.jpg"
                 alt="Accessible outdoor seating area with one side open for wheelchair parking, table at 28-30 inches high"
                 caption="Accessible outdoor dining: table at 28–30 inches high with knee clearance of at least 27 inches high. One side of the table is open for wheelchair approach."
               />
@@ -499,7 +493,7 @@ export default function OutdoorGuidePage() {
                   age: "70",
                   condition: "Osteoarthritis, powered wheelchair user for 2 years",
                   budget: "$450",
-                  img: "/images/guides/outdoor/sarah-garden.jpg",
+                  img: "/Homeguide/Outdoor Accessibility/Sarah's Garden.jpg",
                   quote: "I'd given up on gardening after I started using the wheelchair. With the raised beds and the long-handled tools, I'm growing tomatoes again for the first time in three years.",
                   changes: [
                     "Three raised garden beds at 24\" height (elbow height from wheelchair)",

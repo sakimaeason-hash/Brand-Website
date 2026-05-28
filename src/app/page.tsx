@@ -10,51 +10,63 @@ import { StaggerContainer, StaggerItem, HoverScale, Magnetic } from "@/component
 const featuredProducts = [
   {
     id: "1",
-    name: "GoldSeason Explorer Pro",
-    tagline: "All-Terrain Mobility",
-    price: 2499,
+    name: "GoldSeason Travel Air W 03",
+    tagline: "Ultra Lightweight Travel",
+    price: 599.99,
     badge: "BESTSELLER",
-    image: "Explorer Pro",
-    color: "#2D2D2D",
-  },
-  {
-    id: "2",
-    name: "GoldSeason City Glide",
-    tagline: "Urban Mobility Redefined",
-    price: 1899,
-    badge: "POPULAR",
-    image: "City Glide",
+    image: "/products/Travel Air W 03C.png",
     color: "#2AAAA0",
   },
   {
+    id: "2",
+    name: "GoldSeason Power Max 01",
+    tagline: "All-Terrain Performance",
+    price: 1099.99,
+    badge: "BESTSELLER",
+    image: "/products/Power Max 01A.png",
+    color: "#2D2D2D",
+  },
+  {
     id: "3",
-    name: "GoldSeason Traveler",
-    tagline: "Your Perfect Travel Companion",
-    price: 1599,
+    name: "GoldSeason Travel Air W 26",
+    tagline: "Premium Compact Design",
+    price: 649.99,
     badge: "NEW",
-    image: "Traveler",
+    image: "/products/Travel Air W 26A.png",
     color: "#C9A961",
+  },
+  {
+    id: "4",
+    name: "GoldSeason Spacious Pro 15",
+    tagline: "Extra Wide Heavy Duty",
+    price: 699.99,
+    badge: "PREMIUM",
+    image: "/products/Spacious Pro 15B.png",
+    color: "#8B7355",
   },
 ];
 
 const testimonials = [
   {
-    name: "Margaret Chen",
-    age: 68,
-    quote: "I can finally travel to see my grandchildren across the country. The GoldSeason is a game-changer.",
-    product: "Explorer Pro",
+    name: "Hadji Reyes",
+    age: 65,
+    quote: "It took only 3 days since I placed the order and it arrived in perfect conditions. The weight is so light even I can load and unload it in my car trunk by myself.",
+    product: "Travel Air W 03C",
+    image: "/stories/Hadji Reyes.jpg",
   },
   {
-    name: "Robert Williams",
-    age: 75,
-    quote: "After 40 years of teaching, I thought my traveling days were over. Not anymore.",
-    product: "City Glide",
+    name: "Stephanie Freeman",
+    age: 71,
+    quote: "I just got my new wheelchair it was fairly easy to put it together. I love that when it's backing up it warns people around you. It's very spacious and comfortable.",
+    product: "Spacious Pro 15B",
+    image: null,
   },
   {
-    name: "Eleanor Davis",
-    age: 72,
-    quote: "So lightweight that I can put it in my car's trunk by myself. Independence restored!",
-    product: "Traveler",
+    name: "Stacy Olney",
+    age: 69,
+    quote: "I am a very big girl and was very glad that I fit into this chair comfortably. It's a slightly tight, but it is definitely workable. The chair goes very fast if you wanted to and I keep it on the slow cycle.",
+    product: "Spacious Pro 15B",
+    image: null,
   },
 ];
 
@@ -349,7 +361,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <StaggerContainer className="grid md:grid-cols-3 gap-8">
+          <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredProducts.map((product) => (
               <StaggerItem key={product.id}>
                 <HoverScale scale={1.03}>
@@ -359,12 +371,11 @@ export default function HomePage() {
                   >
                     <Card className="bg-white overflow-hidden group cursor-pointer">
                       <div className="relative aspect-[4/3] bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] flex items-center justify-center">
-                        <div
-                          className="w-24 h-24 rounded-full flex items-center justify-center text-5xl"
-                          style={{ backgroundColor: product.color + "20" }}
-                        >
-                          🦽
-                        </div>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-contain p-4"
+                        />
                         {product.badge && (
                           <div className="absolute top-4 left-4">
                             <Badge
@@ -373,6 +384,8 @@ export default function HomePage() {
                                   ? "bg-[#F5A623] text-[#2D2D2D]"
                                   : product.badge === "NEW"
                                   ? "bg-[#2AAAA0] text-white"
+                                  : product.badge === "PREMIUM"
+                                  ? "bg-[#8B7355] text-white"
                                   : "bg-[#6B6B6B] text-white"
                               }
                             >
@@ -392,8 +405,8 @@ export default function HomePage() {
                           {product.name}
                         </h3>
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-[#F5A623]">
-                            ${product.price.toLocaleString()}
+                          <span className="text-xl font-bold text-[#F5A623]">
+                            ${product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                           <Button
                             size="sm"
@@ -706,9 +719,17 @@ export default function HomePage() {
                   <Card className="bg-white border-0 h-full">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F5A623] to-[#2AAAA0] flex items-center justify-center text-white font-bold">
-                          {testimonial.name.charAt(0)}
-                        </div>
+                        {testimonial.image ? (
+                          <img
+                            src={testimonial.image}
+                            alt={testimonial.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F5A623] to-[#2AAAA0] flex items-center justify-center text-white font-bold">
+                            {testimonial.name.charAt(0)}
+                          </div>
+                        )}
                         <div>
                           <p className="font-semibold text-[#2D2D2D]">{testimonial.name}</p>
                           <p className="text-sm text-[#6B6B6B]">Age {testimonial.age}</p>

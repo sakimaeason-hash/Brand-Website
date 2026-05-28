@@ -19,6 +19,10 @@ import {
 const categories = [
   { id: "all", label: "All Products" },
   { id: "wheelchair", label: "Electric Wheelchairs" },
+  { id: "wheelchair-Travel Air", label: "  Travel Air Series" },
+  { id: "wheelchair-Power Max", label: "  Power Max Series" },
+  { id: "wheelchair-Spacious Pro", label: "  Spacious Pro Series" },
+  { id: "wheelchair-Basic", label: "  Basic Series" },
   { id: "scooter", label: "Electric Scooters" },
   { id: "accessories", label: "Accessories" },
 ];
@@ -151,7 +155,7 @@ const products: Product[] = [
     name: "Basic 13",
     tagline: "Reliable • Everyday Use",
     price: 399.99,
-    category: "scooter",
+    category: "wheelchair",
     rating: 4.6,
     reviews: 215,
     images: ["/products/Basic 13A.png", "/products/Basic 13L.png", "/products/Basic 13N.png"],
@@ -188,12 +192,36 @@ export default function ProductsPage() {
   const [compareList, setCompareList] = useState<string[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const { addItem } = useCart();
 
+  const handleCategoryClick = (categoryId: string) => {
+    if (categoryId === "wheelchair" || categoryId === "scooter") {
+      setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
+      setActiveCategory(categoryId);
+    } else if (categoryId.startsWith("wheelchair-")) {
+      setActiveCategory(categoryId);
+      setExpandedCategory("wheelchair");
+    } else if (categoryId.startsWith("scooter-")) {
+      setActiveCategory(categoryId);
+      setExpandedCategory("scooter");
+    } else {
+      setExpandedCategory(null);
+      setActiveCategory(categoryId);
+    }
+  };
+
   const filteredAndSortedProducts = useMemo(() => {
-    const result = activeCategory === "all"
-      ? [...products]
-      : products.filter((p) => p.category === activeCategory);
+    let result: Product[];
+
+    if (activeCategory === "all") {
+      result = [...products];
+    } else if (activeCategory.includes("-")) {
+      const [mainCat, series] = activeCategory.split("-");
+      result = products.filter((p) => p.category === mainCat && p.name.startsWith(series));
+    } else {
+      result = products.filter((p) => p.category === activeCategory);
+    }
 
     switch (sortBy) {
       case "price-low":
@@ -381,255 +409,382 @@ export default function ProductsPage() {
       {/* Products Section */}
       <section id="products" className="py-16 lg:py-24 bg-[#FAF8F5]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <MotionWrapper className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-            <div>
-              <motion.h2
-                className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-3"
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                Our Products
-              </motion.h2>
-              <motion.p
-                className="text-[#6B6B6B] max-w-xl"
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
-                Each GoldSeason product is crafted with precision engineering and
-                thoughtful design to enhance your mobility and independence.
-              </motion.p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Sort Dropdown */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption["id"])}
-                className="px-4 py-2 rounded-lg border border-[#E8E8E8] bg-white text-sm focus:outline-none focus:border-[#2AAAA0]"
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              {/* Category Filter */}
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat, i) => (
-                  <motion.button
-                    key={cat.id}
-                    onClick={() => setActiveCategory(cat.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      activeCategory === cat.id
-                        ? "bg-[#F5A623] text-[#2D2D2D]"
-                        : "bg-white text-[#6B6B6B] hover:bg-[#F5A623]/10"
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    {cat.label}
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Compare Button */}
-              {compareList.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCompareList([])}
-                  className="text-[#2AAAA0] border-[#2AAAA0]"
-                >
-                  Compare ({compareList.length})
-                </Button>
-              )}
-            </div>
+          {/* Header */}
+          <MotionWrapper className="mb-12">
+            <motion.h2
+              className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-3"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              Our Products
+            </motion.h2>
+            <motion.p
+              className="text-[#6B6B6B] max-w-xl"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              Each GoldSeason product is crafted with precision engineering and
+              thoughtful design to enhance your mobility and independence.
+            </motion.p>
           </MotionWrapper>
 
-          {/* Products Grid */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${activeCategory}-${sortBy}`}
-              className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              {filteredAndSortedProducts.map((product, i) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  onMouseEnter={() => setHoveredProduct(product.id)}
-                  onMouseLeave={() => setHoveredProduct(null)}
-                >
-                  <HoverScale scale={1.02}>
-                    <Card className="overflow-hidden group bg-white hover:shadow-xl transition-all duration-300">
-                      {/* Image Area */}
-                      <div className="relative aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] overflow-hidden">
-                        <motion.div
-                          className="absolute inset-0 flex items-center justify-center"
-                          animate={{ scale: hoveredProduct === product.id ? 1.05 : 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <img
-                            src={product.images[selectedImages[product.id] || 0]}
-                            alt={product.name}
-                            className="w-full h-full object-contain p-4"
-                          />
-                        </motion.div>
+          {/* Two Column Layout: Sidebar + Content */}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Left Sidebar - Category Filter */}
+            <div className="lg:w-64 flex-shrink-0">
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-[#2D2D2D] mb-4">Categories</h3>
+                <div className="flex flex-col gap-2">
+                  {/* All Products - Standalone */}
+                  <motion.button
+                    onClick={() => handleCategoryClick("all")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                      activeCategory === "all"
+                        ? "bg-[#F5A623] text-[#2D2D2D]"
+                        : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    All Products
+                  </motion.button>
 
-                        {/* Badges */}
-                        <AnimatePresence>
-                          {product.badge && (
-                            <motion.div
-                              className="absolute top-3 left-3"
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -20 }}
+                  {/* Electric Scooters - Parent with expand/collapse */}
+                  <div className="flex flex-col gap-1">
+                    <motion.button
+                      onClick={() => handleCategoryClick("scooter")}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all w-full ${
+                        activeCategory === "scooter" || activeCategory.startsWith("scooter-")
+                          ? "bg-[#F5A623] text-[#2D2D2D]"
+                          : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <motion.span
+                        animate={{ rotate: expandedCategory === "scooter" ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        ▶
+                      </motion.span>
+                      Electric Scooters
+                    </motion.button>
+                    {/* Sub-series - Tree children */}
+                    <AnimatePresence>
+                      {expandedCategory === "scooter" && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="flex flex-col gap-1 pl-6"
+                        >
+                          {[
+                            { id: "scooter-Travel Air S", label: "Travel Air S" },
+                            { id: "scooter-Rover Power", label: "Rover Power Series" },
+                          ].map((sub) => (
+                            <motion.button
+                              key={sub.id}
+                              onClick={() => handleCategoryClick(sub.id)}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                                activeCategory === sub.id
+                                  ? "bg-[#F5A623] text-[#2D2D2D]"
+                                  : "bg-[#FAF8F5] text-[#6B6B6B] hover:bg-[#F5A623]/20"
+                              }`}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                             >
-                              <Badge
-                                className={`${
-                                  product.badge === "SALE"
-                                    ? "bg-[#C95959] text-white"
-                                    : product.badge === "NEW"
-                                    ? "bg-[#2AAAA0] text-white"
-                                    : product.badge === "PREMIUM"
-                                    ? "bg-[#8B7355] text-white"
-                                    : "bg-[#F5A623] text-[#2D2D2D]"
+                              {sub.label}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Electric Wheelchairs - Parent with expand/collapse */}
+                  <div className="flex flex-col gap-1">
+                    <motion.button
+                      onClick={() => handleCategoryClick("wheelchair")}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all w-full ${
+                        activeCategory === "wheelchair" || activeCategory.startsWith("wheelchair-")
+                          ? "bg-[#F5A623] text-[#2D2D2D]"
+                          : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <motion.span
+                        animate={{ rotate: expandedCategory === "wheelchair" ? 90 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        ▶
+                      </motion.span>
+                      Electric Wheelchairs
+                    </motion.button>
+                    {/* Sub-series - Tree children */}
+                    <AnimatePresence>
+                      {expandedCategory === "wheelchair" && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="flex flex-col gap-1 pl-6"
+                        >
+                          {[
+                            { id: "wheelchair-Travel Air", label: "Travel Air Series" },
+                            { id: "wheelchair-Power Max", label: "Power Max Series" },
+                            { id: "wheelchair-Spacious Pro", label: "Spacious Pro Series" },
+                            { id: "wheelchair-Basic", label: "Basic Series" },
+                          ].map((sub) => (
+                            <motion.button
+                              key={sub.id}
+                              onClick={() => handleCategoryClick(sub.id)}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                                activeCategory === sub.id
+                                  ? "bg-[#F5A623] text-[#2D2D2D]"
+                                  : "bg-[#FAF8F5] text-[#6B6B6B] hover:bg-[#F5A623]/20"
+                              }`}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              {sub.label}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Accessories - Standalone */}
+                  <motion.button
+                    onClick={() => handleCategoryClick("accessories")}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                      activeCategory === "accessories"
+                        ? "bg-[#F5A623] text-[#2D2D2D]"
+                        : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Accessories
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Content - Sort + Products Grid */}
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                {/* Sort Dropdown */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption["id"])}
+                  className="px-4 py-2 rounded-lg border border-[#E8E8E8] bg-white text-sm focus:outline-none focus:border-[#2AAAA0]"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Compare Button */}
+                {compareList.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCompareList([])}
+                    className="text-[#2AAAA0] border-[#2AAAA0]"
+                  >
+                    Compare ({compareList.length})
+                  </Button>
+                )}
+              </div>
+
+              {/* Products Grid */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${activeCategory}-${sortBy}`}
+                  className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {filteredAndSortedProducts.map((product, i) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      onMouseEnter={() => setHoveredProduct(product.id)}
+                      onMouseLeave={() => setHoveredProduct(null)}
+                    >
+                      <HoverScale scale={1.02}>
+                        <Card className="overflow-hidden group bg-white hover:shadow-xl transition-all duration-300">
+                          {/* Image Area */}
+                          <div className="relative aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] overflow-hidden">
+                            <motion.div
+                              className="absolute inset-0 flex items-center justify-center"
+                              animate={{ scale: hoveredProduct === product.id ? 1.05 : 1 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <img
+                                src={product.images[selectedImages[product.id] || 0]}
+                                alt={product.name}
+                                className="w-full h-full object-contain p-4"
+                              />
+                            </motion.div>
+
+                            {/* Badges */}
+                            <AnimatePresence>
+                              {product.badge && (
+                                <motion.div
+                                  className="absolute top-3 left-3"
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  exit={{ opacity: 0, x: -20 }}
+                                >
+                                  <Badge
+                                    className={`${
+                                      product.badge === "SALE"
+                                        ? "bg-[#C95959] text-white"
+                                        : product.badge === "NEW"
+                                        ? "bg-[#2AAAA0] text-white"
+                                        : product.badge === "PREMIUM"
+                                        ? "bg-[#8B7355] text-white"
+                                        : "bg-[#F5A623] text-[#2D2D2D]"
+                                    }`}
+                                  >
+                                    {product.badge}
+                                  </Badge>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
+                            {/* Wishlist & Compare */}
+                            <div className="absolute top-3 right-3 flex flex-col gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleWishlist(product.id);
+                                }}
+                                className={`w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-all hover:scale-110 ${
+                                  wishlist.includes(product.id) ? "text-[#C95959]" : "text-[#6B6B6B]"
                                 }`}
                               >
-                                {product.badge}
-                              </Badge>
+                                <svg className="w-4 h-4" fill={wishlist.includes(product.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleCompare(product.id);
+                                }}
+                                className={`w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-all hover:scale-110 ${
+                                  compareList.includes(product.id) ? "text-[#2AAAA0]" : "text-[#6B6B6B]"
+                                }`}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            {/* Quick Actions */}
+                            <motion.div
+                              className="absolute bottom-3 left-3 right-3 flex gap-2"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{
+                                opacity: hoveredProduct === product.id ? 1 : 0,
+                                y: hoveredProduct === product.id ? 0 : 20,
+                              }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-white text-[#2D2D2D] hover:bg-[#F5A623]"
+                                onClick={() => handleAddToCart(product)}
+                              >
+                                Add to Cart
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-white/90 border-0"
+                                onClick={() => setQuickViewProduct(product)}
+                              >
+                                View
+                              </Button>
                             </motion.div>
-                          )}
-                        </AnimatePresence>
 
-                        {/* Wishlist & Compare */}
-                        <div className="absolute top-3 right-3 flex flex-col gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleWishlist(product.id);
-                            }}
-                            className={`w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-all hover:scale-110 ${
-                              wishlist.includes(product.id) ? "text-[#C95959]" : "text-[#6B6B6B]"
-                            }`}
-                          >
-                            <svg className="w-4 h-4" fill={wishlist.includes(product.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleCompare(product.id);
-                            }}
-                            className={`w-8 h-8 rounded-full bg-white/90 flex items-center justify-center transition-all hover:scale-110 ${
-                              compareList.includes(product.id) ? "text-[#2AAAA0]" : "text-[#6B6B6B]"
-                            }`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                          </button>
-                        </div>
+                            {/* Image Dots */}
+                            <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {product.images.map((_, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() =>
+                                    setSelectedImages({ ...selectedImages, [product.id]: idx })
+                                  }
+                                  className={`rounded-full transition-all ${
+                                    (selectedImages[product.id] || 0) === idx
+                                      ? "w-3 h-3 bg-[#F5A623]"
+                                      : "w-2 h-2 bg-white/70"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
 
-                        {/* Quick Actions */}
-                        <motion.div
-                          className="absolute bottom-3 left-3 right-3 flex gap-2"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{
-                            opacity: hoveredProduct === product.id ? 1 : 0,
-                            y: hoveredProduct === product.id ? 0 : 20,
-                          }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <Button
-                            size="sm"
-                            className="flex-1 bg-white text-[#2D2D2D] hover:bg-[#F5A623]"
-                            onClick={() => handleAddToCart(product)}
-                          >
-                            Add to Cart
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="bg-white/90 border-0"
-                            onClick={() => setQuickViewProduct(product)}
-                          >
-                            View
-                          </Button>
-                        </motion.div>
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-1 mb-2">
+                              <svg className="w-3 h-3 text-[#F5A623] fill-[#F5A623]" viewBox="0 0 20 20">
+                                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                              </svg>
+                              <span className="text-xs text-[#6B6B6B]">
+                                {product.rating} ({product.reviews})
+                              </span>
+                            </div>
 
-                        {/* Image Dots */}
-                        <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {product.images.map((_, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() =>
-                                setSelectedImages({ ...selectedImages, [product.id]: idx })
-                              }
-                              className={`rounded-full transition-all ${
-                                (selectedImages[product.id] || 0) === idx
-                                  ? "w-3 h-3 bg-[#F5A623]"
-                                  : "w-2 h-2 bg-white/70"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                            <p className="text-xs text-[#2AAAA0] font-medium mb-1">
+                              {product.tagline}
+                            </p>
+                            <h3 className="font-bold text-[#2D2D2D] mb-2 group-hover:text-[#2AAAA0] transition-colors line-clamp-1">
+                              {product.name}
+                            </h3>
 
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-1 mb-2">
-                          <svg className="w-3 h-3 text-[#F5A623] fill-[#F5A623]" viewBox="0 0 20 20">
-                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                          </svg>
-                          <span className="text-xs text-[#6B6B6B]">
-                            {product.rating} ({product.reviews})
-                          </span>
-                        </div>
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {product.features.slice(0, 2).map((feature, idx) => (
+                                <span key={idx} className="text-[10px] bg-[#FAF8F5] text-[#6B6B6B] px-2 py-0.5 rounded">
+                                  {feature}
+                                </span>
+                              ))}
+                            </div>
 
-                        <p className="text-xs text-[#2AAAA0] font-medium mb-1">
-                          {product.tagline}
-                        </p>
-                        <h3 className="font-bold text-[#2D2D2D] mb-2 group-hover:text-[#2AAAA0] transition-colors line-clamp-1">
-                          {product.name}
-                        </h3>
-
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {product.features.slice(0, 2).map((feature, idx) => (
-                            <span key={idx} className="text-[10px] bg-[#FAF8F5] text-[#6B6B6B] px-2 py-0.5 rounded">
-                              {feature}
-                            </span>
-                          ))}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-[#F5A623]">
-                            ${product.price.toLocaleString()}
-                          </span>
-                          {product.originalPrice && (
-                            <span className="text-sm text-[#B0B0B0] line-through">
-                              ${product.originalPrice.toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </HoverScale>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-[#F5A623]">
+                                ${product.price.toLocaleString()}
+                              </span>
+                              {product.originalPrice && (
+                                <span className="text-sm text-[#B0B0B0] line-through">
+                                  ${product.originalPrice.toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </HoverScale>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </section>
 

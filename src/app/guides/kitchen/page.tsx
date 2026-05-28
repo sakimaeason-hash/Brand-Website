@@ -32,18 +32,8 @@ function ImagePlaceholder({
 }) {
   return (
     <figure className="my-8">
-      <div className="relative bg-[#f0fffe] border-2 border-dashed border-[#2AAAA0]/40 rounded-2xl overflow-hidden">
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-64 object-cover opacity-60 blur-sm"
-        />
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="bg-white/90 rounded-2xl px-6 py-4 text-center shadow-sm">
-            <p className="text-[#2AAAA0] font-semibold text-sm">{alt}</p>
-            <p className="text-[#6B6B6B] text-xs mt-1">Image placeholder — please upload photo</p>
-          </div>
-        </div>
+      <div className="relative rounded-2xl overflow-hidden">
+        <img src={src} alt={alt} className="w-full" />
       </div>
       {caption && (
         <figcaption className="text-center text-sm text-[#6B6B6B] mt-3 italic">
@@ -168,7 +158,7 @@ export default function KitchenGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/kitchen/capability-assessment.jpg"
+                src="/Homeguide/Kitchen Accessibility/OT assessing a wheelchair user's upper body strength in a kitchen setting 根据这句话生成配图.png"
                 alt="OT assessing a wheelchair user's upper body strength in a kitchen setting"
                 caption="An occupational therapist assessing a user's capability to determine appropriate kitchen modifications."
               />
@@ -243,7 +233,7 @@ export default function KitchenGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/kitchen/doorway-measurement.jpg"
+                src="/Homeguide/Kitchen Accessibility/Measuring a doorway for wheelchair accessibility.png"
                 alt="Measuring a doorway for wheelchair accessibility"
                 caption="Always measure the narrowest point of the doorway — the frame edge, not the opening width."
               />
@@ -322,12 +312,6 @@ export default function KitchenGuidePage() {
                 Counter height is the most important factor in whether someone can work independently in the kitchen. The goal is to bring work surfaces within comfortable reach from a seated position.
               </p>
 
-              <ImagePlaceholder
-                src="/images/guides/kitchen/counter-height-measurement.jpg"
-                alt="Measuring seated elbow height to determine ideal counter height"
-                caption="To find your ideal counter height: sit upright in your wheelchair, bend your arm at 90°, and measure from the floor to the underside of your forearm."
-              />
-
               <div className="bg-[#2AAAA0]/5 border border-[#2AAAA0]/20 rounded-xl p-5 mb-6">
                 <p className="text-[#2AAAA0] font-semibold text-sm mb-2">💡 The Golden Rule</p>
                 <p className="text-sm text-[#2D2D2D]">
@@ -342,12 +326,6 @@ export default function KitchenGuidePage() {
                 <li>Joystick controller may protrude 4–6 inches in front</li>
                 <li><strong>Knee clearance must be:</strong> at least 30" wide × 27" high × 19" deep (ADA 2010 standard)</li>
               </ul>
-
-              <ImagePlaceholder
-                src="/images/guides/kitchen/knee-clearance-diagram.jpg"
-                alt="Diagram showing required knee clearance dimensions: 30 wide x 27 high x 19 deep"
-                caption="ADA 2010 knee clearance requirements. Note that controller/joystick protrusion may require additional depth."
-              />
 
               <div className="grid md:grid-cols-3 gap-4 mt-6">
                 {[
@@ -384,7 +362,7 @@ export default function KitchenGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/kitchen/accessible-sink.jpg"
+                src="/Homeguide/Kitchen Accessibility/An accessible shallow single-bowl sink with lever faucet at wheelchair.png"
                 alt="An accessible shallow single-bowl sink with lever faucet at wheelchair-accessible height"
                 caption="A shallow single-bowl sink (5–6 inches deep) with a lever faucet at 10–12 inches height is the ideal accessible setup."
               />
@@ -461,7 +439,7 @@ export default function KitchenGuidePage() {
               </div>
 
               <ImagePlaceholder
-                src="/images/guides/kitchen/induction-cooktop.jpg"
+                src="/Homeguide/Kitchen Accessibility/Flat induction cooktop with front-mounted.jpg"
                 alt="Flat induction cooktop with front-mounted controls at counter height — the safest choice for wheelchair users"
                 caption="A flat induction cooktop with front-mounted controls sits flush with the counter, allowing close approach. The surface doesn't get hot, eliminating burn risk."
               />
@@ -511,7 +489,7 @@ export default function KitchenGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/kitchen/drawer-storage.jpg"
+                src="/Homeguide/Kitchen Accessibility/Full-extension drawers at wheelchair-accessible height replacing swing-door base cabinets.png"
                 alt="Full-extension drawers at wheelchair-accessible height replacing swing-door base cabinets"
                 caption="Converting swing-door base cabinets to full-extension drawers is one of the best investments in an accessible kitchen. Everything is visible and within reach."
               />
@@ -568,12 +546,6 @@ export default function KitchenGuidePage() {
                 </tbody>
               </table>
 
-              <ImagePlaceholder
-                src="/images/guides/kitchen/three-tier-plans.jpg"
-                alt="Three kitchen renovation plans — from left: Easy (assistive devices), Medium (counter and sink modifications), Major (full renovation)"
-                caption="Three renovation tiers from a $140 easy plan to a $15,000+ full renovation. All three levels significantly improve kitchen accessibility."
-              />
-
               <div className="grid md:grid-cols-3 gap-4 mt-6">
                 {[
                   {
@@ -626,7 +598,7 @@ export default function KitchenGuidePage() {
                   before: ["Original counter at 36\" — required raising arms constantly", "Wall cabinets completely unreachable", "Sink depth 9\" — water splashed on her lap washing dishes"],
                   after: ["Lowered sink-area counter to 31\"", "Shallow 5.5\" single-bowl sink + lever faucet", "Removed cabinet floor under sink for knee clearance", "Converted base cabinets below cooktop to 3 full-extension drawers"],
                   quote: "I can cook my own meals again without waiting for my daughter to visit on weekends. The sink is the best part — I don't get soaked washing dishes anymore.",
-                  img: "/images/guides/kitchen/sarah-kitchen-after.jpg",
+                  img: "/Homeguide/Kitchen Accessibility/Sarah's Kitchen's accessible kitchen after renovation.jpg",
                 },
               ].map((story) => (
                 <Card key={story.name} className="overflow-hidden mb-6 border-t-4 border-[#2AAAA0]">

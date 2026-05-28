@@ -25,14 +25,8 @@ const tableOfContents = [
 function ImagePlaceholder({ src, alt, caption }: { src: string; alt: string; caption: string }) {
   return (
     <figure className="my-8">
-      <div className="relative bg-[#f0fffe] border-2 border-dashed border-[#2AAAA0]/40 rounded-2xl overflow-hidden">
-        <img src={src} alt={alt} className="w-full h-64 object-cover opacity-60 blur-sm" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="bg-white/90 rounded-2xl px-6 py-4 text-center shadow-sm">
-            <p className="text-[#2AAAA0] font-semibold text-sm">{alt}</p>
-            <p className="text-[#6B6B6B] text-xs mt-1">Image placeholder -- please upload photo</p>
-          </div>
-        </div>
+      <div className="relative rounded-2xl overflow-hidden">
+        <img src={src} alt={alt} className="w-full" />
       </div>
       {caption && <figcaption className="text-center text-sm text-[#6B6B6B] mt-3 italic">{caption}</figcaption>}
     </figure>
@@ -118,7 +112,7 @@ export default function BedroomGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/bedroom/transfer-assessment.jpg"
+                src="/Homeguide/Bedroom Accessibility/Occupational therapist assessing a wheelchair user's bed transfer capability.jpg"
                 alt="Occupational therapist assessing a wheelchair user's bed transfer capability"
                 caption="An OT assessment determines whether a user needs equipment-assisted transfers, caregiver help, or can transfer independently."
               />
@@ -180,12 +174,7 @@ export default function BedroomGuidePage() {
                 Bed height directly determines transfer safety, how much effort is needed to get out of bed, and how easily you can get dressed from a seated position.
               </p>
 
-              <ImagePlaceholder
-                src="/images/guides/bedroom/bed-height-formula.jpg"
-                alt="Bed height should match wheelchair seat height within 1-2 inches for safe transfers"
-                caption="The goal: minimize the height difference between wheelchair seat and bed surface. Target: 17-19 inches from floor to top of mattress for most users."
-              />
-
+              
               <div className="bg-[#2AAAA0]/5 border border-[#2AAAA0]/20 rounded-xl p-5 mb-6">
                 <p className="text-[#2AAAA0] font-semibold text-sm mb-2">[tip] The Golden Rule</p>
                 <p className="text-sm text-[#2D2D2D]">
@@ -245,7 +234,7 @@ export default function BedroomGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/bedroom/bedroom-measurements.jpg"
+                src="/Homeguide/Bedroom Accessibility/Diagram showing minimum bedroom clearance dimensions for wheelchair access.jpg"
                 alt="Diagram showing minimum bedroom clearance dimensions for wheelchair access"
                 caption="Bedroom accessibility requires clear space on at least one side (32-inch minimum), 48-inch at the foot for approach, and 60-inch turning diameter."
               />
@@ -290,12 +279,7 @@ export default function BedroomGuidePage() {
                 A bed rail prevents rolling out of bed at night, provides a handhold to push up from lying, and helps reposition during sleep.
               </p>
 
-              <ImagePlaceholder
-                src="/images/guides/bedroom/bed-rail.jpg"
-                alt="Fold-down bed rail installed on the side of a bed -- provides a stable handhold for wheelchair transfers"
-                caption="A fold-down bed rail provides a stable grip without taking up floor space when not in use. Rail height should be 8-14 inches above the mattress."
-              />
-
+              
               <table className="w-full mb-6 text-sm">
                 <thead>
                   <tr className="bg-[#2AAAA0] text-white">
@@ -341,7 +325,7 @@ export default function BedroomGuidePage() {
               </p>
 
               <ImagePlaceholder
-                src="/images/guides/bedroom/accessible-closet.jpg"
+                src="/Homeguide/Bedroom Accessibility/Closet with lowered hanging rods at 44 and 52 inches, and full-extension drawers at the bottom for wheelchair-accessible storage.jpg"
                 alt="Closet with lowered hanging rods at 44 and 52 inches, and full-extension drawers at the bottom for wheelchair-accessible storage"
                 caption="The primary zone for wheelchair-accessible closets is 38-52 inches from the floor -- where daily-use items should always be stored."
               />
@@ -375,12 +359,7 @@ export default function BedroomGuidePage() {
                 Standard wall switch height (48-52") is above the seated reach range for most wheelchair users. Night lighting is essential for nighttime safety.
               </p>
 
-              <ImagePlaceholder
-                src="/images/guides/bedroom/bedroom-lighting.jpg"
-                alt="Motion-sensor LED night lights along the bedroom floor showing the path to the bathroom"
-                caption="Motion-sensor night lights at floor level illuminate the path to the bathroom without disturbing sleep. Place them at bed level, doorway, and hallway."
-              />
-
+              
               <div className="grid md:grid-cols-3 gap-3 mb-6">
                 {[
                   { label: "Lower the Switch", cost: "$0-50", desc: "An electrician relocates the switch to 36-40 inchesfrom the floor." },
@@ -559,7 +538,7 @@ export default function BedroomGuidePage() {
                   age: "72",
                   condition: "Post-stroke, powered wheelchair user for 18 months",
                   budget: "$130",
-                  img: "/images/guides/bedroom/barbara-bedroom.jpg",
+                  img: "/Homeguide/Bedroom Accessibility/Barbara's Bedroom's accessible bedroom after renovation.jpg",
                   quote: "I used to have to wait for my daughter to come over just to get into bed at night. Now I do it myself, and I don't wake her up anymore. The motion light in the hallway turned out to be the most important thing we did.",
                   changes: [
                     "Added 3 inchesbed risers to raise bed from 22 inchesto 21 inches(matching wheelchair)",
@@ -574,7 +553,7 @@ export default function BedroomGuidePage() {
                   age: "68",
                   condition: "Multiple sclerosis, powered wheelchair user for 4 years",
                   budget: "$720",
-                  img: "/images/guides/bedroom/robert-bedroom.jpg",
+                  img: "/Homeguide/Bedroom Accessibility/Robert's Full Renovation's accessible bedroom after renovation.jpg",
                   quote: "The adjustable bed frame was worth every penny -- the ability to fine-tune the height with a remote means I can always maintain the perfect transfer height.",
                   changes: [
                     "Lucid L300 adjustable bed frame at exactly 18 inches(matching wheelchair)",
