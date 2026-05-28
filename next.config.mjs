@@ -10,10 +10,11 @@ const nextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload'
           },
-          // 防止点击劫持
+          // 防止点击劫持 - 使用 CSP frame-ancestors 替代 X-Frame-Options
+          // 'self' 允许同源iframe，youtube.com 允许YouTube嵌入
           {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' https://www.youtube.com https://www.youtube-nocookie.com"
           },
           // 防止MIME类型嗅探
           {
@@ -29,16 +30,6 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
-          },
-          // CSP策略（基础，生产环境需根据需求调整）
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self';"
-          },
-          // 权限策略
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
           },
         ],
       },
