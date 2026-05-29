@@ -257,7 +257,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Timeline Section */}
+      {/* Timeline Section - Hidden */}
+      {false && (
       <section className="py-20 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -312,6 +313,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Team Section */}
       <section className="py-20 lg:py-28 bg-[#FAF8F5]">

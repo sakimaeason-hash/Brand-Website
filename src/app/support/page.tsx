@@ -159,29 +159,29 @@ const serviceCenters = [
 
 const faqs = [
   {
-    question: "How do I fold and unfold my GoldSeason wheelchair?",
+    question: "Can I bring my wheelchair on an airplane?",
     answer:
-      "All GoldSeason wheelchairs feature our patented 3-second fold mechanism. Simply pull the release lever located at the back of the seat, and the chair will fold inward. To unfold, pull the handles apart until you hear a click indicating the locking mechanism has engaged.",
+      "You need to check the series you purchased. The Travel Air series wheelchairs and mobility scooters can be carried onto airplanes. Of course, you should also consult with your airline about their specific policies.",
   },
   {
-    question: "Is my wheelchair covered for airline travel?",
+    question: "I'm worried about not knowing how to use it for the first time. What should I do?",
     answer:
-      "Yes! All GoldSeason wheelchairs are FAA compliant and can be checked as medical equipment at no additional charge. We recommend removing the joystick controller and carrying it in your hand luggage for protection.",
+      "You can practice using the low-speed mode in an open, flat area accompanied by a caregiver. We also provide video tutorial resources for your learning. It is normal to feel uncomfortable during first use, but with regular practice, our product will become your most trusted companion.",
   },
   {
-    question: "How long does the battery last?",
+    question: "How long does the battery last on a single charge?",
     answer:
-      "Battery life depends on the model and usage conditions. The Lite offers up to 10 miles per charge, the Pro up to 15 miles, and the Elite up to 20 miles. All batteries use lithium-ion technology and take 6-8 hours for a full charge.",
+      "Battery range depends on your usage habits, environment, temperature, and other factors, but generally refers to the range we specify. Always fully charge the battery before each use. If you need to purchase a spare battery, please contact us.",
   },
   {
     question: "What should I do if my wheelchair needs repair?",
     answer:
-      "Contact our support team via phone, chat, or email. We&apos;ll troubleshoot with you and determine if a repair is needed. For in-warranty repairs, we'll send you a prepaid shipping label. For on-site service, we'll schedule a technician visit.",
+      "If your wheelchair is damaged, malfunctioning, or has any issues, stop using it immediately and contact us right away. We'll help you troubleshoot the problem and determine if any parts need to be replaced. For repairs within the warranty period, we'll ship the necessary replacement parts to you at no cost.",
   },
   {
-    question: "Can I upgrade my wheelchair after purchase?",
+    question: "How do I choose the right product for me? And can I return it if it's not suitable?",
     answer:
-      "Yes! We offer various upgrade options including extended batteries, upgraded cushions, and accessory packages. Contact our sales team to discuss upgrade options for your specific model.",
+      "Please visit the Support page on our website and browse the section on how to choose the right electric wheelchair for you. If the product you choose is not suitable, we will provide you with a free exchange service.",
   },
 ];
 

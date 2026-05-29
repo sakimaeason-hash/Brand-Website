@@ -39,6 +39,7 @@ interface Product {
   reviews: number;
   images: string[];
   colors: string[];
+  colorNames: string[];
   features: string[];
   weight?: string;
   maxSpeed?: string;
@@ -47,6 +48,95 @@ interface Product {
 }
 
 const products: Product[] = [
+  // Electric Scooters - Travel Air S Series
+  {
+    id: "s1",
+    name: "Travel Air S 24",
+    tagline: "Travel Ready • Ultra Portable",
+    price: 499.99,
+    category: "scooter",
+    badge: "BESTSELLER",
+    rating: 4.8,
+    reviews: 72,
+    images: ["/products/Scooters/Travel Air S 24A.jpg", "/products/Scooters/Travel Air S 24B.jpg", "/products/Scooters/Travel Air S 24F.jpg"],
+    colors: ["#DC2626", "#EA580C", "#2563EB"],
+    colorNames: ["Red", "Orange", "Blue"],
+    features: ["Airline Approved", "Ultra Light 28lbs", "15 Mile Range"],
+    weight: "28 lbs",
+    maxSpeed: "4 mph",
+    warranty: "2 Years",
+    amazonLink: "https://www.amazon.com/dp/B0GYNVF8QP?th=1",
+  },
+  {
+    id: "s2",
+    name: "Travel Air S 14",
+    tagline: "Compact • Easy to Store",
+    price: 999.99,
+    category: "scooter",
+    rating: 4.6,
+    reviews: 45,
+    images: ["/products/Scooters/Travel Air S 14F.jpg", "/products/Scooters/Travel Air S 14H.jpg", "/products/Scooters/Travel Air S 14J.jpg"],
+    colors: ["#2563EB", "#171717", "#D4AF37"],
+    colorNames: ["Blue", "Black", "Gold"],
+    features: ["Airline Approved", "Lightweight", "12 Mile Range"],
+    weight: "24 lbs",
+    maxSpeed: "4 mph",
+    warranty: "2 Years",
+    amazonLink: "https://www.amazon.com/dp/B0GHYLR1BK?th=1",
+  },
+  // Electric Scooters - Rover Power Series
+  {
+    id: "s3",
+    name: "Rover Power 23",
+    tagline: "All-Terrain • Powerful Motor",
+    price: 699.99,
+    category: "scooter",
+    badge: "NEW",
+    rating: 4.9,
+    reviews: 38,
+    images: ["/products/Scooters/Rover Power 23A.jpg", "/products/Scooters/Rover Power 23F.jpg", "/products/Scooters/Rover Power 23M.jpg"],
+    colors: ["#DC2626", "#2563EB", "#EC4899"],
+    colorNames: ["Red", "Blue", "Pink"],
+    features: ["25 Mile Range", "Dual Motors", "All-Terrain"],
+    weight: "35 lbs",
+    maxSpeed: "5 mph",
+    warranty: "3 Years",
+    amazonLink: "https://www.amazon.com/dp/B0GZ43N9ZQ?th=1",
+  },
+  {
+    id: "s4",
+    name: "Rover Power 20",
+    tagline: "Extended Range • Comfort",
+    price: 499.99,
+    category: "scooter",
+    rating: 4.7,
+    reviews: 52,
+    images: ["/products/Scooters/Rover Power 20A.jpg", "/products/Scooters/Rover Power 20I.jpg", "/products/Scooters/Rover Power 20J.jpg"],
+    colors: ["#DC2626", "#F5F5F5", "#D4AF37"],
+    colorNames: ["Red", "White", "Gold"],
+    features: ["20 Mile Range", "Comfort Seat", "All-Terrain"],
+    weight: "32 lbs",
+    maxSpeed: "4.5 mph",
+    warranty: "3 Years",
+    amazonLink: "https://www.amazon.com/dp/B0FWKC6H49",
+  },
+  {
+    id: "s5",
+    name: "Rover Power 19",
+    tagline: "All-Terrain • Durable Build",
+    price: 599.99,
+    category: "scooter",
+    rating: 4.8,
+    reviews: 29,
+    images: ["/products/Scooters/Rover Power 19A.png", "/products/Scooters/Rover Power 19D.png"],
+    colors: ["#DC2626", "#9D9D6B"],
+    colorNames: ["Red", "Pearl Green"],
+    features: ["18 Mile Range", "All-Terrain", " Durable Frame"],
+    weight: "30 lbs",
+    maxSpeed: "4 mph",
+    warranty: "3 Years",
+  },
+  // Electric Wheelchairs
   {
     id: "1",
     name: "Travel Air W 03",
@@ -59,6 +149,7 @@ const products: Product[] = [
     reviews: 89,
     images: ["/products/Travel Air W 03C.png", "/products/Travel Air W 03E.png"],
     colors: ["#2D2D2D", "#C9A961"],
+    colorNames: ["Standard", "Standard"],
     features: ["Airline Approved", "Ultra Light 19lbs", "15 Mile Range"],
     weight: "19 lbs",
     maxSpeed: "4 mph",
@@ -74,7 +165,8 @@ const products: Product[] = [
     rating: 4.7,
     reviews: 64,
     images: ["/products/Travel Air W 21A.png", "/products/Travel Air W 21H.png"],
-    colors: ["#2D2D2D", "#2AAAA0"],
+    colors: ["#DC2626", "#1A1A1A"],
+    colorNames: ["Red", "Carbon Black"],
     features: ["Airline Approved", "Lightweight", "18 Mile Range"],
     weight: "22 lbs",
     maxSpeed: "4 mph",
@@ -91,7 +183,8 @@ const products: Product[] = [
     rating: 4.9,
     reviews: 112,
     images: ["/products/Travel Air W 26A.png", "/products/Travel Air W 26B.png"],
-    colors: ["#C9A961", "#2D2D2D"],
+    colors: ["#DC2626", "#EA580C"],
+    colorNames: ["Red", "Orange"],
     features: ["Airline Approved", "Compact Fold", "20 Mile Range"],
     weight: "21 lbs",
     maxSpeed: "4 mph",
@@ -110,6 +203,7 @@ const products: Product[] = [
     reviews: 128,
     images: ["/products/Power Max 01A.png", "/products/Power Max 01B.png"],
     colors: ["#2D2D2D", "#4A5568"],
+    colorNames: ["Standard", "Standard"],
     features: ["25 Mile Range", "All-Terrain", "Folds in 3s"],
     weight: "33 lbs",
     maxSpeed: "4 mph",
@@ -126,7 +220,8 @@ const products: Product[] = [
     rating: 4.8,
     reviews: 76,
     images: ["/products/Power Max 16H.png", "/products/Power Max 16K.png", "/products/Power Max 16L.png"],
-    colors: ["#2D2D2D", "#C9A961", "#4A5568"],
+    colors: ["#171717", "#6B7280", "#9CA3AF"],
+    colorNames: ["Black", "Leather Gray", "Gray"],
     features: ["28 Mile Range", "Dual Motors", "All-Terrain"],
     weight: "35 lbs",
     maxSpeed: "5 mph",
@@ -143,7 +238,8 @@ const products: Product[] = [
     rating: 5.0,
     reviews: 42,
     images: ["/products/Spacious Pro 15B.png", "/products/Spacious Pro 15F.png"],
-    colors: ["#2D2D2D", "#8B7355"],
+    colors: ["#EA580C", "#2563EB"],
+    colorNames: ["Orange", "Blue"],
     features: ["30 Mile Range", "Luxury Seat", "Dual Motors"],
     weight: "38 lbs",
     maxSpeed: "5 mph",
@@ -159,7 +255,8 @@ const products: Product[] = [
     rating: 4.6,
     reviews: 215,
     images: ["/products/Basic 13A.png", "/products/Basic 13L.png", "/products/Basic 13N.png"],
-    colors: ["#2D2D2D"],
+    colors: ["#DC2626", "#9CA3AF", "#FF6B35"],
+    colorNames: ["Red", "Gray", "Bright Orange"],
     features: ["15 Mile Range", "Lightweight", "Easy to Use"],
     weight: "28 lbs",
     maxSpeed: "4 mph",
@@ -192,6 +289,7 @@ export default function ProductsPage() {
   const [compareList, setCompareList] = useState<string[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [quickViewSelectedImage, setQuickViewSelectedImage] = useState<number>(0);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const { addItem } = useCart();
 
@@ -337,7 +435,7 @@ export default function ProductsPage() {
               >
                 🔥 Summer Sale Ends In:
               </motion.p>
-              <CountdownTimer targetDate="2026-08-31T23:59:59" />
+              <CountdownTimer targetDate="2026-09-10T00:00:00" />
             </motion.div>
 
             <motion.div
@@ -717,7 +815,7 @@ export default function ProductsPage() {
                                 size="sm"
                                 variant="outline"
                                 className="bg-white/90 border-0"
-                                onClick={() => setQuickViewProduct(product)}
+                                onClick={() => { setQuickViewProduct(product); setQuickViewSelectedImage(0); }}
                               >
                                 View
                               </Button>
@@ -768,7 +866,9 @@ export default function ProductsPage() {
 
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-bold text-[#F5A623]">
-                                ${product.price.toLocaleString()}
+                                ${product.id === "s1"
+                                  ? ((selectedImages[product.id] ?? 0) === 1 ? 1139.99 : 949.99).toLocaleString()
+                                  : product.price.toLocaleString()}
                               </span>
                               {product.originalPrice && (
                                 <span className="text-sm text-[#B0B0B0] line-through">
@@ -810,7 +910,7 @@ export default function ProductsPage() {
                 <div className="relative">
                   <div className="aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] rounded-xl flex items-center justify-center overflow-hidden">
                     <img
-                      src={quickViewProduct.images[0]}
+                      src={quickViewProduct.images[quickViewSelectedImage]}
                       alt={quickViewProduct.name}
                       className="w-full h-full object-contain p-4"
                     />
@@ -858,9 +958,11 @@ export default function ProductsPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-baseline gap-3 mb-6">
+                  <div className="flex items-baseline gap-3 mb-6" suppressHydrationWarning>
                     <span className="text-4xl font-bold text-[#F5A623]">
-                      ${quickViewProduct.price.toLocaleString()}
+                      ${quickViewProduct.id === "s1"
+                        ? (quickViewSelectedImage === 1 ? 1139.99 : 949.99).toLocaleString()
+                        : quickViewProduct.price.toLocaleString()}
                     </span>
                     {quickViewProduct.originalPrice && (
                       <span className="text-xl text-[#B0B0B0] line-through">
@@ -869,8 +971,10 @@ export default function ProductsPage() {
                     )}
                   </div>
 
-                  <p className="text-[#6B6B6B] mb-6">
-                    {quickViewProduct.features.join(" • ")}
+                  <p className="text-[#6B6B6B] mb-6" suppressHydrationWarning>
+                    {quickViewProduct.id === "s1" && quickViewSelectedImage === 1
+                      ? quickViewProduct.features.map((f, i) => i === 2 ? "Dual Battery" : f).join(" • ")
+                      : quickViewProduct.features.join(" • ")}
                   </p>
 
                   {/* Specs */}
@@ -900,10 +1004,14 @@ export default function ProductsPage() {
                     <p className="text-sm text-[#6B6B6B] mb-2">Colors:</p>
                     <div className="flex gap-2">
                       {quickViewProduct.colors.map((color, idx) => (
-                        <div
+                        <button
                           key={idx}
-                          className="w-8 h-8 rounded-full border-2 border-[#E8E8E8]"
+                          onClick={() => setQuickViewSelectedImage(idx)}
+                          className={`w-8 h-8 rounded-full border-2 ${
+                            quickViewSelectedImage === idx ? "border-[#2AAAA0] scale-110" : "border-[#E8E8E8]"
+                          } transition-all`}
                           style={{ backgroundColor: color }}
+                          title={quickViewProduct.colorNames?.[idx] || color}
                         />
                       ))}
                     </div>
