@@ -15,7 +15,7 @@ const featuredProducts = [
     price: 599.99,
     badge: "BESTSELLER",
     image: "/products/Travel Air W 03C.png",
-    color: "#2AAAA0",
+    color: "#C8956C",
   },
   {
     id: "2",
@@ -24,7 +24,7 @@ const featuredProducts = [
     price: 1099.99,
     badge: "BESTSELLER",
     image: "/products/Power Max 01A.png",
-    color: "#2D2D2D",
+    color: "#3D3330",
   },
   {
     id: "3",
@@ -33,7 +33,7 @@ const featuredProducts = [
     price: 649.99,
     badge: "NEW",
     image: "/products/Travel Air W 26A.png",
-    color: "#C9A961",
+    color: "#C8956C",
   },
   {
     id: "4",
@@ -144,7 +144,7 @@ export default function HomePage() {
             style={{ objectPosition: 'center' }}
           />
           {/* Left side blur overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/70 to-transparent lg:w-3/5" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FAF7F4]/95 via-[#FAF7F4]/70 to-transparent lg:w-3/5" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative">
@@ -155,7 +155,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <Badge className="bg-[#F5A623]/10 text-[#2D2D2D] border-[#F5A623]/30 mb-6">
+                <Badge className="bg-[#C8956C]/10 text-[#3D3330] border-[#C8956C]/30 mb-6">
                   <motion.span
                     animate={{ rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
@@ -168,14 +168,14 @@ export default function HomePage() {
               </motion.div>
 
               <motion.h1
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#2D2D2D] mb-6 leading-tight"
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#3D3330] mb-6 leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
               >
                 Your Golden Years,
                 <motion.span
-                  className="block text-[#2AAAA0]"
+                  className="block text-[#C8956C]"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
@@ -185,7 +185,7 @@ export default function HomePage() {
               </motion.h1>
 
               <motion.p
-                className="text-lg lg:text-xl text-[#6B6B6B] mb-8 max-w-lg mx-auto lg:mx-0"
+                className="text-lg lg:text-xl text-[#5C534E] mb-8 max-w-lg mx-auto lg:mx-0"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
@@ -203,7 +203,7 @@ export default function HomePage() {
                 <Magnetic>
                   <Button
                     size="lg"
-                    className="bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520] text-lg px-8"
+                    className="bg-[#C8956C] text-white hover:brightness-110 text-lg px-8 shadow-warm"
                     asChild
                   >
                     <a
@@ -220,7 +220,7 @@ export default function HomePage() {
                     variant="outline"
                     size="lg"
                     asChild
-                    className="text-lg px-8 border-[#2D2D2D] text-[#2D2D2D] hover:bg-[#2D2D2D] hover:text-white"
+                    className="text-lg px-8 border-[#8B7355] text-[#8B7355] hover:bg-[#8B7355] hover:text-white"
                   >
                     <Link href="/products">Explore Products</Link>
                   </Button>
@@ -241,10 +241,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#3D3330] mb-4">
               Find Your Perfect Match
             </h2>
-            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
+            <p className="text-[#5C534E] max-w-2xl mx-auto">
               Whether you&apos;re exploring the world, enjoying daily routines, or venturing outdoors —
               there&apos;s a GoldSeason designed for your lifestyle.
             </p>
@@ -258,24 +258,24 @@ export default function HomePage() {
                     whileHover={{ y: -10 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="bg-white overflow-hidden group cursor-pointer h-full">
-                      <div className="aspect-[4/3] bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] flex items-center justify-center relative overflow-hidden">
+                    <Card className="bg-white overflow-hidden group cursor-pointer h-full border-[#D4CCC5]">
+                      <div className="aspect-[4/3] bg-gradient-to-br from-[#E8D5C4] to-[#D4CCC5] flex items-center justify-center relative overflow-hidden">
                         <span className="text-7xl">{category.icon}</span>
                         <motion.div
-                          className="absolute inset-0 bg-[#2AAAA0]/5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute inset-0 bg-[#C8956C]/5 opacity-0 group-hover:opacity-100 transition-opacity"
                         />
                       </div>
                       <CardContent className="p-6">
-                        <h3 className="text-xl font-bold text-[#2D2D2D] mb-2">
+                        <h3 className="text-xl font-bold text-[#3D3330] mb-2">
                           {category.title}
                         </h3>
-                        <p className="text-[#6B6B6B] text-sm mb-4">
+                        <p className="text-[#5C534E] text-sm mb-4">
                           {category.desc}
                         </p>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full border-[#2AAAA0] text-[#2AAAA0] hover:bg-[#2AAAA0] hover:text-white"
+                          className="w-full border-[#C8956C] text-[#C8956C] hover:bg-[#C8956C] hover:text-white"
                           asChild
                         >
                           <Link href="/products">{category.cta}</Link>
@@ -291,7 +291,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 lg:py-28 bg-[#FAF8F5]">
+      <section className="py-20 lg:py-28 bg-[#FAF7F4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="text-center mb-16"
@@ -300,10 +300,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#3D3330] mb-4">
               Simple in 3 Steps
             </h2>
-            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
+            <p className="text-[#5C534E] max-w-2xl mx-auto">
               GoldSeason is designed for real life — easy to fold, easy to control,
               easy to live with.
             </p>
@@ -321,21 +321,21 @@ export default function HomePage() {
               >
                 <div className="relative mb-6">
                   {i < 2 && (
-                    <div className="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-[#E8E8E8] -translate-y-1/2" />
+                    <div className="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-[#D4CCC5] -translate-y-1/2" />
                   )}
                   <motion.div
-                    className="w-24 h-24 mx-auto bg-white rounded-full shadow-lg flex items-center justify-center"
+                    className="w-24 h-24 mx-auto bg-white rounded-full shadow-warm flex items-center justify-center"
                     whileHover={{ scale: 1.1 }}
                     transition={{ type: "spring", stiffness: 400 }}
                   >
                     <span className="text-4xl">{item.icon}</span>
                   </motion.div>
                 </div>
-                <h3 className="text-xl font-bold text-[#2D2D2D] mb-2">
-                  <span className="text-[#F5A623]">{item.step}</span>
+                <h3 className="text-xl font-bold text-[#3D3330] mb-2">
+                  <span className="text-[#C8956C]">{item.step}</span>
                   {item.title}
                 </h3>
-                <p className="text-[#6B6B6B] text-sm">{item.desc}</p>
+                <p className="text-[#5C534E] text-sm">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -352,10 +352,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#3D3330] mb-4">
               Our Bestsellers
             </h2>
-            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
+            <p className="text-[#5C534E] max-w-2xl mx-auto">
               Discover our most loved mobility solutions, crafted with precision engineering
               and thoughtful design for ultimate comfort and independence.
             </p>
@@ -369,8 +369,8 @@ export default function HomePage() {
                     whileHover={{ y: -10 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="bg-white overflow-hidden group cursor-pointer">
-                      <div className="relative aspect-[4/3] bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] flex items-center justify-center">
+                    <Card className="bg-white overflow-hidden group cursor-pointer border-[#D4CCC5]">
+                      <div className="relative aspect-[4/3] bg-gradient-to-br from-[#E8D5C4] to-[#D4CCC5] flex items-center justify-center">
                         <img
                           src={product.image}
                           alt={product.name}
@@ -381,12 +381,12 @@ export default function HomePage() {
                             <Badge
                               className={
                                 product.badge === "BESTSELLER"
-                                  ? "bg-[#F5A623] text-[#2D2D2D]"
+                                  ? "bg-[#C8956C] text-white"
                                   : product.badge === "NEW"
-                                  ? "bg-[#2AAAA0] text-white"
+                                  ? "bg-[#9CAF88] text-white"
                                   : product.badge === "PREMIUM"
                                   ? "bg-[#8B7355] text-white"
-                                  : "bg-[#6B6B6B] text-white"
+                                  : "bg-[#5C534E] text-white"
                               }
                             >
                               {product.badge}
@@ -394,23 +394,23 @@ export default function HomePage() {
                           </div>
                         )}
                         <motion.div
-                          className="absolute inset-0 bg-[#2D2D2D]/5 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute inset-0 bg-[#3D3330]/5 opacity-0 group-hover:opacity-100 transition-opacity"
                         />
                       </div>
                       <CardContent className="p-6">
-                        <p className="text-sm text-[#2AAAA0] font-medium mb-1">
+                        <p className="text-sm text-[#9CAF88] font-medium mb-1">
                           {product.tagline}
                         </p>
-                        <h3 className="text-xl font-bold text-[#2D2D2D] mb-3">
+                        <h3 className="text-xl font-bold text-[#3D3330] mb-3">
                           {product.name}
                         </h3>
                         <div className="flex items-center justify-between">
-                          <span className="text-xl font-bold text-[#F5A623]">
+                          <span className="text-xl font-bold text-[#C8956C]">
                             ${product.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                           <Button
                             size="sm"
-                            className="bg-[#2D2D2D] text-white hover:bg-[#2AAAA0]"
+                            className="bg-[#3D3330] text-white hover:bg-[#C8956C]"
                             asChild
                           >
                             <Link href="/products">View Details</Link>
@@ -431,15 +431,15 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             viewport={{ once: true }}
           >
-            <Button variant="outline" size="lg" asChild className="text-lg px-8">
+            <Button variant="outline" size="lg" asChild className="text-lg px-8 border-[#8B7355] text-[#8B7355] hover:bg-[#8B7355] hover:text-white">
               <Link href="/products">View All Products</Link>
             </Button>
           </motion.div>
         </div>
       </section>
 
-      {/* Easy to Learn */}
-      <section className="py-20 lg:py-28 bg-gradient-to-br from-[#2AAAA0] to-[#259990] text-white">
+      {/* Easy to Learn - Premium Warm Section */}
+      <section className="py-20 lg:py-28 bg-gradient-to-br from-[#8B7355] to-[#5C534E] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -488,7 +488,7 @@ export default function HomePage() {
               >
                 <Button
                   size="lg"
-                  className="bg-white text-[#2AAAA0] hover:bg-white/90 text-lg px-8"
+                  className="bg-[#C8956C] text-white hover:brightness-110 text-lg px-8"
                   asChild
                 >
                   <a
@@ -551,22 +551,22 @@ export default function HomePage() {
               viewport={{ once: true }}
             >
               <div className="relative">
-                <div className="aspect-[4/3] bg-gradient-to-br from-[#F5A623]/10 to-[#2AAAA0]/10 rounded-3xl flex items-center justify-center">
+                <div className="aspect-[4/3] bg-gradient-to-br from-[#C8956C]/10 to-[#9CAF88]/10 rounded-3xl flex items-center justify-center">
                   <div className="text-center">
                     <span className="text-8xl">✈️</span>
-                    <p className="text-[#2D2D2D] font-semibold mt-4">FAA Compliant</p>
-                    <p className="text-[#6B6B6B] text-sm">Safe for all airlines</p>
+                    <p className="text-[#3D3330] font-semibold mt-4">FAA Compliant</p>
+                    <p className="text-[#5C534E] text-sm">Safe for all airlines</p>
                   </div>
                 </div>
                 <motion.div
-                  className="absolute -bottom-4 -right-4 bg-white rounded-xl px-4 py-3 shadow-lg"
+                  className="absolute -bottom-4 -right-4 bg-white rounded-xl px-4 py-3 shadow-warm border border-[#D4CCC5]"
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: 0.3 }}
                   viewport={{ once: true }}
                 >
-                  <p className="text-2xl font-bold text-[#F5A623]">3 Sec</p>
-                  <p className="text-xs text-[#6B6B6B]">Fold Time</p>
+                  <p className="text-2xl font-bold text-[#C8956C]">3 Sec</p>
+                  <p className="text-xs text-[#5C534E]">Fold Time</p>
                 </motion.div>
               </div>
             </motion.div>
@@ -578,13 +578,13 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <Badge className="bg-[#F5A623]/10 text-[#F5A623] border-[#F5A623]/30 mb-4">
+              <Badge className="bg-[#C8956C]/10 text-[#C8956C] border-[#C8956C]/30 mb-4">
                 ✈️ Travel Ready
               </Badge>
-              <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-6">
+              <h2 className="text-3xl lg:text-4xl font-bold text-[#3D3330] mb-6">
                 Go Anywhere You Want to Go
               </h2>
-              <p className="text-[#6B6B6B] text-lg mb-6">
+              <p className="text-[#5C534E] text-lg mb-6">
                 GoldSeason wheelchairs are FAA compliant and can be checked as baggage
                 at no extra charge. Your independence shouldn&apos;t stop at the airport.
               </p>
@@ -597,17 +597,17 @@ export default function HomePage() {
                   "Joystick controller carries on separately",
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[#2AAAA0] flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-[#9CAF88] flex items-center justify-center">
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <span className="text-[#2D2D2D]">{item}</span>
+                    <span className="text-[#3D3330]">{item}</span>
                   </div>
                 ))}
               </div>
 
-              <Button className="bg-[#2AAAA0] hover:bg-[#259990]" asChild>
+              <Button className="bg-[#8B7355] hover:bg-[#5C534E]" asChild>
                 <Link href="/products">Explore Travel Series</Link>
               </Button>
             </motion.div>
@@ -616,7 +616,7 @@ export default function HomePage() {
       </section>
 
       {/* Why GoldSeason */}
-      <section className="py-20 lg:py-28 bg-white">
+      <section className="py-20 lg:py-28 bg-[#FAF7F4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -625,10 +625,10 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-6">
+              <h2 className="text-3xl lg:text-4xl font-bold text-[#3D3330] mb-6">
                 Why Choose GoldSeason?
               </h2>
-              <p className="text-[#6B6B6B] text-lg mb-8">
+              <p className="text-[#5C534E] text-lg mb-8">
                 We believe mobility should never limit your life. Every GoldSeason product
                 is crafted with one mission: giving you the freedom to live life on your terms.
               </p>
@@ -647,12 +647,12 @@ export default function HomePage() {
                     transition={{ duration: 0.5, delay: i * 0.1 }}
                     viewport={{ once: true }}
                   >
-                    <div className="w-10 h-10 rounded-full bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[#F5A623] font-bold">{i + 1}</span>
+                    <div className="w-10 h-10 rounded-full bg-[#C8956C]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[#C8956C] font-bold">{i + 1}</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-[#2D2D2D] mb-1">{item.title}</h4>
-                      <p className="text-[#6B6B6B] text-sm">{item.desc}</p>
+                      <h4 className="font-semibold text-[#3D3330] mb-1">{item.title}</h4>
+                      <p className="text-[#5C534E] text-sm">{item.desc}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -666,7 +666,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <div className="bg-gradient-to-br from-[#F5A623]/10 to-[#2AAAA0]/10 rounded-3xl p-8 lg:p-12">
+              <div className="bg-gradient-to-br from-[#C8956C]/10 to-[#9CAF88]/10 rounded-3xl p-8 lg:p-12">
                 <div className="grid grid-cols-2 gap-6">
                   {[
                     { value: "50,000+", label: "Happy Customers" },
@@ -676,12 +676,12 @@ export default function HomePage() {
                   ].map((stat, i) => (
                     <motion.div
                       key={i}
-                      className="text-center p-4 bg-white rounded-2xl shadow-sm"
+                      className="text-center p-4 bg-white rounded-2xl shadow-warm border border-[#D4CCC5]"
                       whileHover={{ scale: 1.05 }}
                       transition={{ type: "spring", stiffness: 400 }}
                     >
-                      <p className="text-3xl font-bold text-[#F5A623]">{stat.value}</p>
-                      <p className="text-sm text-[#6B6B6B]">{stat.label}</p>
+                      <p className="text-3xl font-bold text-[#C8956C]">{stat.value}</p>
+                      <p className="text-sm text-[#5C534E]">{stat.label}</p>
                     </motion.div>
                   ))}
                 </div>
@@ -692,7 +692,7 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 lg:py-28 bg-[#FAF8F5]">
+      <section className="py-20 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="text-center mb-16"
@@ -701,10 +701,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-[#3D3330] mb-4">
               What Our Customers Say
             </h2>
-            <p className="text-[#6B6B6B] max-w-2xl mx-auto">
+            <p className="text-[#5C534E] max-w-2xl mx-auto">
               Real stories from real people who have rediscovered their freedom with GoldSeason.
             </p>
           </motion.div>
@@ -716,7 +716,7 @@ export default function HomePage() {
                   whileHover={{ y: -5 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Card className="bg-white border-0 h-full">
+                  <Card className="bg-[#FAF7F4] border-[#D4CCC5] h-full">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-3 mb-4">
                         {testimonial.image ? (
@@ -726,28 +726,28 @@ export default function HomePage() {
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F5A623] to-[#2AAAA0] flex items-center justify-center text-white font-bold">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#C8956C] to-[#8B7355] flex items-center justify-center text-white font-bold">
                             {testimonial.name.charAt(0)}
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold text-[#2D2D2D]">{testimonial.name}</p>
-                          <p className="text-sm text-[#6B6B6B]">Age {testimonial.age}</p>
+                          <p className="font-semibold text-[#3D3330]">{testimonial.name}</p>
+                          <p className="text-sm text-[#5C534E]">Age {testimonial.age}</p>
                         </div>
                       </div>
                       <div className="flex gap-1 mb-4">
                         {[...Array(5)].map((_, idx) => (
                           <svg
                             key={idx}
-                            className="w-4 h-4 text-[#F5A623] fill-[#F5A623]"
+                            className="w-4 h-4 text-[#C8956C] fill-[#C8956C]"
                             viewBox="0 0 20 20"
                           >
                             <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                           </svg>
                         ))}
                       </div>
-                      <p className="text-[#6B6B6B] mb-4">&ldquo;{testimonial.quote}&rdquo;</p>
-                      <p className="text-sm text-[#2AAAA0] font-medium">
+                      <p className="text-[#5C534E] mb-4">&ldquo;{testimonial.quote}&rdquo;</p>
+                      <p className="text-sm text-[#8B7355] font-medium">
                         Using: {testimonial.product}
                       </p>
                     </CardContent>
@@ -759,8 +759,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 lg:py-28 bg-gradient-to-r from-[#2D2D2D] to-[#1a1a1a]">
+      {/* CTA Section - Premium Dark */}
+      <section className="py-20 lg:py-28 bg-gradient-to-r from-[#3D3330] to-[#2A2523]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -779,7 +779,7 @@ export default function HomePage() {
               <Magnetic>
                 <Button
                   size="lg"
-                  className="bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520] text-lg px-8"
+                  className="bg-[#C8956C] text-white hover:brightness-110 text-lg px-8"
                   asChild
                 >
                   <a

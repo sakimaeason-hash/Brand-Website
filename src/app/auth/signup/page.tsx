@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,11 @@ type SignUpForm = z.infer<typeof signUpSchema>;
 
 function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedCallback = searchParams.get("callbackUrl");
+  const callbackUrl = requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
+    ? requestedCallback
+    : "/account";
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -73,7 +78,7 @@ function SignUpForm() {
       if (signInResult?.ok) {
         setSuccess(true);
         setTimeout(() => {
-          router.push("/");
+          router.push(callbackUrl);
           router.refresh();
         }, 2000);
       }
@@ -199,16 +204,7 @@ function SignUpForm() {
           <div className="text-sm text-[#6B6B6B]">
             <label className="flex items-start gap-2 cursor-pointer">
               <input type="checkbox" className="mt-1 rounded border-[#E8E8E8]" required />
-              <span>
-                I agree to the{" "}
-                <Link href="/terms" className="text-[#2AAAA0] hover:underline">
-                  Terms of Service
-                </Link>{" "}
-                and{" "}
-                <Link href="/privacy" className="text-[#2AAAA0] hover:underline">
-                  Privacy Policy
-                </Link>
-              </span>
+              <span>I agree that GoldSeason may use these details to create and manage my account.</span>
             </label>
           </div>
 
@@ -223,7 +219,7 @@ function SignUpForm() {
 
         <div className="mt-6 text-center text-sm text-[#6B6B6B]">
           Already have an account?{" "}
-          <Link href="/auth/signin" className="text-[#2AAAA0] hover:underline">
+          <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="text-[#2AAAA0] hover:underline">
             Sign in
           </Link>
         </div>

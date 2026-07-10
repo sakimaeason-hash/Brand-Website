@@ -14,7 +14,7 @@ import { z } from "zod";
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type SignInForm = z.infer<typeof signInSchema>;
@@ -22,7 +22,10 @@ type SignInForm = z.infer<typeof signInSchema>;
 function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const requestedCallback = searchParams.get("callbackUrl");
+  const callbackUrl = requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
+    ? requestedCallback
+    : "/";
   const error = searchParams.get("error");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -111,16 +114,12 @@ function SignInForm() {
             )}
           </div>
 
-          <div className="flex items-center justify-between text-sm">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" className="rounded border-[#E8E8E8]" />
-              <span className="text-[#6B6B6B]">Remember me</span>
-            </label>
+          <div className="text-right text-sm">
             <Link
-              href="/auth/forgot-password"
+              href="/support"
               className="text-[#2AAAA0] hover:underline"
             >
-              Forgot password?
+              Need help signing in?
             </Link>
           </div>
 
@@ -135,7 +134,7 @@ function SignInForm() {
 
         <div className="mt-6 text-center text-sm text-[#6B6B6B]">
           Don&apos;t have an account?{" "}
-          <Link href="/auth/signup" className="text-[#2AAAA0] hover:underline">
+          <Link href={`/auth/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`} className="text-[#2AAAA0] hover:underline">
             Sign up
           </Link>
         </div>
@@ -164,10 +163,6 @@ export default function SignInPage() {
         <Suspense fallback={<div className="animate-pulse bg-[#FAF8F5] h-96 rounded-lg" />}>
           <SignInForm />
         </Suspense>
-
-        <p className="text-xs text-[#B0B0B0] text-center mt-6">
-          Demo credentials: demo@goldseason.com / demo123
-        </p>
       </motion.div>
     </div>
   );

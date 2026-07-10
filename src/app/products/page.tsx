@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/context/CartContext";
 import { CountdownTimer } from "@/components/CountdownTimer";
@@ -14,18 +14,8 @@ import {
   Floating,
   AnimatedCounter,
   Magnetic,
+  RevealOnScroll,
 } from "@/components/animations";
-
-const categories = [
-  { id: "all", label: "All Products" },
-  { id: "wheelchair", label: "Electric Wheelchairs" },
-  { id: "wheelchair-Travel Air", label: "  Travel Air Series" },
-  { id: "wheelchair-Power Max", label: "  Power Max Series" },
-  { id: "wheelchair-Spacious Pro", label: "  Spacious Pro Series" },
-  { id: "wheelchair-Basic", label: "  Basic Series" },
-  { id: "scooter", label: "Electric Scooters" },
-  { id: "accessories", label: "Accessories" },
-];
 
 interface Product {
   id: string;
@@ -265,13 +255,6 @@ const products: Product[] = [
   },
 ];
 
-const highlights = [
-  { icon: "⚡", title: "Quick Fold", desc: "Folds in 3 seconds" },
-  { icon: "🔋", title: "Long Range", desc: "Up to 30 miles" },
-  { icon: "✈️", title: "Travel Ready", desc: "Airline approved" },
-  { icon: "🛡️", title: "5-Year Warranty", desc: "Complete coverage" },
-];
-
 const sortOptions = [
   { id: "featured", label: "Featured" },
   { id: "price-low", label: "Price: Low to High" },
@@ -362,58 +345,37 @@ export default function ProductsPage() {
   };
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-[#FAF8F5] via-white to-[#FAF8F5] py-20 lg:py-28 overflow-hidden">
-        <motion.div
-          className="absolute top-20 right-10 w-64 h-64 bg-[#F5A623]/10 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-10 left-10 w-48 h-48 bg-[#2AAAA0]/10 rounded-full blur-3xl"
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        />
+    <div className="bg-cream">
+      {/* Hero Section - Editorial Style */}
+      <section className="relative bg-gradient-to-br from-[#C8956C] via-[#8B7355] to-[#5C534E] py-24 lg:py-32 overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/[0.03] rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#C8956C]/20 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-3xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6 }}
             >
-              <Badge className="bg-[#F5A623]/10 text-[#2D2D2D] border-[#F5A623]/30 mb-6">
-                <motion.span
-                  className="mr-1"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  ✨
-                </motion.span>
-                Free Shipping on All Orders
-              </Badge>
+              <span className="inline-block text-xs font-semibold tracking-[0.2em] uppercase text-white/70 mb-6">
+                ✨ Free Shipping on All Orders
+              </span>
             </motion.div>
 
             <motion.h1
-              className="text-4xl lg:text-6xl font-bold text-[#2D2D2D] mb-6"
+              className="text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] font-bold text-white mb-6 tracking-tight"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
             >
               Discover Your Perfect
-              <motion.span
-                className="block text-[#2AAAA0]"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                Mobility Solution
-              </motion.span>
+              <span className="block text-[#E8D5C4]">Mobility Solution</span>
             </motion.h1>
 
             <motion.p
-              className="text-lg lg:text-xl text-[#6B6B6B] mb-8 max-w-2xl mx-auto"
+              className="text-[clamp(1.125rem,2vw,1.375rem)] text-white/80 max-w-2xl mx-auto leading-relaxed mb-10"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -423,18 +385,12 @@ export default function ProductsPage() {
             </motion.p>
 
             <motion.div
-              className="flex flex-col items-center gap-4 mb-10"
+              className="mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <motion.p
-                className="text-sm text-[#6B6B6B] font-medium"
-                animate={{ scale: [1, 1.02, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                🔥 Summer Sale Ends In:
-              </motion.p>
+              <p className="text-sm text-white/70 font-medium mb-3">🔥 Summer Sale Ends In:</p>
               <CountdownTimer targetDate="2026-09-10T00:00:00" />
             </motion.div>
 
@@ -444,21 +400,14 @@ export default function ProductsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <Magnetic>
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520] text-lg px-8"
-                >
-                  <a
-                    href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Shop on Amazon
-                  </a>
-                </Button>
-              </Magnetic>
+              <a
+                href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary text-lg px-10 py-4"
+              >
+                Shop on Amazon
+              </a>
               <Magnetic>
                 <Button
                   variant="outline"
@@ -510,7 +459,7 @@ export default function ProductsPage() {
           {/* Header */}
           <MotionWrapper className="mb-12">
             <motion.h2
-              className="text-3xl lg:text-4xl font-bold text-[#2D2D2D] mb-3"
+              className="editorial-subheading text-deep-espresso mb-3"
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
@@ -518,7 +467,7 @@ export default function ProductsPage() {
               Our Products
             </motion.h2>
             <motion.p
-              className="text-[#6B6B6B] max-w-xl"
+              className="text-muted max-w-xl"
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -532,16 +481,16 @@ export default function ProductsPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Sidebar - Category Filter */}
             <div className="lg:w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[#2D2D2D] mb-4">Categories</h3>
-                <div className="flex flex-col gap-2">
+              <div className="bg-white rounded-2xl p-6 shadow-warm">
+                <h3 className="text-lg font-semibold text-deep-espresso mb-4">Categories</h3>
+                <div className="flex flex-col gap-1">
                   {/* All Products - Standalone */}
                   <motion.button
                     onClick={() => handleCategoryClick("all")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
                       activeCategory === "all"
-                        ? "bg-[#F5A623] text-[#2D2D2D]"
-                        : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                        ? "bg-[#C8956C] text-white"
+                        : "text-warm hover:bg-[#C8956C]/10"
                     }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -553,10 +502,10 @@ export default function ProductsPage() {
                   <div className="flex flex-col gap-1">
                     <motion.button
                       onClick={() => handleCategoryClick("scooter")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all w-full ${
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full ${
                         activeCategory === "scooter" || activeCategory.startsWith("scooter-")
-                          ? "bg-[#F5A623] text-[#2D2D2D]"
-                          : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                          ? "bg-[#C8956C] text-white"
+                          : "text-warm hover:bg-[#C8956C]/10"
                       }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -588,8 +537,8 @@ export default function ProductsPage() {
                               onClick={() => handleCategoryClick(sub.id)}
                               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
                                 activeCategory === sub.id
-                                  ? "bg-[#F5A623] text-[#2D2D2D]"
-                                  : "bg-[#FAF8F5] text-[#6B6B6B] hover:bg-[#F5A623]/20"
+                                  ? "bg-[#C8956C] text-white"
+                                  : "bg-[#FAF7F4] text-warm hover:bg-[#C8956C]/20"
                               }`}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
@@ -606,10 +555,10 @@ export default function ProductsPage() {
                   <div className="flex flex-col gap-1">
                     <motion.button
                       onClick={() => handleCategoryClick("wheelchair")}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all w-full ${
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full ${
                         activeCategory === "wheelchair" || activeCategory.startsWith("wheelchair-")
-                          ? "bg-[#F5A623] text-[#2D2D2D]"
-                          : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                          ? "bg-[#C8956C] text-white"
+                          : "text-warm hover:bg-[#C8956C]/10"
                       }`}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -643,8 +592,8 @@ export default function ProductsPage() {
                               onClick={() => handleCategoryClick(sub.id)}
                               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
                                 activeCategory === sub.id
-                                  ? "bg-[#F5A623] text-[#2D2D2D]"
-                                  : "bg-[#FAF8F5] text-[#6B6B6B] hover:bg-[#F5A623]/20"
+                                  ? "bg-[#C8956C] text-white"
+                                  : "bg-[#FAF7F4] text-warm hover:bg-[#C8956C]/20"
                               }`}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
@@ -660,10 +609,10 @@ export default function ProductsPage() {
                   {/* Accessories - Standalone */}
                   <motion.button
                     onClick={() => handleCategoryClick("accessories")}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all text-left ${
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
                       activeCategory === "accessories"
-                        ? "bg-[#F5A623] text-[#2D2D2D]"
-                        : "text-[#6B6B6B] hover:bg-[#F5A623]/10"
+                        ? "bg-[#C8956C] text-white"
+                        : "text-warm hover:bg-[#C8956C]/10"
                     }`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -673,7 +622,6 @@ export default function ProductsPage() {
                 </div>
               </div>
             </div>
-
             {/* Right Content - Sort + Products Grid */}
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -723,9 +671,9 @@ export default function ProductsPage() {
                       onMouseLeave={() => setHoveredProduct(null)}
                     >
                       <HoverScale scale={1.02}>
-                        <Card className="overflow-hidden group bg-white hover:shadow-xl transition-all duration-300">
+                        <div className="editorial-card overflow-hidden group hover:shadow-xl transition-shadow duration-300">
                           {/* Image Area */}
-                          <div className="relative aspect-square bg-gradient-to-br from-[#E8DDD4] to-[#E8E8E8] overflow-hidden">
+                          <div className="relative aspect-square bg-gradient-to-br from-[#F5EFE9] to-[#E8D5C4] overflow-hidden">
                             <motion.div
                               className="absolute inset-0 flex items-center justify-center"
                               animate={{ scale: hoveredProduct === product.id ? 1.05 : 1 }}
@@ -877,7 +825,7 @@ export default function ProductsPage() {
                               )}
                             </div>
                           </CardContent>
-                        </Card>
+                        </div>
                       </HoverScale>
                     </motion.div>
                   ))}
@@ -1061,47 +1009,35 @@ export default function ProductsPage() {
         )}
       </AnimatePresence>
 
-      {/* CTA Section */}
-      <section className="py-16 lg:py-24 bg-gradient-to-r from-[#2D2D2D] to-[#1a1a1a]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <MotionWrapper direction="left" className="text-center lg:text-left">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                Ready to Transform Your Mobility?
-              </h2>
-              <p className="text-white/70 text-lg max-w-xl">
-                Join thousands of satisfied customers who have discovered the
-                freedom of GoldSeason electric wheelchairs.
-              </p>
-            </MotionWrapper>
-            <MotionWrapper direction="right" className="flex flex-col sm:flex-row gap-4">
-              <Magnetic>
-                <Button
-                  size="lg"
-                  className="bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520] text-lg px-8"
-                  asChild
-                >
-                  <a
-                    href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Shop Now on Amazon
-                  </a>
-                </Button>
-              </Magnetic>
-              <Magnetic>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white text-white hover:bg-white/10 text-lg px-8"
-                  asChild
-                >
-                  <Link href="/support">Contact Sales</Link>
-                </Button>
-              </Magnetic>
-            </MotionWrapper>
-          </div>
+      {/* CTA Section - Editorial Style */}
+      <section className="py-24 lg:py-32 bg-gradient-to-br from-[#3D3330] to-[#5C534E]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <RevealOnScroll>
+            <span className="editorial-label text-white/70">Get Started</span>
+            <h2 className="text-[clamp(2rem,4vw,3.5rem)] font-bold text-white mt-4 mb-6 tracking-tight">
+              Ready to Transform Your Mobility?
+            </h2>
+            <p className="text-lg text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Join thousands of satisfied customers who have discovered the
+              freedom of GoldSeason electric wheelchairs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a
+                href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary text-lg px-10 py-4"
+              >
+                Shop Now on Amazon
+              </a>
+              <Link
+                href="/support"
+                className="inline-flex items-center justify-center px-10 py-4 rounded-lg border-2 border-white/30 text-white font-medium hover:bg-white/10 transition-colors"
+              >
+                Contact Sales
+              </Link>
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
     </div>

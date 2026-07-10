@@ -3,31 +3,523 @@
 @tailwind utilities;
 
 :root {
-  --background: #FAF8F5;
-  --foreground: #2D2D2D;
-  --brand-gold: #F5A623;
-  --brand-teal: #2AAAA0;
-  --neutral-white: #FFFFFF;
-  --neutral-off-white: #FAF8F5;
-  --neutral-charcoal: #2D2D2D;
-  --neutral-medium-gray: #6B6B6B;
-  --neutral-light-gray: #B0B0B0;
-  --neutral-silver: #E8E8E8;
-  --warm-sand: #E8DDD4;
+  /* Brand Colors - Premium Warm Palette */
+  --amber-gold: #C8956C;
+  --warm-terra: #8B7355;
+  --blush-cream: #E8D5C4;
+  --sage-mist: #9CAF88;
+  --dusty-blue: #8BA4B4;
+
+  /* Neutrals - Warm Sophistication */
+  --deep-espresso: #3D3330;
+  --warm-charcoal: #5C534E;
+  --neutral-warm-gray: #9E948A;
+  --stone: #D4CCC5;
+  --cream: #FAF7F4;
+  --pure-white: #FFFFFF;
+
+  /* Functional */
+  --success: #7A9B76;
+  --warning: #D4A84B;
+  --error: #C4756A;
+  --info: #7A9BB4;
+
+  /* Semantic */
+  --background: #FAF7F4;
+  --foreground: #3D3330;
+
+  /* Legacy compatibility */
+  --brand-gold: #C8956C;
+  --brand-teal: #8BA4B4;
 }
 
 @layer base {
   body {
-    @apply bg-[#FAF8F5] text-[#2D2D2D] antialiased;
+    @apply bg-cream text-deep-espresso antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight;
+    @apply font-heading tracking-tight;
+    color: var(--deep-espresso);
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Selection color */
+  ::selection {
+    background-color: var(--blush-cream);
+    color: var(--deep-espresso);
+  }
+
+  /* Focus states */
+  *:focus-visible {
+    outline: 2px solid var(--amber-gold);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Primary Button - Amber Gold */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-200;
+    background-color: var(--amber-gold);
+    color: var(--pure-white);
+  }
+
+  .btn-primary:hover {
+    @apply brightness-110;
+    box-shadow: 0 4px 12px rgba(200, 149, 108, 0.3);
+  }
+
+  /* Secondary Button - Warm Terra */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-200 border-2;
+    border-color: var(--warm-terra);
+    color: var(--warm-terra);
+    background: transparent;
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--warm-terra);
+    color: var(--pure-white);
+  }
+
+  /* Ghost Button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-medium transition-all duration-200;
+    color: var(--warm-charcoal);
+    background: transparent;
+  }
+
+  .btn-ghost:hover {
+    background-color: var(--stone);
+  }
+
+  /* Card - Premium Feel */
+  .card {
+    @apply bg-pure-white rounded-xl shadow-sm transition-shadow duration-300;
+    border: 1px solid var(--stone);
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 24px rgba(61, 51, 48, 0.08);
+  }
+
+  /* Editorial Card */
+  .editorial-card {
+    @apply bg-pure-white rounded-2xl shadow-warm transition-all duration-300;
+    border: 1px solid var(--stone);
+  }
+
+  .editorial-card:hover {
+    box-shadow: 0 12px 32px rgba(61, 51, 48, 0.12);
+  }
+
+  /* Editorial Label */
+  .editorial-label {
+    @apply text-xs font-semibold tracking-[0.2em] uppercase;
+  }
+
+  /* Section backgrounds */
+  .section-cream {
+    background-color: var(--cream);
+  }
+
+  .section-blush {
+    background-color: var(--blush-cream);
+  }
+
+  .section-warm {
+    background-color: var(--warm-charcoal);
+    color: var(--cream);
+  }
+
+  /* Text accents */
+  .text-accent {
+    color: var(--amber-gold);
+  }
+
+  .text-warm {
+    color: var(--warm-terra);
+  }
+
+  .text-muted {
+    color: var(--neutral-warm-gray);
+  }
+
+  /* Dividers */
+  .divider-warm {
+    border-color: var(--stone);
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    background-color: var(--blush-cream);
+    color: var(--warm-terra);
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Gradient text for headings */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--amber-gold), var(--warm-terra));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle grain texture overlay */
+  .grain {
+    position: relative;
+  }
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Soft shadow */
+  .shadow-warm {
+    box-shadow: 0 4px 20px rgba(61, 51, 48, 0.08);
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   EDITORIAL DESIGN SYSTEM
+   Magazine-style typography and spacing
+   ============================================ */
+
+:root {
+  /* === Editorial Typography Scale === */
+  /* 标题尺寸 - 显著增大 */
+  --editorial-h1: clamp(3rem, 8vw, 6rem);
+  --editorial-h2: clamp(2rem, 5vw, 4rem);
+  --editorial-h3: clamp(1.5rem, 3vw, 2.5rem);
+  --editorial-h4: clamp(1.25rem, 2vw, 1.75rem);
+  
+  /* 正文尺寸 - 增大便于阅读 */
+  --editorial-body: 1.125rem;
+  --editorial-body-lg: 1.25rem;
+  
+  /* === Editorial Spacing === */
+  /* 比现有间距扩大 30-50% */
+  --space-editorial-xs: 1rem;
+  --space-editorial-sm: 1.5rem;
+  --space-editorial-md: 2.5rem;
+  --space-editorial-lg: 4rem;
+  --space-editorial-xl: 6rem;
+  --space-editorial-2xl: 10rem;
+  
+  /* === Editorial 缓动曲线 === */
+  /* 更细腻的动画缓动 */
+  --ease-editorial: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-slow: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  
+  /* === 视差速度 === */
+  --parallax-fast: 0.3;
+  --parallax-medium: 0.5;
+  --parallax-slow: 0.7;
+}
+
+@layer base {
+  /* Editorial 标题样式 */
+  .editorial-heading {
+    font-family: var(--font-heading);
+    font-size: var(--editorial-h1);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+  
+  .editorial-subheading {
+    font-family: var(--font-heading);
+    font-size: var(--editorial-h2);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+  }
+  
+  .editorial-tertiary {
+    font-family: var(--font-heading);
+    font-size: var(--editorial-h3);
+    line-height: 1.2;
+    font-weight: 500;
+  }
+  
+  .editorial-body {
+    font-size: var(--editorial-body);
+    line-height: 1.7;
+    max-width: 65ch;
+  }
+  
+  .editorial-body-lg {
+    font-size: var(--editorial-body-lg);
+    line-height: 1.65;
+    max-width: 70ch;
+  }
+  
+  /* Section 间距类 */
+  .section-editorial {
+    padding-top: var(--space-editorial-xl);
+    padding-bottom: var(--space-editorial-xl);
+  }
+  
+  .section-editorial-lg {
+    padding-top: var(--space-editorial-2xl);
+    padding-bottom: var(--space-editorial-2xl);
+  }
+  
+  .section-editorial-sm {
+    padding-top: var(--space-editorial-lg);
+    padding-bottom: var(--space-editorial-lg);
+  }
+}
+
+@layer components {
+  /* === Editorial Grid System === */
+  .editorial-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--space-editorial-md);
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  
+  /* 非对称列布局 */
+  .col-asymmetric-left { grid-column: 1 / 7; }
+  .col-asymmetric-right { grid-column: 7 / 13; }
+  .col-wide { grid-column: 1 / 9; }
+  .col-narrow { grid-column: 9 / 13; }
+  .col-half { grid-column: span 6; }
+  .col-third { grid-column: span 4; }
+  .col-quarter { grid-column: span 3; }
+  
+  /* === Editorial Card === */
+  .editorial-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--pure-white);
+    transition: transform 0.5s var(--ease-editorial), 
+                box-shadow 0.5s var(--ease-editorial);
+  }
+  
+  /* 顶部边框动画 */
+  .editorial-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--amber-gold), var(--warm-terra));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease-smooth);
+  }
+  
+  .editorial-card:hover::before {
+    transform: scaleX(1);
+  }
+  
+  .editorial-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+      0 20px 40px rgba(61, 51, 48, 0.1),
+      0 8px 16px rgba(61, 51, 48, 0.08);
+  }
+  
+  /* === Editorial Hover 系统 === */
+  /* 卡片悬停 */
+  .hover-editorial {
+    transition: transform 0.5s var(--ease-editorial),
+                box-shadow 0.5s var(--ease-editorial);
+    transform: translateY(0);
+  }
+  
+  .hover-editorial:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+      0 20px 40px rgba(61, 51, 48, 0.1),
+      0 8px 16px rgba(61, 51, 48, 0.08);
+  }
+  
+  /* 链接悬停 - 下划线动画 */
+  .link-editorial {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .link-editorial::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0.5px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s var(--ease-editorial);
+  }
+  
+  .link-editorial:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  
+  /* 按钮填充动画 */
+  .btn-editorial {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .btn-editorial::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--amber-gold), var(--warm-terra));
+    transform: translateX(-100%);
+    transition: transform 0.4s var(--ease-editorial);
+  }
+  
+  .btn-editorial:hover::before {
+    transform: translateX(0);
+  }
+  
+  /* 图片悬停 - 缩放 */
+  .image-hover-editorial {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .image-hover-editorial img {
+    transition: transform 0.7s var(--ease-smooth);
+    transform: scale(1);
+  }
+  
+  .image-hover-editorial:hover img {
+    transform: scale(1.08);
+  }
+  
+  .image-hover-editorial::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(61, 51, 48, 0);
+    transition: background 0.5s;
+  }
+  
+  .image-hover-editorial:hover::after {
+    background: rgba(61, 51, 48, 0.15);
+  }
+  
+  /* 标签文字 - Editorial 风格 */
+  .editorial-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--warm-terra);
+  }
+  
+  /* 引言样式 */
+  .editorial-quote {
+    font-family: var(--font-heading);
+    font-size: var(--editorial-h3);
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--warm-charcoal);
+    border-left: 4px solid var(--amber-gold);
+    padding-left: 1.5rem;
+  }
+}
+
+@layer utilities {
+  /* === Editorial 过渡动画 === */
+  .transition-editorial {
+    transition: all 0.5s var(--ease-editorial);
+  }
+  
+  .transition-smooth {
+    transition: all 0.4s var(--ease-smooth);
+  }
+  
+  .transition-slow {
+    transition: all 0.8s var(--ease-slow);
+  }
+  
+  /* === Editorial Z-Index 层叠 === */
+  .z-editorial-grid { z-index: 1; }
+  .z-editorial-content { z-index: 10; }
+  .z-editorial-overlay { z-index: 100; }
+  .z-editorial-modal { z-index: 1000; }
+  
+  /* === 响应式断点调整 === */
+  @media (max-width: 1024px) {
+    .col-asymmetric-left,
+    .col-asymmetric-right,
+    .col-wide,
+    .col-narrow,
+    .col-half,
+    .col-third,
+    .col-quarter {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+/* === Reduced Motion 支持 === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

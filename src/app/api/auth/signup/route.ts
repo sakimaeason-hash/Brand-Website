@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
+import { Prisma } from "@prisma/client"
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -27,7 +28,9 @@ export async function POST(request: Request) {
       )
     }
 
-    const { name, email, password } = result.data
+    const name = result.data.name.trim()
+    const email = result.data.email.trim().toLowerCase()
+    const { password } = result.data
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -63,6 +66,16 @@ export async function POST(request: Request) {
       user: newUser,
     })
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "An account with this email already exists" },
+        { status: 409 }
+      )
+    }
+
     console.error("Signup error:", error)
     return NextResponse.json(
       { error: "Failed to create account" },

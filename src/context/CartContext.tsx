@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 interface CartItem {
   id: string;
@@ -21,26 +21,44 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+const CART_STORAGE_KEY = "goldseason-cart";
+
+function persistItems(nextItems: CartItem[]) {
+  window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(nextItems));
+  return nextItems;
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const savedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        if (Array.isArray(parsedCart)) setItems(parsedCart);
+      }
+    } catch {
+      window.localStorage.removeItem(CART_STORAGE_KEY);
+    }
+  }, []);
 
   const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
     setItems((currentItems) => {
       const existingItem = currentItems.find((item) => item.id === newItem.id);
       if (existingItem) {
-        return currentItems.map((item) =>
+        return persistItems(currentItems.map((item) =>
           item.id === newItem.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
-        );
+        ));
       }
-      return [...currentItems, { ...newItem, quantity: 1 }];
+      return persistItems([...currentItems, { ...newItem, quantity: 1 }]);
     });
   }, []);
 
   const removeItem = useCallback((id: string) => {
-    setItems((currentItems) => currentItems.filter((item) => item.id !== id));
+    setItems((currentItems) => persistItems(currentItems.filter((item) => item.id !== id)));
   }, []);
 
   const updateQuantity = useCallback((id: string, quantity: number) => {
@@ -49,13 +67,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setItems((currentItems) =>
-      currentItems.map((item) =>
+      persistItems(currentItems.map((item) =>
         item.id === id ? { ...item, quantity } : item
-      )
+      ))
     );
   }, [removeItem]);
 
   const clearCart = useCallback(() => {
+    window.localStorage.removeItem(CART_STORAGE_KEY);
     setItems([]);
   }, []);
 

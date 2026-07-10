@@ -1,3 +1,4 @@
+// Original exports
 export {
   MotionWrapper,
   StaggerContainer,
@@ -10,3 +11,9 @@ export {
   Magnetic,
   RevealText,
 } from "./MotionWrapper";
+
+// New Editorial exports
+export { EditorialGrid } from "./EditorialGrid";
+export { ScrollParallax, SimpleParallax } from "./ScrollParallax";
+export { RevealOnScroll, StaggerReveal } from "./RevealOnScroll";
+export { ImageReveal, HoverImageReveal } from "./ImageReveal";

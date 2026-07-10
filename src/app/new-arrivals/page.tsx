@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { RevealOnScroll, HoverScale } from "@/components/animations";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { useCart } from "@/context/CartContext";
 
@@ -16,15 +14,8 @@ const newProducts = [
     price: 2799,
     originalPrice: 3199,
     badge: "NEW",
-    badgeColor: "bg-[#F5A623]",
-    features: [
-      "AI-Powered Navigation",
-      "25-Mile Range",
-      "Smart App Control",
-      "Auto-Folding",
-    ],
-    description: "Our most advanced wheelchair featuring AI-assisted navigation, premium suspension, and a 25-mile range. The Elite X represents the pinnacle of mobility technology.",
-    image: "Elite X",
+    features: ["AI-Powered Navigation", "25-Mile Range", "Smart App Control", "Auto-Folding"],
+    description: "Our most advanced wheelchair featuring AI-assisted navigation, premium suspension, and a 25-mile range.",
     launchDate: "Just Released",
   },
   {
@@ -34,15 +25,8 @@ const newProducts = [
     price: 1799,
     originalPrice: 1999,
     badge: "NEW",
-    badgeColor: "bg-[#F5A623]",
-    features: [
-      "18-Mile Range",
-      "Enhanced Comfort Seat",
-      "All-Terrain Wheels",
-      "Quick-Release Battery",
-    ],
-    description: "Building on our popular Pro model, the Pro Plus offers extended range and enhanced comfort features for the active user.",
-    image: "Pro Plus",
+    features: ["18-Mile Range", "Enhanced Comfort Seat", "All-Terrain Wheels", "Quick-Release Battery"],
+    description: "Building on our popular Pro model, the Pro Plus offers extended range and enhanced comfort features.",
     launchDate: "New This Month",
   },
 ];
@@ -52,63 +36,39 @@ const promotions = [
     id: "summer-sale",
     title: "Summer Freedom Sale",
     discount: "Save Up To $300",
-    description: "Celebrate the season with special savings on select GoldSeason models. Limited time offer.",
-    endDate: "2026-06-30T23:59:59",
+    description: "Celebrate the season with special savings on select GoldSeason models.",
+    endDate: "2026-07-30T23:59:59",
     code: "SUMMER26",
     terms: "Valid on Lite and Pro models. Cannot be combined with other offers.",
+    limited: true,
   },
   {
     id: "trade-in",
     title: "Trade-In Program",
     discount: "Get Up To $500 Credit",
     description: "Trade in any mobility device and receive credit toward a new GoldSeason wheelchair.",
-    endDate: "2026-12-31T23:59:59",
     code: "No Code Needed",
     terms: "Trade-in value depends on condition and model. Contact us for assessment.",
+    limited: false,
   },
   {
     id: "referral",
     title: "Refer a Friend",
     discount: "$100 For You Both",
     description: "Refer a friend to GoldSeason and you both receive $100 off your purchase.",
-    endDate: "Ongoing",
     code: "REFER100",
     terms: "Friend must be a new customer. Credit applied after purchase completion.",
+    limited: false,
   },
 ];
 
 const bundleDeals = [
-  {
-    name: "Travel Essentials Bundle",
-    items: ["Wheelchair + Travel Bag + Battery Backup"],
-    savings: "$150",
-    price: 1149,
-    originalPrice: 1299,
-  },
-  {
-    name: "Comfort Plus Bundle",
-    items: ["Wheelchair + Premium Cushion + Weather Cover"],
-    savings: "$120",
-    price: 1379,
-    originalPrice: 1499,
-  },
-  {
-    name: "Complete Care Bundle",
-    items: ["Wheelchair + Maintenance Kit + Extended Warranty"],
-    savings: "$200",
-    price: 1299,
-    originalPrice: 1499,
-  },
+  { name: "Travel Essentials Bundle", items: ["Wheelchair + Travel Bag + Battery Backup"], savings: "$150", price: 1149, originalPrice: 1299 },
+  { name: "Comfort Plus Bundle", items: ["Wheelchair + Premium Cushion + Weather Cover"], savings: "$120", price: 1379, originalPrice: 1499 },
+  { name: "Complete Care Bundle", items: ["Wheelchair + Maintenance Kit + Extended Warranty"], savings: "$200", price: 1299, originalPrice: 1499 },
 ];
 
-const flashSaleProduct = {
-  name: "GoldSeason Lite",
-  tagline: "Lightweight & Portable",
-  price: 1299,
-  originalPrice: 1599,
-  discount: "20% Off",
-  remaining: 12,
-};
+const flashSaleProduct = { name: "GoldSeason Lite", tagline: "Lightweight & Portable", price: 1299, originalPrice: 1599, discount: "20% Off", remaining: 12 };
 
 export default function NewArrivalsPage() {
   const { addItem } = useCart();
@@ -125,17 +85,13 @@ export default function NewArrivalsPage() {
   };
 
   const handleAddBundle = (bundle: (typeof bundleDeals)[0]) => {
-    addItem({
-      id: `bundle-${bundle.name.toLowerCase().replace(/\s+/g, '-')}`,
-      name: bundle.name,
-      price: bundle.price,
-    });
+    addItem({ id: `bundle-${bundle.name.toLowerCase().replace(/\s+/g, '-')}`, name: bundle.name, price: bundle.price });
   };
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-[#F5A623] to-[#E09520] py-20 lg:py-32 overflow-hidden">
+    <div className="bg-cream">
+      {/* Hero - Editorial Style */}
+      <section className="relative bg-gradient-to-br from-[#C8956C] to-[#8B7355] py-20 lg:py-32 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full" />
           <div className="absolute bottom-20 right-20 w-48 h-48 bg-white rounded-full" />
@@ -148,318 +104,243 @@ export default function NewArrivalsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Badge className="mb-4 bg-white/20 text-white border-0 text-sm">
-              🎉 Introducing the Elite X
-            </Badge>
-            <h1 className="text-4xl lg:text-6xl font-bold text-[#2D2D2D] mb-6">
+            <span className="editorial-label text-white/70">🎉 Introducing the Elite X</span>
+            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.05] font-bold text-white mt-4 mb-6 tracking-tight">
               New Arrivals
               <br />
-              <span className="text-white">& Special Offers</span>
+              <span className="text-[#E8D5C4]">& Special Offers</span>
             </h1>
-            <p className="text-lg text-[#2D2D2D]/80 mb-8">
+            <p className="text-[clamp(1.125rem,2vw,1.375rem)] text-white/80 mb-8 max-w-2xl mx-auto leading-relaxed">
               Discover our latest innovations and exclusive promotions.
-              Limited time offers for a limited time only.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
-              <Button
-                className="bg-[#2D2D2D] text-white hover:bg-[#1a1a1a]"
-                asChild
-              >
-                <a href="#new-products">Shop New Arrivals</a>
-              </Button>
-              <Button
-                variant="outline"
-                className="border-[#2D2D2D] text-[#2D2D2D] hover:bg-[#2D2D2D] hover:text-white"
-                asChild
-              >
-                <a href="#promotions">View All Promotions</a>
-              </Button>
+              <a href="#new-products" className="btn-primary bg-white text-[#C8956C] hover:bg-[#E8D5C4]">
+                Shop New Arrivals
+              </a>
+              <a href="#promotions" className="inline-flex items-center justify-center px-8 py-3 rounded-lg border-2 border-white/30 text-white font-medium hover:bg-white/10 transition-colors">
+                View All Promotions
+              </a>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* New Products Section */}
-      <section id="new-products" className="py-16 lg:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <p className="text-[#2AAAA0] font-medium tracking-wide uppercase mb-2">Just Launched</p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">New Products</h2>
-          </motion.div>
+      {/* New Products - Editorial Magazine Grid */}
+      <section id="new-products" className="py-16 lg:py-24 section-editorial bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="editorial-label text-[#C8956C]">Just Launched</span>
+            <h2 className="editorial-subheading text-deep-espresso mt-2">New Products</h2>
+          </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
             {newProducts.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card
-                  className="overflow-hidden group hover:shadow-xl transition-all"
-                  onMouseEnter={() => setHoveredCard(i)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                >
-                  <div className="grid md:grid-cols-2">
-                    <div className="aspect-square md:aspect-auto bg-gradient-to-br from-[#F5A623]/20 to-[#2AAAA0]/20 flex items-center justify-center relative">
-                      <Badge className={`absolute top-4 left-4 ${product.badgeColor} text-[#2D2D2D]`}>
-                        {product.badge}
-                      </Badge>
-                      <motion.span
-                        className="text-[#6B6B6B] text-xl"
-                        animate={{ scale: hoveredCard === i ? 1.05 : 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {product.image}
-                      </motion.span>
-                    </div>
-                    <CardContent className="p-8 flex flex-col justify-center">
-                      <p className="text-sm text-[#2AAAA0] font-medium mb-1">{product.launchDate}</p>
-                      <h3 className="text-2xl font-bold text-[#2D2D2D] mb-1">{product.name}</h3>
-                      <p className="text-[#6B6B6B] mb-4">{product.tagline}</p>
-
-                      <div className="flex items-baseline gap-3 mb-4">
-                        <motion.span
-                          className="text-3xl font-bold text-[#F5A623]"
-                          initial={{ opacity: 0, x: -10 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.2 }}
-                        >
-                          ${product.price.toLocaleString()}
-                        </motion.span>
-                        <span className="text-lg text-[#B0B0B0] line-through">
-                          ${product.originalPrice.toLocaleString()}
+              <RevealOnScroll key={product.id} delay={i * 0.15}>
+                <HoverScale scale={1.01}>
+                  <div
+                    className="editorial-card overflow-hidden"
+                    onMouseEnter={() => setHoveredCard(i)}
+                    onMouseLeave={() => setHoveredCard(null)}
+                  >
+                    <div className="grid md:grid-cols-2">
+                      {/* Image Side */}
+                      <div className="aspect-square md:aspect-auto bg-gradient-to-br from-[#C8956C]/20 to-[#9CAF88]/20 flex items-center justify-center relative p-8">
+                        <span className="absolute top-4 left-4 px-3 py-1 bg-[#C8956C] text-white text-xs font-bold rounded-full">
+                          {product.badge}
                         </span>
+                        <motion.span
+                          className="text-muted text-xl"
+                          animate={{ scale: hoveredCard === i ? 1.05 : 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          {product.name}
+                        </motion.span>
                       </div>
 
-                      <p className="text-[#6B6B6B] text-sm mb-4">{product.description}</p>
+                      {/* Content Side */}
+                      <div className="p-8 flex flex-col justify-center">
+                        <p className="text-sm text-[#C8956C] font-medium mb-1">{product.launchDate}</p>
+                        <h3 className="text-2xl font-bold text-deep-espresso mb-1">{product.name}</h3>
+                        <p className="text-muted mb-4">{product.tagline}</p>
 
-                      <ul className="space-y-2 mb-6">
-                        {product.features.map((feature, idx) => (
-                          <motion.li
-                            key={idx}
-                            className="flex items-center gap-2 text-sm text-[#6B6B6B]"
-                            initial={{ opacity: 0, x: -10 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.1 * idx }}
-                            viewport={{ once: true }}
-                          >
-                            <svg className="w-4 h-4 text-[#2AAAA0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            {feature}
-                          </motion.li>
-                        ))}
-                      </ul>
+                        <div className="flex items-baseline gap-3 mb-4">
+                          <span className="text-3xl font-bold text-[#C8956C]">
+                            ${product.price.toLocaleString()}
+                          </span>
+                          <span className="text-lg text-muted line-through">
+                            ${product.originalPrice.toLocaleString()}
+                          </span>
+                        </div>
 
-                      <div className="flex gap-3">
-                        <Button
-                          className="flex-1 bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520]"
-                          asChild
-                        >
+                        <p className="text-muted text-sm mb-4">{product.description}</p>
+
+                        <ul className="space-y-2 mb-6">
+                          {product.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-center gap-2 text-sm text-muted">
+                              <svg className="w-4 h-4 text-[#9CAF88]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+
+                        <div className="flex gap-3">
                           <a
                             href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="flex-1 text-center py-3 bg-[#C8956C] text-white rounded-lg font-medium hover:bg-[#8B7355] transition-colors"
                           >
                             Pre-Order Now
                           </a>
-                        </Button>
-                        <Button variant="outline" className="flex-1">
-                          Learn More
-                        </Button>
+                          <button className="flex-1 py-3 border border-[#C8956C] text-[#C8956C] rounded-lg font-medium hover:bg-[#C8956C]/10 transition-colors">
+                            Learn More
+                          </button>
+                        </div>
                       </div>
-                    </CardContent>
+                    </div>
                   </div>
-                </Card>
-              </motion.div>
+                </HoverScale>
+              </RevealOnScroll>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Limited Time Offers */}
-      <section id="promotions" className="py-16 lg:py-24 bg-[#FAF8F5]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <p className="text-[#F5A623] font-medium tracking-wide uppercase mb-2">Limited Time</p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#2D2D2D]">Current Promotions</h2>
-          </motion.div>
+      {/* Limited Time Offers - Editorial Cards */}
+      <section id="promotions" className="py-16 lg:py-24 section-editorial bg-cream">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="editorial-label text-[#C8956C]">Limited Time</span>
+            <h2 className="editorial-subheading text-deep-espresso mt-2">Current Promotions</h2>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {promotions.map((promo, i) => (
-              <motion.div
-                key={promo.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="relative overflow-hidden hover:shadow-lg transition-all">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#F5A623]/10 rounded-bl-full" />
-                  <CardContent className="p-8 relative">
-                    <Badge className="mb-4 bg-[#2AAAA0] text-white">
-                      {promo.id === "summer-sale" ? "⏰ Limited Time" : "🎁 Ongoing"}
-                    </Badge>
+              <RevealOnScroll key={promo.id} delay={i * 0.1}>
+                <div className="editorial-card p-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#C8956C]/10 rounded-bl-full" />
+                  <div className="relative">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4 ${promo.limited ? 'bg-[#9CAF88] text-white' : 'bg-[#E8D5C4] text-warm'}`}>
+                      {promo.limited ? "⏰ Limited Time" : "🎁 Ongoing"}
+                    </span>
 
-                    <h3 className="text-xl font-bold text-[#2D2D2D] mb-2">{promo.title}</h3>
-                    <p className="text-2xl font-bold text-[#F5A623] mb-3">{promo.discount}</p>
-                    <p className="text-[#6B6B6B] text-sm mb-4">{promo.description}</p>
+                    <h3 className="text-xl font-semibold text-deep-espresso mb-2">{promo.title}</h3>
+                    <p className="text-2xl font-bold text-[#C8956C] mb-3">{promo.discount}</p>
+                    <p className="text-muted text-sm mb-4">{promo.description}</p>
 
-                    {promo.id === "summer-sale" && (
+                    {promo.limited && (
                       <div className="mb-4">
-                        <p className="text-xs text-[#6B6B6B] mb-1">Offer ends in:</p>
-                        <CountdownTimer targetDate={promo.endDate} />
+                        <p className="text-xs text-muted mb-1">Offer ends in:</p>
+                        <CountdownTimer targetDate={promo.endDate!} />
                       </div>
                     )}
 
-                    <div className="bg-[#FAF8F5] rounded-lg p-3 mb-4">
-                      <p className="text-xs text-[#6B6B6B]">Use code:</p>
-                      <p className="font-mono font-bold text-[#2D2D2D]">{promo.code}</p>
+                    <div className="bg-[#FAF7F4] rounded-lg p-3 mb-4">
+                      <p className="text-xs text-muted">Use code:</p>
+                      <p className="font-mono font-bold text-deep-espresso">{promo.code}</p>
                     </div>
 
-                    <p className="text-xs text-[#B0B0B0] mb-4">{promo.terms}</p>
+                    <p className="text-xs text-muted mb-4">{promo.terms}</p>
 
-                    <Button className="w-full bg-[#2AAAA0] hover:bg-[#259990]">
+                    <button className="w-full py-3 bg-[#C8956C] text-white rounded-lg font-medium hover:bg-[#8B7355] transition-colors">
                       Claim Offer
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                    </button>
+                  </div>
+                </div>
+              </RevealOnScroll>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Bundle Deals */}
-      <section className="py-16 lg:py-24 bg-[#2D2D2D] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <p className="text-[#F5A623] font-medium tracking-wide uppercase mb-2">Bundle & Save</p>
-            <h2 className="text-3xl lg:text-4xl font-bold">Complete Care Packages</h2>
-          </motion.div>
+      {/* Bundle Deals - Dark Editorial */}
+      <section className="py-16 lg:py-24 bg-gradient-to-br from-[#3D3330] to-[#5C534E]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="editorial-label text-[#C8956C]">Bundle & Save</span>
+            <h2 className="editorial-subheading text-white mt-2">Complete Care Packages</h2>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {bundleDeals.map((bundle, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="bg-white/5 border-white/10 text-white overflow-hidden hover:bg-white/10 transition-all">
-                  <CardContent className="p-6">
-                    <Badge className="mb-4 bg-[#F5A623] text-[#2D2D2D]">
-                      Save {bundle.savings}
-                    </Badge>
+              <RevealOnScroll key={i} delay={i * 0.1}>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all">
+                  <span className="inline-block px-3 py-1 bg-[#C8956C] text-white text-xs font-bold rounded-full mb-4">
+                    Save {bundle.savings}
+                  </span>
 
-                    <h3 className="text-xl font-bold mb-2">{bundle.name}</h3>
+                  <h3 className="text-xl font-semibold text-white mb-2">{bundle.name}</h3>
 
-                    <ul className="text-sm text-[#B0B0B0] mb-4 space-y-1">
-                      {bundle.items.map((item, j) => (
-                        <li key={j}>{item}</li>
-                      ))}
-                    </ul>
+                  <ul className="text-sm text-white/70 mb-4 space-y-1">
+                    {bundle.items.map((item, j) => <li key={j}>{item}</li>)}
+                  </ul>
 
-                    <div className="flex items-baseline gap-2 mb-4">
-                      <span className="text-2xl font-bold text-[#F5A623]">
-                        ${bundle.price.toLocaleString()}
-                      </span>
-                      <span className="text-sm text-[#6B6B6B] line-through">
-                        ${bundle.originalPrice.toLocaleString()}
-                      </span>
-                    </div>
+                  <div className="flex items-baseline gap-2 mb-4">
+                    <span className="text-2xl font-bold text-[#C8956C]">${bundle.price.toLocaleString()}</span>
+                    <span className="text-sm text-white/50 line-through">${bundle.originalPrice.toLocaleString()}</span>
+                  </div>
 
-                    <Button
-                      className="w-full bg-white text-[#2D2D2D] hover:bg-[#F5A623]"
-                      onClick={() => handleAddBundle(bundle)}
-                    >
-                      Add to Cart
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  <button
+                    onClick={() => handleAddBundle(bundle)}
+                    className="w-full py-3 bg-white text-[#3D3330] rounded-lg font-medium hover:bg-[#C8956C] hover:text-white transition-colors"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </RevealOnScroll>
             ))}
           </div>
         </div>
       </section>
 
       {/* Flash Sale Banner */}
-      <section className="py-12 bg-[#F5A623]">
+      <section className="py-12 bg-[#C8956C]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="text-center lg:text-left">
-              <h2 className="text-2xl lg:text-3xl font-bold text-[#2D2D2D] mb-2">
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">
                 ⚡ Flash Sale: 20% Off {flashSaleProduct.name}
               </h2>
-              <p className="text-[#2D2D2D]/80">
+              <p className="text-white/80">
                 {flashSaleProduct.tagline} at an unbeatable price. Only {flashSaleProduct.remaining} units available!
               </p>
             </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <p className="text-sm text-[#2D2D2D]/70 mb-1">Sale ends in</p>
-                <CountdownTimer targetDate="2026-06-30T23:59:59" />
+                <p className="text-sm text-white/70 mb-1">Sale ends in</p>
+                <CountdownTimer targetDate="2026-07-30T23:59:59" />
               </div>
-              <Button
-                className="bg-[#2D2D2D] text-white hover:bg-[#1a1a1a]"
-                asChild
+              <a
+                href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-3 bg-white text-[#C8956C] rounded-lg font-medium hover:bg-[#E8D5C4] transition-colors"
               >
-                <a
-                  href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Shop Now
-                </a>
-              </Button>
+                Shop Now
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="py-16 lg:py-24 bg-white">
+      {/* Newsletter - Editorial Style */}
+      <section className="py-16 lg:py-24 section-editorial bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4">
-              Be the First to Know
-            </h2>
-            <p className="text-[#6B6B6B] mb-8">
+          <RevealOnScroll>
+            <span className="editorial-label text-[#C8956C]">Stay Updated</span>
+            <h2 className="editorial-subheading text-deep-espresso mt-2 mb-4">Be the First to Know</h2>
+            <p className="text-muted mb-8 max-w-xl mx-auto">
               Subscribe to get exclusive access to new product launches and member-only promotions.
             </p>
             {subscribed ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-[#2AAAA0]/10 text-[#2AAAA0] p-4 rounded-lg inline-block"
+                className="bg-[#9CAF88]/10 text-[#9CAF88] p-6 rounded-2xl inline-block"
               >
-                <p className="font-medium">Thanks for subscribing!</p>
+                <p className="font-semibold text-lg">Thanks for subscribing!</p>
                 <p className="text-sm">Check your email for your 10% off code.</p>
               </motion.div>
             ) : (
@@ -470,17 +351,15 @@ export default function NewArrivalsPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
-                  className="flex-1 px-6 py-3 rounded-lg border border-[#E8E8E8] focus:border-[#2AAAA0] outline-none transition-colors"
+                  className="flex-1 px-6 py-3 rounded-lg border border-stone focus:border-[#C8956C] outline-none transition-colors bg-white"
                 />
-                <Button type="submit" className="bg-[#2AAAA0] hover:bg-[#259990]">
+                <button type="submit" className="btn-primary whitespace-nowrap">
                   Subscribe
-                </Button>
+                </button>
               </form>
             )}
-            <p className="text-xs text-[#B0B0B0] mt-4">
-              New subscribers get 10% off their first order!
-            </p>
-          </motion.div>
+            <p className="text-sm text-muted mt-4">New subscribers get 10% off their first order!</p>
+          </RevealOnScroll>
         </div>
       </section>
     </div>

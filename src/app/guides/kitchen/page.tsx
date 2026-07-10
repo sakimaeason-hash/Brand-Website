@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +44,7 @@ function ImagePlaceholder({
 }
 
 export default function KitchenGuidePage() {
-  const [activeSection, setActiveSection] = useState("assessment");
+  const activeSection = "assessment";
 
   return (
     <div className="min-h-screen bg-[#FAF8F5]">

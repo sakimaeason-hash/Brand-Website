@@ -14,12 +14,13 @@ interface TimeLeft {
   seconds: number;
 }
 
-export function CountdownTimer({ targetDate }: CountdownTimerProps) {
-  const calculateTimeLeft = (): TimeLeft => {
-    const difference = new Date(targetDate).getTime() - new Date().getTime();
+const EMPTY_TIME: TimeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+function calculateTimeLeft(targetDate: string): TimeLeft {
+    const difference = new Date(targetDate).getTime() - Date.now();
 
     if (difference <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      return EMPTY_TIME;
     }
 
     return {
@@ -28,16 +29,18 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       minutes: Math.floor((difference / 1000 / 60) % 60),
       seconds: Math.floor((difference / 1000) % 60),
     };
-  };
+}
 
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft());
+export function CountdownTimer({ targetDate }: CountdownTimerProps) {
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(EMPTY_TIME);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    const updateTimeLeft = () => setTimeLeft(calculateTimeLeft(targetDate));
+
+    updateTimeLeft();
     setMounted(true);
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
+    const timer = setInterval(updateTimeLeft, 1000);
 
     return () => clearInterval(timer);
   }, [targetDate]);
