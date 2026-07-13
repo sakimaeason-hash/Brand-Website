@@ -6,6 +6,19 @@ import { RevealOnScroll, HoverScale } from "@/components/animations";
 
 const guides = [
   {
+    slug: "bathroom",
+    title: "Bathroom Accessibility",
+    subtitle: "Powered Wheelchair Adaptation",
+    description:
+      "Plan safer transfers, a roll-in shower, reachable fixtures, and slip-resistant circulation with practical options for every renovation level.",
+    difficulty: "Medium",
+    budget: "$150–$35,000+",
+    duration: "1 day – 6 weeks",
+    icon: "♿",
+    color: "#2AAAA0",
+    sections: 8,
+  },
+  {
     slug: "kitchen",
     title: "Kitchen Accessibility",
     subtitle: "Powered Wheelchair Adaptation",
@@ -109,7 +122,7 @@ export default function GuidesPage() {
       {/* Guides Grid - Editorial Magazine Style */}
       <section className="py-16 lg:py-24 section-editorial">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-8">
             {guides.map((guide, i) => (
               <RevealOnScroll key={guide.slug} delay={i * 0.15}>
                 <HoverScale scale={1.02}>
@@ -211,10 +224,10 @@ export default function GuidesPage() {
               Browse our room-by-room guides and find the right solution for your home.
             </p>
             <Link
-              href="/guides/kitchen"
+              href="/guides/bathroom"
               className="inline-flex items-center justify-center px-10 py-4 rounded-lg bg-white text-[#C8956C] font-medium hover:bg-[#E8D5C4] transition-colors text-lg"
             >
-              Start with the Kitchen Guide →
+              Start with the Bathroom Guide →
             </Link>
           </RevealOnScroll>
         </div>
