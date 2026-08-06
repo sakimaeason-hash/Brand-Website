@@ -104,6 +104,30 @@ describe("assessment validation", () => {
     ).toBe(false);
   });
 
+  it("rejects duplicate and overlong surface or priority selections", () => {
+    expect(
+      assessmentSchema.safeParse({
+        ...valid,
+        use: { ...valid.use, surfaces: ["smooth", "smooth"] },
+      }).success,
+    ).toBe(false);
+    expect(
+      assessmentSchema.safeParse({
+        ...valid,
+        use: {
+          ...valid.use,
+          surfaces: ["smooth", "carpet", "grass", "gravel", "uneven", "smooth"],
+        },
+      }).success,
+    ).toBe(false);
+    expect(
+      assessmentSchema.safeParse({
+        ...valid,
+        use: { ...valid.use, priorities: ["fit", "fit"] },
+      }).success,
+    ).toBe(false);
+  });
+
   it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
     "rejects non-finite provided measurements (%s)",
     (value) => {
@@ -136,6 +160,17 @@ describe("assessment privacy", () => {
         safety: { ...valid.safety, posturalAsymmetry: true },
       }),
     ).toBe(true);
+  });
+
+  it("ignores unknown truthy safety fields when aggregating risk", () => {
+    const wider: FinderAssessment & {
+      safety: FinderAssessment["safety"] & { diagnosisFlag: boolean };
+    } = {
+      ...valid,
+      safety: { ...valid.safety, diagnosisFlag: true },
+    };
+
+    expect(requiresProfessionalAssessment(wider)).toBe(false);
   });
 
   it("removes all individual safety fields without mutating the input", () => {

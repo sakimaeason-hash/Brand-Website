@@ -3,8 +3,8 @@ import { createElement, StrictMode } from "react";
 import type { PropsWithChildren } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-  DEFAULT_ASSESSMENT,
   WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
+  createDefaultAssessment,
   useWheelchairAssessment,
 } from "./useWheelchairAssessment";
 import type { FinderAssessmentUpdate } from "./useWheelchairAssessment";
@@ -44,6 +44,25 @@ const createMemoryStorage = (): Storage => {
   };
 };
 
+const replaceLocalStorage = (descriptor: PropertyDescriptor) => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    ...descriptor,
+  });
+
+  return () => {
+    if (original) {
+      Object.defineProperty(globalThis, "localStorage", original);
+    } else {
+      Reflect.deleteProperty(globalThis, "localStorage");
+    }
+  };
+};
+
+const installLocalStorage = (storage: Storage) =>
+  replaceLocalStorage({ value: storage });
+
 const StrictWrapper = ({ children }: PropsWithChildren) =>
   createElement(StrictMode, null, children);
 
@@ -77,6 +96,164 @@ describe("useWheelchairAssessment", () => {
       expect(serialized).not.toContain("posturalAsymmetry");
       expect(serialized).not.toContain("customPositioningNeed");
     });
+  });
+
+  it("keeps memory state usable when the localStorage property getter throws", () => {
+    const restore = replaceLocalStorage({
+      get: () => {
+        throw new DOMException("Storage access blocked", "SecurityError");
+      },
+    });
+    let unmount: (() => void) | undefined;
+
+    try {
+      const hook = renderHook(() => useWheelchairAssessment());
+      unmount = hook.unmount;
+      act(() => {
+        hook.result.current.update({ heightMm: 1800 });
+        hook.result.current.next();
+      });
+      expect(hook.result.current.assessment.heightMm).toBe(1800);
+      expect(hook.result.current.step).toBe(2);
+      expect(hook.result.current.result).toBeNull();
+    } finally {
+      unmount?.();
+      restore();
+    }
+  });
+
+  it("keeps memory state usable when getItem throws", () => {
+    const storage = createMemoryStorage();
+    const restore = installLocalStorage({
+      ...storage,
+      getItem: () => {
+        throw new DOMException("Storage access blocked", "SecurityError");
+      },
+    });
+    let unmount: (() => void) | undefined;
+
+    try {
+      const hook = renderHook(() => useWheelchairAssessment());
+      unmount = hook.unmount;
+      act(() => {
+        hook.result.current.update({ heightMm: 1800 });
+        hook.result.current.next();
+      });
+      expect(hook.result.current.assessment.heightMm).toBe(1800);
+      expect(hook.result.current.step).toBe(2);
+    } finally {
+      unmount?.();
+      restore();
+    }
+  });
+
+  it("keeps memory state usable when setItem throws", () => {
+    const storage = createMemoryStorage();
+    const restore = installLocalStorage({
+      ...storage,
+      setItem: () => {
+        throw new DOMException("Storage quota exceeded", "QuotaExceededError");
+      },
+    });
+    let unmount: (() => void) | undefined;
+
+    try {
+      const hook = renderHook(() => useWheelchairAssessment());
+      unmount = hook.unmount;
+      act(() => {
+        hook.result.current.update({ heightMm: 1800 });
+        hook.result.current.next();
+      });
+      expect(hook.result.current.assessment.heightMm).toBe(1800);
+      expect(hook.result.current.step).toBe(2);
+    } finally {
+      unmount?.();
+      restore();
+    }
+  });
+
+  it("retries a failed corrupt-draft removal before the next write", async () => {
+    const backing = createMemoryStorage();
+    backing.setItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY, "not-json");
+    let removeAttempts = 0;
+    const restore = installLocalStorage({
+      ...backing,
+      removeItem: (key) => {
+        removeAttempts += 1;
+        if (removeAttempts === 1) {
+          throw new DOMException("Storage removal blocked", "SecurityError");
+        }
+        backing.removeItem(key);
+      },
+    });
+    let unmount: (() => void) | undefined;
+
+    try {
+      const hook = renderHook(() => useWheelchairAssessment());
+      unmount = hook.unmount;
+      expect(hook.result.current.assessment).toEqual(createDefaultAssessment());
+
+      act(() => {
+        hook.result.current.update({ heightMm: 1800 });
+      });
+      await waitFor(() => {
+        expect(removeAttempts).toBe(2);
+        expect(backing.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY)).toContain(
+          '"heightMm":1800',
+        );
+      });
+    } finally {
+      unmount?.();
+      restore();
+    }
+  });
+
+  it("resets memory immediately and retries a failed removal before writing again", async () => {
+    const backing = createMemoryStorage();
+    let removeAttempts = 0;
+    const restore = installLocalStorage({
+      ...backing,
+      removeItem: (key) => {
+        removeAttempts += 1;
+        if (removeAttempts === 1) {
+          throw new DOMException("Storage removal blocked", "SecurityError");
+        }
+        backing.removeItem(key);
+      },
+    });
+    let unmount: (() => void) | undefined;
+
+    try {
+      const hook = renderHook(() => useWheelchairAssessment());
+      unmount = hook.unmount;
+      act(() => {
+        hook.result.current.update({ heightMm: 1700 });
+      });
+      await waitFor(() =>
+        expect(backing.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY)).toContain(
+          '"heightMm":1700',
+        ),
+      );
+
+      act(() => {
+        hook.result.current.reset();
+      });
+      expect(hook.result.current.assessment).toEqual(createDefaultAssessment());
+      expect(hook.result.current.step).toBe(1);
+
+      act(() => {
+        hook.result.current.update({ heightMm: 1800 });
+      });
+      await waitFor(() => {
+        expect(removeAttempts).toBe(2);
+        expect(backing.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY)).toContain(
+          '"heightMm":1800',
+        );
+      });
+    } finally {
+      unmount?.();
+      restore();
+    }
   });
 
   it("restores validated non-sensitive fields and discards injected safety", async () => {
@@ -118,7 +295,7 @@ describe("useWheelchairAssessment", () => {
           localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
         ).toBeNull(),
       );
-      expect(result.current.assessment).toEqual(DEFAULT_ASSESSMENT);
+      expect(result.current.assessment).toEqual(createDefaultAssessment());
     },
   );
 
@@ -271,7 +448,59 @@ describe("useWheelchairAssessment", () => {
     });
 
     expect(result.current.step).toBe(1);
-    expect(result.current.assessment).toEqual(DEFAULT_ASSESSMENT);
+    expect(result.current.assessment).toEqual(createDefaultAssessment());
+    await waitFor(() =>
+      expect(
+        localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
+      ).toBeNull(),
+    );
+  });
+
+  it("persists a reset-then-update queued in one StrictMode act", async () => {
+    const { result } = renderHook(() => useWheelchairAssessment(), {
+      wrapper: StrictWrapper,
+    });
+    act(() => {
+      result.current.update({ heightMm: 1700 });
+    });
+    await waitFor(() =>
+      expect(
+        localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
+      ).toContain('"heightMm":1700'),
+    );
+
+    act(() => {
+      result.current.reset();
+      result.current.update({ heightMm: 1800 });
+    });
+
+    expect(result.current.assessment.heightMm).toBe(1800);
+    await waitFor(() =>
+      expect(
+        localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
+      ).toContain('"heightMm":1800'),
+    );
+  });
+
+  it("removes a draft when update-then-reset is queued in one StrictMode act", async () => {
+    const { result } = renderHook(() => useWheelchairAssessment(), {
+      wrapper: StrictWrapper,
+    });
+    act(() => {
+      result.current.update({ heightMm: 1700 });
+    });
+    await waitFor(() =>
+      expect(
+        localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
+      ).toContain('"heightMm":1700'),
+    );
+
+    act(() => {
+      result.current.update({ heightMm: 1800 });
+      result.current.reset();
+    });
+
+    expect(result.current.assessment).toEqual(createDefaultAssessment());
     await waitFor(() =>
       expect(
         localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
@@ -293,5 +522,23 @@ describe("useWheelchairAssessment", () => {
       result.current.update({ weightKg: Number.NaN });
     });
     expect(result.current.result).toBeNull();
+  });
+
+  it("creates isolated default assessment objects", () => {
+    const first = createDefaultAssessment();
+    const second = createDefaultAssessment();
+
+    expect(first).not.toBe(second);
+    expect(first.safety).not.toBe(second.safety);
+    expect(first.use).not.toBe(second.use);
+    expect(first.use.surfaces).not.toBe(second.use.surfaces);
+    expect(first.use.priorities).not.toBe(second.use.priorities);
+    first.use.surfaces.push("gravel");
+    expect(second.use.surfaces).toEqual(["smooth"]);
+  });
+
+  it("does not expose a mutable shared default assessment", async () => {
+    const hookModule = await import("./useWheelchairAssessment");
+    expect(hookModule).not.toHaveProperty("DEFAULT_ASSESSMENT");
   });
 });

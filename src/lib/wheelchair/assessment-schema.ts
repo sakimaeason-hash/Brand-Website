@@ -11,7 +11,11 @@ export const useProfileSchema = z.object({
   environment: z.enum(["indoor", "outdoor", "mixed"]),
   surfaces: z
     .array(z.enum(["smooth", "carpet", "grass", "gravel", "uneven"]))
-    .min(1),
+    .min(1)
+    .max(5)
+    .refine((surfaces) => new Set(surfaces).size === surfaces.length, {
+      message: "Select each surface only once",
+    }),
   tightSpaces: z.boolean(),
   dailyRangeKm: z.number().min(1).max(100),
   airlineTravel: z.boolean(),
@@ -22,7 +26,10 @@ export const useProfileSchema = z.object({
       z.enum(["fit", "portability", "range", "rough-terrain", "roominess"]),
     )
     .min(1)
-    .max(3),
+    .max(3)
+    .refine((priorities) => new Set(priorities).size === priorities.length, {
+      message: "Select each priority only once",
+    }),
 });
 
 const safetySchema = z.object({
@@ -79,7 +86,11 @@ export const persistedAssessmentSchema = assessmentObjectSchema
 export type AssessmentInput = z.infer<typeof assessmentSchema>;
 
 export function requiresProfessionalAssessment(assessment: FinderAssessment) {
-  return Object.values(assessment.safety).some(Boolean);
+  return (
+    assessment.safety.pressureInjuryConcern ||
+    assessment.safety.posturalAsymmetry ||
+    assessment.safety.customPositioningNeed
+  );
 }
 
 export function sanitizeForLocalStorage(assessment: FinderAssessment) {

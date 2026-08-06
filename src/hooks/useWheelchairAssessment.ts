@@ -24,7 +24,7 @@ const createSafetyAnswers = (): FinderAssessment["safety"] => ({
   customPositioningNeed: false,
 });
 
-const createDefaultAssessment = (): FinderAssessment => ({
+export const createDefaultAssessment = (): FinderAssessment => ({
   mode: "quick",
   unitSystem: "us",
   heightMm: 1727,
@@ -40,8 +40,6 @@ const createDefaultAssessment = (): FinderAssessment => ({
     priorities: ["fit"],
   },
 });
-
-export const DEFAULT_ASSESSMENT = createDefaultAssessment();
 
 type UseUpdate = Omit<Partial<FinderAssessment["use"]>, "storageMm"> & {
   storageMm?: FinderAssessment["use"]["storageMm"];
@@ -69,6 +67,36 @@ const copyDimensions = (
       }
     : undefined;
 
+const safeGet = () => {
+  try {
+    return window.localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const safeSet = (assessment: FinderAssessment) => {
+  try {
+    const serialized = JSON.stringify(sanitizeForLocalStorage(assessment));
+    window.localStorage.setItem(
+      WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
+      serialized,
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const safeRemove = () => {
+  try {
+    window.localStorage.removeItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export function useWheelchairAssessment() {
   const [assessment, setAssessment] = useState<FinderAssessment>(() =>
     createDefaultAssessment(),
@@ -76,9 +104,36 @@ export function useWheelchairAssessment() {
   const [step, setStep] = useState(FIRST_STEP);
   const [hydrated, setHydrated] = useState(false);
   const skipNextPersist = useRef(false);
+  const pendingRemoval = useRef(false);
+
+  const retryPendingRemoval = useCallback(() => {
+    if (!pendingRemoval.current) return true;
+    if (!safeRemove()) return false;
+
+    pendingRemoval.current = false;
+    return true;
+  }, []);
+
+  const readStoredAssessment = useCallback(() => {
+    if (!retryPendingRemoval()) return null;
+    return safeGet();
+  }, [retryPendingRemoval]);
+
+  const writeStoredAssessment = useCallback(
+    (value: FinderAssessment) => {
+      if (!retryPendingRemoval()) return false;
+      return safeSet(value);
+    },
+    [retryPendingRemoval],
+  );
+
+  const removeStoredAssessment = useCallback(() => {
+    pendingRemoval.current = true;
+    if (safeRemove()) pendingRemoval.current = false;
+  }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
+    const stored = readStoredAssessment();
     if (stored === null) {
       skipNextPersist.current = true;
       setHydrated(true);
@@ -88,17 +143,17 @@ export function useWheelchairAssessment() {
     try {
       const parsed = persistedAssessmentSchema.safeParse(JSON.parse(stored));
       if (!parsed.success) {
-        localStorage.removeItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
+        removeStoredAssessment();
         skipNextPersist.current = true;
       } else {
         setAssessment({ ...parsed.data, safety: createSafetyAnswers() });
       }
     } catch {
-      localStorage.removeItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
+      removeStoredAssessment();
       skipNextPersist.current = true;
     }
     setHydrated(true);
-  }, []);
+  }, [readStoredAssessment, removeStoredAssessment]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -107,13 +162,11 @@ export function useWheelchairAssessment() {
       return;
     }
 
-    localStorage.setItem(
-      WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
-      JSON.stringify(sanitizeForLocalStorage(assessment)),
-    );
-  }, [assessment, hydrated]);
+    writeStoredAssessment(assessment);
+  }, [assessment, hydrated, writeStoredAssessment]);
 
   const update = useCallback((patch: FinderAssessmentUpdate) => {
+    skipNextPersist.current = false;
     setAssessment((current) => {
       const usePatch = patch.use;
       const safetyPatch = patch.safety;
@@ -175,8 +228,8 @@ export function useWheelchairAssessment() {
     skipNextPersist.current = true;
     setAssessment(createDefaultAssessment());
     setStep(FIRST_STEP);
-    localStorage.removeItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
-  }, []);
+    removeStoredAssessment();
+  }, [removeStoredAssessment]);
 
   const result = useMemo(() => {
     if (step !== FINAL_STEP) return null;
