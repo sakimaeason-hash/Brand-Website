@@ -103,7 +103,9 @@ export function useWheelchairAssessment() {
   );
   const [step, setStep] = useState(FIRST_STEP);
   const [hydrated, setHydrated] = useState(false);
-  const skipNextPersist = useRef(false);
+  const initialAssessment = useRef(assessment);
+  const skipPersistForAssessment = useRef<FinderAssessment | null>(null);
+  const dirtyBeforeHydration = useRef(false);
   const pendingRemoval = useRef(false);
 
   const retryPendingRemoval = useCallback(() => {
@@ -135,7 +137,9 @@ export function useWheelchairAssessment() {
   useEffect(() => {
     const stored = readStoredAssessment();
     if (stored === null) {
-      skipNextPersist.current = true;
+      if (!dirtyBeforeHydration.current) {
+        skipPersistForAssessment.current = initialAssessment.current;
+      }
       setHydrated(true);
       return;
     }
@@ -144,29 +148,35 @@ export function useWheelchairAssessment() {
       const parsed = persistedAssessmentSchema.safeParse(JSON.parse(stored));
       if (!parsed.success) {
         removeStoredAssessment();
-        skipNextPersist.current = true;
-      } else {
+        if (!dirtyBeforeHydration.current) {
+          skipPersistForAssessment.current = initialAssessment.current;
+        }
+      } else if (!dirtyBeforeHydration.current) {
         setAssessment({ ...parsed.data, safety: createSafetyAnswers() });
       }
     } catch {
       removeStoredAssessment();
-      skipNextPersist.current = true;
+      if (!dirtyBeforeHydration.current) {
+        skipPersistForAssessment.current = initialAssessment.current;
+      }
     }
     setHydrated(true);
   }, [readStoredAssessment, removeStoredAssessment]);
 
   useEffect(() => {
     if (!hydrated) return;
-    if (skipNextPersist.current) {
-      skipNextPersist.current = false;
+    if (assessment === skipPersistForAssessment.current) {
+      skipPersistForAssessment.current = null;
+      retryPendingRemoval();
       return;
     }
 
+    skipPersistForAssessment.current = null;
     writeStoredAssessment(assessment);
-  }, [assessment, hydrated, writeStoredAssessment]);
+  }, [assessment, hydrated, retryPendingRemoval, writeStoredAssessment]);
 
   const update = useCallback((patch: FinderAssessmentUpdate) => {
-    skipNextPersist.current = false;
+    dirtyBeforeHydration.current = true;
     setAssessment((current) => {
       const usePatch = patch.use;
       const safetyPatch = patch.safety;
@@ -225,8 +235,10 @@ export function useWheelchairAssessment() {
   }, []);
 
   const reset = useCallback(() => {
-    skipNextPersist.current = true;
-    setAssessment(createDefaultAssessment());
+    const next = createDefaultAssessment();
+    dirtyBeforeHydration.current = true;
+    skipPersistForAssessment.current = next;
+    setAssessment(next);
     setStep(FIRST_STEP);
     removeStoredAssessment();
   }, [removeStoredAssessment]);

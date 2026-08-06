@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { createElement, StrictMode } from "react";
+import { createElement, StrictMode, useLayoutEffect } from "react";
 import type { PropsWithChildren } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
@@ -96,6 +96,29 @@ describe("useWheelchairAssessment", () => {
       expect(serialized).not.toContain("posturalAsymmetry");
       expect(serialized).not.toContain("customPositioningNeed");
     });
+  });
+
+  it("persists an update made by a consumer layout effect before hydration", async () => {
+    const useEarlyAssessmentUpdate = () => {
+      const finder = useWheelchairAssessment();
+      const { update } = finder;
+      useLayoutEffect(() => {
+        update({ heightMm: 1800 });
+      }, [update]);
+      return finder;
+    };
+    const { result } = renderHook(() => useEarlyAssessmentUpdate(), {
+      wrapper: StrictWrapper,
+    });
+
+    await waitFor(() =>
+      expect(result.current.assessment.heightMm).toBe(1800),
+    );
+    await waitFor(() =>
+      expect(
+        localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY),
+      ).toContain('"heightMm":1800'),
+    );
   });
 
   it("keeps memory state usable when the localStorage property getter throws", () => {
@@ -249,6 +272,49 @@ describe("useWheelchairAssessment", () => {
         expect(backing.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY)).toContain(
           '"heightMm":1800',
         );
+      });
+    } finally {
+      unmount?.();
+      restore();
+    }
+  });
+
+  it("retries a failed reset removal from the reset assessment effect", async () => {
+    const backing = createMemoryStorage();
+    backing.setItem(
+      WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
+      JSON.stringify(storedDraft({ heightMm: 1700 })),
+    );
+    let removeAttempts = 0;
+    const restore = installLocalStorage({
+      ...backing,
+      removeItem: (key) => {
+        removeAttempts += 1;
+        if (removeAttempts === 1) {
+          throw new DOMException("Storage removal blocked", "SecurityError");
+        }
+        backing.removeItem(key);
+      },
+    });
+    let unmount: (() => void) | undefined;
+
+    try {
+      const hook = renderHook(() => useWheelchairAssessment(), {
+        wrapper: StrictWrapper,
+      });
+      unmount = hook.unmount;
+      await waitFor(() =>
+        expect(hook.result.current.assessment.heightMm).toBe(1700),
+      );
+
+      act(() => {
+        hook.result.current.reset();
+      });
+
+      expect(hook.result.current.assessment).toEqual(createDefaultAssessment());
+      await waitFor(() => {
+        expect(removeAttempts).toBeGreaterThanOrEqual(2);
+        expect(backing.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY)).toBeNull();
       });
     } finally {
       unmount?.();
