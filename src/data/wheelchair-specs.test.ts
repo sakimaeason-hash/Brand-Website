@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { OFFICIAL_WHEELCHAIR_SPECS, getWheelchairSpec } from "./wheelchair-specs";
 import { batteryWh } from "@/lib/wheelchair/units";
+import type { WheelchairVariantSpec } from "@/lib/wheelchair/types";
 
 describe("official wheelchair specifications", () => {
   it("maps every storefront wheelchair to its official family", () => {
@@ -75,5 +76,11 @@ describe("official wheelchair specifications", () => {
 
   it("rejects unknown storefront products", () => {
     expect(() => getWheelchairSpec("unknown")).toThrow("Unknown wheelchair product: unknown");
+  });
+
+  it("returns variants compatible with the official specification contract", () => {
+    const wheelchairVariant: WheelchairVariantSpec = getWheelchairSpec("1").variants[0];
+
+    expect(wheelchairVariant.variantId).toBe("GI03H102");
   });
 });

@@ -12,52 +12,56 @@ export type Confidence = "preliminary" | "moderate" | "high";
 export type MatchBand = "best" | "good" | "potential";
 export type NoMatchKind = "professional" | "incomplete" | "hard" | "soft-conflict";
 
-export interface DimensionsMm { length: number; width: number; height: number }
+export interface DimensionsMm {
+  readonly length: number;
+  readonly width: number;
+  readonly height: number;
+}
 
 export interface SourceRecord {
-  workbookColumns: string;
-  raw: Record<string, string>;
-  status: Partial<Record<string, VerificationStatus>>;
-  notes: string[];
+  readonly workbookColumns: string;
+  readonly raw: Readonly<Record<string, string>>;
+  readonly status: Readonly<Partial<Record<string, VerificationStatus>>>;
+  readonly notes: readonly string[];
 }
 
 export interface WheelchairVariantSpec {
-  variantId: string;
-  factoryModel: string;
-  maxUserWeightKg: number;
-  seatWidthMm: number;
-  seatDepthMm: number;
-  cushionWidthMm: number | null;
-  cushionDepthMm: number | null;
-  seatHeightMm: number;
-  armrestSpacingMm: number;
-  seatToFootrestMm: number;
-  overallMm: DimensionsMm;
-  foldedMm: DimensionsMm;
-  netWeightWithoutBatteryKg: number;
-  batteryWeightKg: number | null;
-  rangeKm: number;
-  turningRadiusMm: number;
-  obstacleHeightMm: number;
-  maxSpeedKph: number;
-  frontWheelMm: number;
-  rearWheelMm: number;
-  tireClass: "solid" | "foam" | "mixed-pneumatic";
-  battery: {
-    removable: boolean;
-    chemistry: "lithium" | "lead-acid";
-    voltageV: number | null;
-    capacityAh: number;
-    manufacturerAirplaneFlag: boolean;
+  readonly variantId: string;
+  readonly factoryModel: string;
+  readonly maxUserWeightKg: number;
+  readonly seatWidthMm: number;
+  readonly seatDepthMm: number;
+  readonly cushionWidthMm: number | null;
+  readonly cushionDepthMm: number | null;
+  readonly seatHeightMm: number;
+  readonly armrestSpacingMm: number;
+  readonly seatToFootrestMm: number;
+  readonly overallMm: DimensionsMm;
+  readonly foldedMm: DimensionsMm;
+  readonly netWeightWithoutBatteryKg: number;
+  readonly batteryWeightKg: number | null;
+  readonly rangeKm: number;
+  readonly turningRadiusMm: number;
+  readonly obstacleHeightMm: number;
+  readonly maxSpeedKph: number;
+  readonly frontWheelMm: number;
+  readonly rearWheelMm: number;
+  readonly tireClass: "solid" | "foam" | "mixed-pneumatic";
+  readonly battery: {
+    readonly removable: boolean;
+    readonly chemistry: "lithium" | "lead-acid";
+    readonly voltageV: number | null;
+    readonly capacityAh: number;
+    readonly manufacturerAirplaneFlag: boolean;
   };
-  source: SourceRecord;
+  readonly source: SourceRecord;
 }
 
 export interface WheelchairProductSpec {
-  productId: string;
-  storefrontName: string;
-  officialFamily: string;
-  variants: WheelchairVariantSpec[];
+  readonly productId: string;
+  readonly storefrontName: string;
+  readonly officialFamily: string;
+  readonly variants: readonly WheelchairVariantSpec[];
 }
 
 export interface FinderAssessment {
