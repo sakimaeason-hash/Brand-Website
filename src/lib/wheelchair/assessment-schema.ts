@@ -83,8 +83,32 @@ export function requiresProfessionalAssessment(assessment: FinderAssessment) {
 }
 
 export function sanitizeForLocalStorage(assessment: FinderAssessment) {
-  const { safety: _safety, ...persistable } = assessment;
-  return persistable;
+  return {
+    mode: assessment.mode,
+    unitSystem: assessment.unitSystem,
+    heightMm: assessment.heightMm,
+    weightKg: assessment.weightKg,
+    bodyBuild: assessment.bodyBuild,
+    hipWidthMm: assessment.hipWidthMm,
+    bodySeatDepthMm: assessment.bodySeatDepthMm,
+    lowerLegMm: assessment.lowerLegMm,
+    use: {
+      environment: assessment.use.environment,
+      surfaces: [...assessment.use.surfaces],
+      tightSpaces: assessment.use.tightSpaces,
+      dailyRangeKm: assessment.use.dailyRangeKm,
+      airlineTravel: assessment.use.airlineTravel,
+      storageMm: assessment.use.storageMm
+        ? {
+            length: assessment.use.storageMm.length,
+            width: assessment.use.storageMm.width,
+            height: assessment.use.storageMm.height,
+          }
+        : undefined,
+      maxLiftKg: assessment.use.maxLiftKg,
+      priorities: [...assessment.use.priorities],
+    },
+  };
 }
 
 export function sanitizeForAccount(assessment: FinderAssessment) {

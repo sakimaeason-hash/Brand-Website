@@ -156,6 +156,54 @@ describe("assessment privacy", () => {
     expect(serialized).not.toContain("customPositioningNeed");
   });
 
+  it("allowlists persisted fields from structurally wider assessments", () => {
+    const injected: FinderAssessment & {
+      safetyNotes: string;
+      caregiverName: string;
+      use: FinderAssessment["use"] & {
+        diagnosis: string;
+        storageMm: NonNullable<FinderAssessment["use"]["storageMm"]> & {
+          storageNotes: string;
+        };
+      };
+    } = {
+      ...valid,
+      safetyNotes: "private-safety-notes",
+      caregiverName: "private-caregiver-name",
+      use: {
+        ...valid.use,
+        diagnosis: "private-diagnosis",
+        storageMm: {
+          length: 800,
+          width: 700,
+          height: 600,
+          storageNotes: "private-storage-notes",
+        },
+      },
+    };
+
+    const local = sanitizeForLocalStorage(injected);
+    const account = sanitizeForAccount(injected);
+    const serialized = `${JSON.stringify(local)}${JSON.stringify(account)}`;
+
+    [
+      "safetyNotes",
+      "caregiverName",
+      "diagnosis",
+      "storageNotes",
+      "private-safety-notes",
+      "private-caregiver-name",
+      "private-diagnosis",
+      "private-storage-notes",
+      "pressureInjuryConcern",
+      "posturalAsymmetry",
+      "customPositioningNeed",
+    ].forEach((sensitive) => expect(serialized).not.toContain(sensitive));
+    expect(local.use.surfaces).not.toBe(injected.use.surfaces);
+    expect(local.use.priorities).not.toBe(injected.use.priorities);
+    expect(local.use.storageMm).not.toBe(injected.use.storageMm);
+  });
+
   it("persists only an aggregate professional-assessment boolean for accounts", () => {
     expect(sanitizeForAccount(valid).professionalAssessmentRequired).toBe(false);
     expect(

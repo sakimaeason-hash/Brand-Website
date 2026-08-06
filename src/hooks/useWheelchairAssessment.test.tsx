@@ -7,6 +7,7 @@ import {
   WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
   useWheelchairAssessment,
 } from "./useWheelchairAssessment";
+import type { FinderAssessmentUpdate } from "./useWheelchairAssessment";
 
 const storedDraft = (overrides: Record<string, unknown> = {}) => ({
   mode: "quick",
@@ -139,6 +140,108 @@ describe("useWheelchairAssessment", () => {
     });
     expect(result.current.assessment.use.environment).toBe("outdoor");
     expect(result.current.assessment.use.dailyRangeKm).toBe(originalRange);
+  });
+
+  it("allowlists structured updates before storing them in state or storage", async () => {
+    const injectedPatch: FinderAssessmentUpdate & {
+      privateRoot: string;
+      use: NonNullable<FinderAssessmentUpdate["use"]> & {
+        diagnosis: string;
+      };
+      safety: NonNullable<FinderAssessmentUpdate["safety"]> & {
+        privateSafetyNote: string;
+      };
+    } = {
+      heightMm: 1800,
+      privateRoot: "private-root-value",
+      use: {
+        environment: "outdoor",
+        surfaces: ["gravel"],
+        priorities: ["range"],
+        diagnosis: "private-diagnosis-value",
+      },
+      safety: {
+        pressureInjuryConcern: true,
+        privateSafetyNote: "private-safety-value",
+      },
+    };
+    const { result } = renderHook(() => useWheelchairAssessment());
+
+    act(() => {
+      result.current.update(injectedPatch);
+    });
+
+    expect(result.current.assessment.heightMm).toBe(1800);
+    expect(result.current.assessment.use.environment).toBe("outdoor");
+    expect(result.current.assessment.safety.pressureInjuryConcern).toBe(true);
+    injectedPatch.use.surfaces?.push("smooth");
+    injectedPatch.use.priorities?.push("fit");
+    expect(result.current.assessment.use.surfaces).toEqual(["gravel"]);
+    expect(result.current.assessment.use.priorities).toEqual(["range"]);
+    const stateJson = JSON.stringify(result.current.assessment);
+    [
+      "privateRoot",
+      "private-root-value",
+      "diagnosis",
+      "private-diagnosis-value",
+      "privateSafetyNote",
+      "private-safety-value",
+    ].forEach((sensitive) => expect(stateJson).not.toContain(sensitive));
+
+    await waitFor(() => {
+      const persisted = localStorage.getItem(
+        WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
+      );
+      expect(persisted).not.toBeNull();
+      [
+        '"safety"',
+        "pressureInjuryConcern",
+        "posturalAsymmetry",
+        "customPositioningNeed",
+        "privateRoot",
+        "private-root-value",
+        "diagnosis",
+        "private-diagnosis-value",
+        "privateSafetyNote",
+        "private-safety-value",
+      ].forEach((sensitive) => expect(persisted).not.toContain(sensitive));
+    });
+  });
+
+  it("clears optional measurements and transport constraints explicitly", () => {
+    const { result } = renderHook(() => useWheelchairAssessment());
+
+    act(() => {
+      result.current.update({
+        hipWidthMm: 430,
+        bodySeatDepthMm: 480,
+        lowerLegMm: 400,
+        use: {
+          storageMm: { length: 800, width: 700, height: 600 },
+          maxLiftKg: 25,
+        },
+      });
+    });
+    expect(result.current.assessment.use.storageMm).toEqual({
+      length: 800,
+      width: 700,
+      height: 600,
+    });
+
+    act(() => {
+      result.current.update({
+        hipWidthMm: undefined,
+        bodySeatDepthMm: undefined,
+        lowerLegMm: undefined,
+        use: { storageMm: undefined, maxLiftKg: undefined },
+      });
+    });
+
+    expect(result.current.assessment.hipWidthMm).toBeUndefined();
+    expect(result.current.assessment.bodySeatDepthMm).toBeUndefined();
+    expect(result.current.assessment.lowerLegMm).toBeUndefined();
+    expect(result.current.assessment.use.storageMm).toBeUndefined();
+    expect(result.current.assessment.use.maxLiftKg).toBeUndefined();
   });
 
   it("clamps steps and reset leaves no persisted draft", async () => {

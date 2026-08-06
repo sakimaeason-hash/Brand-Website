@@ -7,7 +7,10 @@ import {
   sanitizeForLocalStorage,
 } from "@/lib/wheelchair/assessment-schema";
 import { recommendWheelchairs } from "@/lib/wheelchair/recommend";
-import type { FinderAssessment } from "@/lib/wheelchair/types";
+import type {
+  DimensionsMm,
+  FinderAssessment,
+} from "@/lib/wheelchair/types";
 
 export const WHEELCHAIR_ASSESSMENT_STORAGE_KEY =
   "goldseason:wheelchair-finder:v1";
@@ -52,18 +55,19 @@ export type FinderAssessmentUpdate = Omit<
   use?: UseUpdate;
 };
 
-const mergeUseUpdate = (
-  current: FinderAssessment["use"],
-  update: UseUpdate,
-): FinderAssessment["use"] => {
-  const next = { ...current, ...update };
-  if (!Object.prototype.hasOwnProperty.call(update, "storageMm")) return next;
+const hasOwn = (value: object, field: PropertyKey) =>
+  Object.prototype.hasOwnProperty.call(value, field);
 
-  return {
-    ...next,
-    storageMm: update.storageMm,
-  };
-};
+const copyDimensions = (
+  dimensions: DimensionsMm | undefined,
+): DimensionsMm | undefined =>
+  dimensions
+    ? {
+        length: dimensions.length,
+        width: dimensions.width,
+        height: dimensions.height,
+      }
+    : undefined;
 
 export function useWheelchairAssessment() {
   const [assessment, setAssessment] = useState<FinderAssessment>(() =>
@@ -110,14 +114,53 @@ export function useWheelchairAssessment() {
   }, [assessment, hydrated]);
 
   const update = useCallback((patch: FinderAssessmentUpdate) => {
-    setAssessment((current) => ({
-      ...current,
-      ...patch,
-      safety: patch.safety
-        ? { ...current.safety, ...patch.safety }
-        : current.safety,
-      use: patch.use ? mergeUseUpdate(current.use, patch.use) : current.use,
-    }));
+    setAssessment((current) => {
+      const usePatch = patch.use;
+      const safetyPatch = patch.safety;
+
+      return {
+        mode: patch.mode ?? current.mode,
+        unitSystem: patch.unitSystem ?? current.unitSystem,
+        heightMm: patch.heightMm ?? current.heightMm,
+        weightKg: patch.weightKg ?? current.weightKg,
+        bodyBuild: patch.bodyBuild ?? current.bodyBuild,
+        hipWidthMm: hasOwn(patch, "hipWidthMm")
+          ? patch.hipWidthMm
+          : current.hipWidthMm,
+        bodySeatDepthMm: hasOwn(patch, "bodySeatDepthMm")
+          ? patch.bodySeatDepthMm
+          : current.bodySeatDepthMm,
+        lowerLegMm: hasOwn(patch, "lowerLegMm")
+          ? patch.lowerLegMm
+          : current.lowerLegMm,
+        safety: {
+          pressureInjuryConcern:
+            safetyPatch?.pressureInjuryConcern ??
+            current.safety.pressureInjuryConcern,
+          posturalAsymmetry:
+            safetyPatch?.posturalAsymmetry ?? current.safety.posturalAsymmetry,
+          customPositioningNeed:
+            safetyPatch?.customPositioningNeed ??
+            current.safety.customPositioningNeed,
+        },
+        use: {
+          environment: usePatch?.environment ?? current.use.environment,
+          surfaces: [...(usePatch?.surfaces ?? current.use.surfaces)],
+          tightSpaces: usePatch?.tightSpaces ?? current.use.tightSpaces,
+          dailyRangeKm: usePatch?.dailyRangeKm ?? current.use.dailyRangeKm,
+          airlineTravel: usePatch?.airlineTravel ?? current.use.airlineTravel,
+          storageMm:
+            usePatch !== undefined && hasOwn(usePatch, "storageMm")
+              ? copyDimensions(usePatch.storageMm)
+              : copyDimensions(current.use.storageMm),
+          maxLiftKg:
+            usePatch !== undefined && hasOwn(usePatch, "maxLiftKg")
+              ? usePatch.maxLiftKg
+              : current.use.maxLiftKg,
+          priorities: [...(usePatch?.priorities ?? current.use.priorities)],
+        },
+      };
+    });
   }, []);
 
   const next = useCallback(() => {
