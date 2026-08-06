@@ -1,6 +1,14 @@
 # Wheelchair specification data quality
 
-The normalized records preserve the workbook's source text in `source.raw` and use the metric values listed below as authoritative inputs. US customary values shown by the product experience must be derived from those metric inputs. A conflict or missing value is carried in `source.status`; it must not be replaced with an estimate.
+The normalized records preserve selected rule-relevant workbook evidence in `source.raw` and use the metric values listed below as authoritative inputs. US customary values shown by the product experience must be derived from those metric inputs. A conflict or missing value is carried in `source.status`; it must not be replaced with an estimate.
+
+## Source registry
+
+| File | Sheet | Received | Reviewed | SHA-256 |
+| --- | --- | --- | --- | --- |
+| `孵化四部产品全线表（Parameters of all the products）.xlsx` | `电动轮椅Wheelchair` | 2026-08-05 | 2026-08-05 | `6EAFAFBF61DDCD8D0D3146B5726A7093410BCFEB19244EA5AFCACF7C48C14E00` |
+
+The runtime catalog retains normalized values, rule-relevant raw evidence, and workbook column references. The complete external workbook remains the source of truth; the runtime catalog does not claim to preserve every workbook field.
 
 | Storefront product | SKU | Workbook columns | Authoritative metric fields | Conflicts | Missing critical values | Affected rule | UI treatment |
 | --- | --- | --- | --- | --- | --- | --- | --- |
