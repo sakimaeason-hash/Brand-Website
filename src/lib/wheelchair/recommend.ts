@@ -7,6 +7,8 @@ import type {
 } from "./types";
 import { batteryWh } from "./units";
 
+// The catalog has no manufacturer-verified side or inverted storage orientation.
+// Fail closed by keeping the height axis upright and only rotating the footprint.
 const permutations = (dimensions: DimensionsMm): DimensionsMm[] => [
   {
     length: dimensions.length,
@@ -14,29 +16,9 @@ const permutations = (dimensions: DimensionsMm): DimensionsMm[] => [
     height: dimensions.height,
   },
   {
-    length: dimensions.length,
-    width: dimensions.height,
-    height: dimensions.width,
-  },
-  {
     length: dimensions.width,
     width: dimensions.length,
     height: dimensions.height,
-  },
-  {
-    length: dimensions.width,
-    width: dimensions.height,
-    height: dimensions.length,
-  },
-  {
-    length: dimensions.height,
-    width: dimensions.length,
-    height: dimensions.width,
-  },
-  {
-    length: dimensions.height,
-    width: dimensions.width,
-    height: dimensions.length,
   },
 ];
 
@@ -59,6 +41,7 @@ export function evaluateHardConstraints(
   assessment: FinderAssessment,
   variant: WheelchairVariantSpec,
 ): ExclusionCode[] {
+  // Callers must validate the assessment with the assessment schema before evaluation.
   const exclusions: ExclusionCode[] = [];
   const safety = assessment.safety;
 

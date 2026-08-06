@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getWheelchairSpec } from "@/data/wheelchair-specs";
-import type { FinderAssessment } from "./types";
+import { FINDER_RULES } from "./rules-config";
+import type { FinderAssessment, WheelchairVariantSpec } from "./types";
 import { evaluateHardConstraints, fitsStorage, liftWeightKg } from "./recommend";
 import { inchesToMm, lbToKg, milesToKm } from "./units";
 
@@ -27,6 +28,50 @@ const assessment: FinderAssessment = {
     priorities: ["fit"],
   },
 };
+
+const airlineAssessment: FinderAssessment = {
+  ...assessment,
+  use: { ...assessment.use, airlineTravel: true },
+};
+
+const airlineBaseVariant = getWheelchairSpec("1").variants[0];
+const airlineFailureCases: ReadonlyArray<{
+  name: string;
+  variant: WheelchairVariantSpec;
+}> = [
+  {
+    name: "battery watt-hours exceed 300 Wh",
+    variant: {
+      ...airlineBaseVariant,
+      battery: { ...airlineBaseVariant.battery, voltageV: 31 },
+    },
+  },
+  {
+    name: "battery chemistry is not lithium",
+    variant: {
+      ...airlineBaseVariant,
+      battery: { ...airlineBaseVariant.battery, chemistry: "lead-acid" },
+    },
+  },
+  {
+    name: "battery is not removable",
+    variant: {
+      ...airlineBaseVariant,
+      battery: { ...airlineBaseVariant.battery, removable: false },
+    },
+  },
+  {
+    name: "manufacturer airplane flag is false",
+    variant: {
+      ...airlineBaseVariant,
+      battery: { ...airlineBaseVariant.battery, manufacturerAirplaneFlag: false },
+    },
+  },
+  {
+    name: "battery voltage is unknown",
+    variant: getWheelchairSpec("2").variants[0],
+  },
+];
 
 describe("hard safety filters", () => {
   it.each([
@@ -72,25 +117,25 @@ describe("hard safety filters", () => {
     );
   });
 
-  it("checks all six folded-storage orientations", () => {
+  it("fails closed on side storage and only rotates length and width while upright", () => {
     const item = { length: 1, width: 2, height: 3 };
-    const orientations = [
-      { length: 1, width: 2, height: 3 },
-      { length: 1, width: 3, height: 2 },
-      { length: 2, width: 1, height: 3 },
-      { length: 2, width: 3, height: 1 },
-      { length: 3, width: 1, height: 2 },
-      { length: 3, width: 2, height: 1 },
-    ];
 
-    expect(orientations.every((storage) => fitsStorage(item, storage))).toBe(true);
+    expect(fitsStorage(item, { length: 3, width: 2, height: 1 })).toBe(false);
+    expect(fitsStorage(item, { length: 2, width: 1, height: 3 })).toBe(true);
 
     const variant = getWheelchairSpec("1").variants[0];
-    const fitsRotated = {
+    const unsupportedSideStorage = {
       ...assessment,
       use: {
         ...assessment.use,
         storageMm: { length: 850, width: 550, height: 350 },
+      },
+    };
+    const fitsUprightRotated = {
+      ...assessment,
+      use: {
+        ...assessment.use,
+        storageMm: { length: 550, width: 350, height: 850 },
       },
     };
     const tooSmall = {
@@ -101,17 +146,28 @@ describe("hard safety filters", () => {
       },
     };
 
-    expect(evaluateHardConstraints(fitsRotated, variant)).not.toContain("storage-too-small");
+    expect(evaluateHardConstraints(unsupportedSideStorage, variant)).toContain(
+      "storage-too-small",
+    );
+    expect(evaluateHardConstraints(fitsUprightRotated, variant)).not.toContain(
+      "storage-too-small",
+    );
     expect(evaluateHardConstraints(tooSmall, variant)).toContain("storage-too-small");
   });
 
-  it("requires known compliant watt-hours for an airline request", () => {
-    const airline = { ...assessment, use: { ...assessment.use, airlineTravel: true } };
-
-    expect(evaluateHardConstraints(airline, getWheelchairSpec("1").variants[0])).not.toContain(
+  it.each(airlineFailureCases)("rejects airline travel when $name", ({ variant }) => {
+    expect(evaluateHardConstraints(airlineAssessment, variant)).toContain(
       "airline-not-verified",
     );
-    expect(evaluateHardConstraints(airline, getWheelchairSpec("2").variants[0])).toContain(
+  });
+
+  it("accepts an otherwise compliant removable lithium battery at exactly 300 Wh", () => {
+    const atLimit = {
+      ...airlineBaseVariant,
+      battery: { ...airlineBaseVariant.battery, voltageV: 30 },
+    };
+
+    expect(evaluateHardConstraints(airlineAssessment, atLimit)).not.toContain(
       "airline-not-verified",
     );
   });
@@ -163,6 +219,49 @@ describe("hard safety filters", () => {
     expect(liftWeightKg(removable)).toBe(removable.netWeightWithoutBatteryKg);
     expect(liftWeightKg(fixedUnknown)).toBeNull();
     expect(liftWeightKg({ ...fixedUnknown, batteryWeightKg: 2 })).toBe(31);
+  });
+
+  it("blocks a product when its fixed-battery lift weight is unknown", () => {
+    const result = evaluateHardConstraints(
+      {
+        ...assessment,
+        use: { ...assessment.use, maxLiftKg: 30 },
+      },
+      getWheelchairSpec("7").variants[0],
+    );
+
+    expect(result).toEqual(["lift-data-missing"]);
+  });
+
+  it("uses a strict upper lift-weight limit", () => {
+    const variant = getWheelchairSpec("1").variants[0];
+    const atLimit = {
+      ...assessment,
+      use: { ...assessment.use, maxLiftKg: variant.netWeightWithoutBatteryKg },
+    };
+    const belowRequiredWeight = {
+      ...assessment,
+      use: { ...assessment.use, maxLiftKg: variant.netWeightWithoutBatteryKg - 0.01 },
+    };
+
+    expect(evaluateHardConstraints(atLimit, variant)).not.toContain("too-heavy-to-lift");
+    expect(evaluateHardConstraints(belowRequiredWeight, variant)).toEqual([
+      "too-heavy-to-lift",
+    ]);
+  });
+
+  it("blocks a seat whose depth exceeds the shortfall hard limit", () => {
+    const variant = getWheelchairSpec("1").variants[0];
+    const result = evaluateHardConstraints(
+      {
+        ...assessment,
+        bodySeatDepthMm:
+          variant.seatDepthMm + FINDER_RULES.seatDepth.shortfallHardLimitMm + 1,
+      },
+      variant,
+    );
+
+    expect(result).toEqual(["seat-too-shallow"]);
   });
 
   it("deduplicates simultaneous exclusions", () => {
