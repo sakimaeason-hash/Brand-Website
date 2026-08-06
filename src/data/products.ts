@@ -1,26 +1,34 @@
 export interface Product {
-  id: string;
-  name: string;
-  tagline: string;
-  price: number;
-  originalPrice?: number;
-  category: "scooter" | "wheelchair";
-  badge?: string;
-  rating: number;
-  reviews: number;
-  images: string[];
-  colors: string[];
-  colorNames: string[];
-  features: string[];
-  weight?: string;
-  range?: string;
-  seatWidth?: string;
-  maxSpeed?: string;
-  warranty?: string;
-  amazonLink?: string;
+  readonly id: string;
+  readonly name: string;
+  readonly tagline: string;
+  readonly price: number;
+  readonly originalPrice?: number;
+  readonly category: "scooter" | "wheelchair";
+  readonly badge?: string;
+  readonly rating: number;
+  readonly reviews: number;
+  readonly images: readonly string[];
+  readonly colors: readonly string[];
+  readonly colorNames: readonly string[];
+  readonly features: readonly string[];
+  readonly weight?: string;
+  readonly range?: string;
+  readonly seatWidth?: string;
+  readonly maxSpeed?: string;
+  readonly warranty?: string;
+  readonly amazonLink?: string;
 }
 
-export const products: Product[] = [
+export interface WheelchairProduct extends Product {
+  readonly category: "wheelchair";
+  readonly weight: string;
+  readonly range: string;
+  readonly seatWidth: string;
+  readonly maxSpeed: string;
+}
+
+const rawProducts: Product[] = [
   // Electric Scooters - Travel Air S Series
   {
     id: "s1",
@@ -252,10 +260,27 @@ export const products: Product[] = [
   },
 ];
 
-export const wheelchairProducts = products.filter(
-  (product): product is Product => product.category === "wheelchair"
+function freezeProduct(product: Product): Product {
+  return Object.freeze({
+    ...product,
+    images: Object.freeze([...product.images]),
+    colors: Object.freeze([...product.colors]),
+    colorNames: Object.freeze([...product.colorNames]),
+    features: Object.freeze([...product.features]),
+  });
+}
+
+export const products: readonly Product[] = Object.freeze(
+  rawProducts.map(freezeProduct)
 );
 
-export const productById = new Map(
+export const wheelchairProducts: readonly WheelchairProduct[] = Object.freeze(
+  products.filter(
+    (product): product is WheelchairProduct =>
+      product.category === "wheelchair"
+  )
+);
+
+export const productById: ReadonlyMap<string, Product> = new Map(
   products.map((product) => [product.id, product])
 );
