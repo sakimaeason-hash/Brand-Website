@@ -253,7 +253,7 @@ export const products: Product[] = [
 ];
 
 export const wheelchairProducts = products.filter(
-  (product) => product.category === "wheelchair"
+  (product): product is Product => product.category === "wheelchair"
 );
 
 export const productById = new Map(
