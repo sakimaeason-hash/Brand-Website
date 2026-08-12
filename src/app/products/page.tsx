@@ -146,6 +146,11 @@ export default function ProductsPage() {
               Engineered for independence, designed for comfort. Explore our
               award-winning collection of electric wheelchairs and scooters.
             </motion.p>
+            <div className="mt-6 flex justify-center">
+              <Link href="/wheelchair-finder" className="btn-primary text-base px-8 py-3">
+                Find My Wheelchair
+              </Link>
+            </div>
 
             <motion.div
               className="mb-8"
@@ -434,7 +439,7 @@ export default function ProductsPage() {
                       onMouseLeave={() => setHoveredProduct(null)}
                     >
                       <HoverScale scale={1.02}>
-                        <div className="editorial-card overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+                        <div id={`product-${product.id}`} className="editorial-card overflow-hidden group hover:shadow-xl transition-shadow duration-300">
                           {/* Image Area */}
                           <div className="relative aspect-square bg-gradient-to-br from-[#F5EFE9] to-[#E8D5C4] overflow-hidden">
                             <motion.div
