@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { useWheelchairAssessment } from "@/hooks/useWheelchairAssessment";
 import { inchesToMm, kgToLb, lbToKg, mmToInches, kmToMiles, milesToKm } from "@/lib/wheelchair/units";
 import type { UnitSystem } from "@/lib/wheelchair/types";
-import { productById } from "@/data/products";
 import { FinderResults } from "@/components/wheelchair/FinderResults";
 
 type MeasurementKey = "hipWidthMm" | "bodySeatDepthMm" | "lowerLegMm";
