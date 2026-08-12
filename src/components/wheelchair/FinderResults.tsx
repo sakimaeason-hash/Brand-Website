@@ -1,0 +1,30 @@
+"use client";
+
+import { useState } from "react";
+import { productById } from "@/data/products";
+import { OFFICIAL_WHEELCHAIR_SPECS } from "@/data/wheelchair-specs";
+import type { FinderAssessment, Recommendation } from "@/lib/wheelchair/types";
+
+type Props = {
+  result: { recommendations: Recommendation[] } | null;
+  assessment: FinderAssessment;
+  onEdit: () => void;
+};
+
+export function FinderResults({ result, assessment, onEdit }: Props) {
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+
+  if (!result) {
+    return <div className="card p-6"><h3 className="text-xl font-semibold">We need to review your answers</h3><p className="mt-2 text-warm-charcoal">Some answers are incomplete or outside the supported screening range.</p><button type="button" className="btn-secondary mt-5" onClick={onEdit}>Edit answers</button></div>;
+  }
+
+  if (result.recommendations.length === 0) {
+    return <div className="card border-warning p-6"><h3 className="text-xl font-semibold">No wheelchair passed every safety check</h3><p className="mt-2 text-warm-charcoal">We will not show a closest product as suitable. Recheck measurements or speak with an OT/ATP or other qualified professional.</p><button type="button" className="btn-secondary mt-5" onClick={onEdit}>Remeasure or edit scenarios</button></div>;
+  }
+
+  const toggleCompare = (id: string) => setCompareIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current);
+  const variants = compareIds.map((id) => ({ id, product: productById.get(id), variant: OFFICIAL_WHEELCHAIR_SPECS.find((item) => item.productId === id)?.variants[0] })).filter((item) => item.product && item.variant);
+
+  return <div className="space-y-5"><div className="card p-5"><h3 className="text-lg font-semibold">Assessment summary</h3><p className="mt-2 text-sm text-warm-charcoal">Body mode: {assessment.mode === "precision" ? "Precision fit" : "Quick screen"} · Environment: {assessment.use.environment} · Daily range: {assessment.use.dailyRangeKm.toFixed(1)} km</p></div>{result.recommendations.map((recommendation) => { const product = productById.get(recommendation.productId); const variant = OFFICIAL_WHEELCHAIR_SPECS.find((item) => item.productId === recommendation.productId)?.variants.find((item) => item.variantId === recommendation.variantId); if (!product || !variant) return null; const detailOpen = detailId === product.id; return <article key={recommendation.productId} className="card overflow-hidden"><div className="grid gap-5 p-5 sm:grid-cols-[180px_1fr] sm:p-6"><img src={product.images[0]} alt={product.name} className="h-44 w-full rounded-lg object-cover" /><div><div className="flex flex-wrap items-center gap-2"><span className="badge">{recommendation.band === "best" ? "Best match" : recommendation.band === "good" ? "Good match" : "Potential match"}</span><span className="text-sm text-warm-charcoal">{recommendation.score}/100 · {recommendation.confidence} confidence</span></div><h3 className="mt-3 text-xl font-semibold">{product.name}</h3><ul className="mt-3 space-y-1 text-sm text-warm-charcoal">{recommendation.reasons.map((reason) => <li key={reason}>✓ {reason}</li>)}</ul>{recommendation.warnings.length > 0 && <div className="mt-4 rounded-lg bg-blush-cream p-3 text-sm text-warm-charcoal"><p className="font-medium">Please confirm</p><ul className="mt-1 list-disc pl-5">{recommendation.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div>}<div className="mt-5 flex flex-wrap gap-3 print:hidden"><a className="btn-primary" href={product.amazonLink ?? "/products"}>View product</a><button type="button" className="btn-secondary" onClick={() => setDetailId(detailOpen ? null : product.id)}>{detailOpen ? "Hide details" : "View details"}</button><button type="button" className="btn-secondary" onClick={() => toggleCompare(product.id)}>{compareIds.includes(product.id) ? "Remove from compare" : "Add to compare"}</button></div></div></div>{detailOpen && <div className="border-t border-stone bg-cream p-5"><h4 className="font-semibold">Official variant facts</h4><p className="mt-1 text-xs text-warm-charcoal">Variant ID: {variant.variantId}</p><dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2"><div><dt className="text-warm-charcoal">Seat width / depth</dt><dd>{variant.seatWidthMm} / {variant.seatDepthMm} mm</dd></div><div><dt className="text-warm-charcoal">Rated capacity</dt><dd>{variant.maxUserWeightKg} kg</dd></div><div><dt className="text-warm-charcoal">Folded dimensions</dt><dd>{variant.foldedMm.length} × {variant.foldedMm.width} × {variant.foldedMm.height} mm</dd></div><div><dt className="text-warm-charcoal">Transport weight / range</dt><dd>{variant.netWeightWithoutBatteryKg} kg / {variant.rangeKm} km</dd></div></dl></div>}</article>; })}{variants.length > 1 && <div className="card overflow-x-auto p-5" role="region" aria-label="Wheelchair comparison"><h3 className="text-lg font-semibold">Compare selected wheelchairs</h3><table role="table" className="mt-4 min-w-full text-left text-sm"><thead><tr><th className="p-2">Fact</th>{variants.map(({ id, product }) => <th key={id} className="p-2">{product?.name}</th>)}</tr></thead><tbody><tr className="border-t border-stone"><th className="p-2">Seat width</th>{variants.map(({ id, variant }) => <td key={id} className="p-2">{variant?.seatWidthMm} mm</td>)}</tr><tr className="border-t border-stone"><th className="p-2">Range</th>{variants.map(({ id, variant }) => <td key={id} className="p-2">{variant?.rangeKm} km</td>)}</tr><tr className="border-t border-stone"><th className="p-2">Rated capacity</th>{variants.map(({ id, variant }) => <td key={id} className="p-2">{variant?.maxUserWeightKg} kg</td>)}</tr></tbody></table></div>}<div className="flex flex-wrap gap-3 print:hidden"><button type="button" className="btn-secondary" onClick={() => window.print()}>Print summary</button><button type="button" className="btn-secondary" onClick={onEdit}>Edit scenarios</button></div></div>;
+}
