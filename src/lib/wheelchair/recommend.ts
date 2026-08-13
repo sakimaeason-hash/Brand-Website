@@ -41,6 +41,21 @@ export function liftWeightKg(variant: WheelchairVariantSpec) {
   return variant.netWeightWithoutBatteryKg + variant.batteryWeightKg;
 }
 
+/** The hip-to-knee measurement is not the target wheelchair seat depth. */
+export function targetSeatDepthMm(hipToKneeMm: number) {
+  return hipToKneeMm - FINDER_RULES.seatDepth.idealBodyOffsetMm;
+}
+
+/** Footrest height above the floor = seat height - lower-leg length. */
+export function targetFootrestHeightMm(seatHeightMm: number, lowerLegMm: number) {
+  return seatHeightMm - lowerLegMm;
+}
+
+/** The catalog field is seat-surface-to-footrest, so derive its floor height. */
+export function productFootrestHeightMm(variant: WheelchairVariantSpec) {
+  return variant.seatHeightMm - variant.seatToFootrestMm;
+}
+
 export function evaluateHardConstraints(
   assessment: FinderAssessment,
   variant: WheelchairVariantSpec,
@@ -127,6 +142,48 @@ function buildDataWarnings(
       }
       return `Official ${field} data needs confirmation.`;
     });
+}
+
+function buildSoftFitWarnings(
+  assessment: FinderAssessment,
+  variant: WheelchairVariantSpec,
+): string[] {
+  if (
+    assessment.mode !== "precision" ||
+    assessment.bodySeatDepthMm === undefined ||
+    assessment.lowerLegMm === undefined
+  ) {
+    return [];
+  }
+
+  const warnings: string[] = [];
+  const bodyOffset = assessment.bodySeatDepthMm - variant.seatDepthMm;
+  if (bodyOffset < FINDER_RULES.seatDepth.bodyOffsetMinMm) {
+    const deeperBy = FINDER_RULES.seatDepth.bodyOffsetMinMm - bodyOffset;
+    warnings.push(
+      `This seat is about ${Math.round(deeperBy)} mm deeper than the recommended range for your hip-to-knee length; the usual target is 50–60 mm shorter. Confirm knee clearance before purchase.`,
+    );
+  } else if (bodyOffset > FINDER_RULES.seatDepth.bodyOffsetMaxMm) {
+    const shorterBy = bodyOffset - FINDER_RULES.seatDepth.bodyOffsetMaxMm;
+    warnings.push(
+      `This seat is about ${Math.round(shorterBy)} mm shorter than the recommended range for your hip-to-knee length; the usual target is 50–60 mm shorter. Confirm thigh support before purchase.`,
+    );
+  }
+
+  const targetFootrestHeight = targetFootrestHeightMm(
+    variant.seatHeightMm,
+    assessment.lowerLegMm,
+  );
+  const footrestDifference = Math.abs(
+    targetFootrestHeight - productFootrestHeightMm(variant),
+  );
+  if (footrestDifference > FINDER_RULES.footrest.hardToleranceMm) {
+    warnings.push(
+      `Your calculated footrest height is about ${Math.round(targetFootrestHeight)} mm above the floor; this variant's calculated footrest height differs by about ${Math.round(footrestDifference)} mm. Confirm foot support before purchase.`,
+    );
+  }
+
+  return warnings;
 }
 
 function supportWidthMm(variant: WheelchairVariantSpec) {
@@ -256,15 +313,18 @@ function scoreVariant(
     assessment.lowerLegMm !== undefined
   ) {
     const widthGap = supportWidthMm(variant) - assessment.hipWidthMm;
-    const depthClearance = assessment.bodySeatDepthMm - variant.seatDepthMm;
-    const legDifference = assessment.lowerLegMm - variant.seatToFootrestMm;
+    const targetSeatDepth = targetSeatDepthMm(assessment.bodySeatDepthMm);
+    const seatDepthDifference = variant.seatDepthMm - targetSeatDepth;
+    const targetFootrestHeight = targetFootrestHeightMm(
+      variant.seatHeightMm,
+      assessment.lowerLegMm,
+    );
+    const footrestDifference =
+      targetFootrestHeight - productFootrestHeightMm(variant);
     fitRatio =
       (closeness(widthGap - 20, 100) +
-        closeness(
-          depthClearance - FINDER_RULES.seatDepth.idealClearanceMm,
-          60,
-        ) +
-        closeness(legDifference, FINDER_RULES.footrest.hardToleranceMm)) /
+        closeness(seatDepthDifference, 60) +
+        closeness(footrestDifference, FINDER_RULES.footrest.hardToleranceMm)) /
       3;
   } else {
     const capacityMargin =
@@ -353,6 +413,7 @@ function scoreVariant(
         "Airline eligibility is not guaranteed; confirm the wheelchair and battery with the airline before travel.",
       ]
     : dataWarnings;
+  warnings.push(...buildSoftFitWarnings(assessment, variant));
 
   return {
     productId,
@@ -400,12 +461,15 @@ export function recommendWheelchairs(assessment: FinderAssessment): {
       }
     });
 
-  const recommendations = Array.from(bestByProduct.values())
-    .filter(
-      (evaluation) => evaluation.score >= FINDER_RULES.outputBands.potential,
-    )
-    .sort((left, right) =>
-      compareEvaluationQuality(left, right, (item) => item.productId),
+  const rankedEligible = Array.from(bestByProduct.values()).sort((left, right) =>
+    compareEvaluationQuality(left, right, (item) => item.productId),
+  );
+  const recommendations = rankedEligible
+    .filter((evaluation) => evaluation.score >= FINDER_RULES.outputBands.potential)
+    .concat(
+      rankedEligible.filter(
+        (evaluation) => evaluation.score < FINDER_RULES.outputBands.potential,
+      ),
     )
     .slice(0, FINDER_RULES.maxRecommendations)
     .map((evaluation) => ({

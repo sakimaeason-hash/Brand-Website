@@ -1,5 +1,8 @@
 export const FINDER_RULES = {
   seatDepth: {
+    bodyOffsetMinMm: 50,
+    bodyOffsetMaxMm: 60,
+    idealBodyOffsetMm: 55,
     kneeClearanceMinMm: 30,
     kneeClearanceMaxMm: 50,
     idealClearanceMm: 40,

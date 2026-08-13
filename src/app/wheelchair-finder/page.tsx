@@ -28,18 +28,18 @@ const measurementInfo: Record<
     warning: "Keep the tape level and do not add extra room.",
   },
   bodySeatDepthMm: {
-    title: "Body seat depth",
+    title: "Hip-to-knee length",
     image: "/wheelchair-finder/measure-seat-depth.png",
     alt: "Caregiver measuring from the back to the back of the knee",
     help: "Sit with your back against the chair. Measure your body from the back of the pelvis to the crease behind the knee — not the chair cushion.",
-    warning: "Stop at the knee crease; this leaves clearance for safe leg positioning.",
+    warning: "This is your hip-to-knee length. The target wheelchair seat depth is usually 5–6 cm shorter.",
   },
   lowerLegMm: {
     title: "Lower-leg length",
     image: "/wheelchair-finder/measure-lower-leg.png",
     alt: "Caregiver measuring from below the knee to the lowest point of the heel",
     help: "With your usual shoes on, measure from just below the knee to the lowest point of the heel or shoe sole.",
-    warning: "Keep the ruler vertical; this screens the seat-to-footrest distance.",
+    warning: "Keep the ruler vertical. Footrest height is calculated as seat height minus lower-leg length.",
   },
 };
 

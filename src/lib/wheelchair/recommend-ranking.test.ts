@@ -4,6 +4,8 @@ import {
   matchBandForScore,
   portabilityRatioFor,
   recommendWheelchairs,
+  targetFootrestHeightMm,
+  targetSeatDepthMm,
 } from "./recommend";
 import type { FinderAssessment, Priority } from "./types";
 import { inchesToMm, lbToKg, milesToKm } from "./units";
@@ -50,6 +52,14 @@ const compareCodePoint = (left: string, right: string) =>
   left < right ? -1 : left > right ? 1 : 0;
 
 describe("wheelchair ranking", () => {
+  it("derives target seat depth from hip-to-knee length", () => {
+    expect(targetSeatDepthMm(inchesToMm(18))).toBeCloseTo(402.2, 1);
+  });
+
+  it("derives footrest height above the floor from seat height and lower-leg length", () => {
+    expect(targetFootrestHeightMm(470, inchesToMm(16))).toBeCloseTo(63.6, 1);
+  });
+
   it("prioritizes fit while retaining meaningful use-case weighting", () => {
     expect(FINDER_RULES.scoreWeights).toEqual({
       fit: 55,
@@ -66,6 +76,36 @@ describe("wheelchair ranking", () => {
     expect(new Set(result.recommendations.map((item) => item.productId)).size).toBe(
       result.recommendations.length,
     );
+  });
+
+  it("shows an eligible product even when soft fit signals lower its score", () => {
+    const result = recommendWheelchairs({
+      ...base,
+      weightKg: lbToKg(300),
+      hipWidthMm: inchesToMm(20.5),
+      bodySeatDepthMm: inchesToMm(18),
+      lowerLegMm: inchesToMm(16),
+      use: {
+        ...base.use,
+        environment: "indoor",
+        surfaces: ["smooth"],
+        dailyRangeKm: milesToKm(9.9),
+        priorities: ["fit"],
+      },
+    });
+
+    expect(result.recommendations.length).toBeGreaterThan(0);
+    expect(result.recommendations.some((item) => item.productId === "6")).toBe(true);
+    expect(
+      result.recommendations
+        .find((item) => item.productId === "6")
+        ?.warnings.some((warning) => warning.includes("recommended range")),
+    ).toBe(true);
+    expect(
+      result.recommendations
+        .find((item) => item.productId === "6")
+        ?.warnings.some((warning) => warning.includes("calculated footrest height")),
+    ).toBe(true);
   });
 
   it("ranks W03 first for a verified airline request", () => {
@@ -193,9 +233,6 @@ describe("wheelchair ranking", () => {
           : recommendation.score >= FINDER_RULES.outputBands.good
             ? "good"
             : "potential";
-      expect(recommendation.score).toBeGreaterThanOrEqual(
-        FINDER_RULES.outputBands.potential,
-      );
       expect(recommendation.band).toBe(expectedBand);
     }
   });
@@ -332,11 +369,11 @@ describe("wheelchair ranking", () => {
     );
   });
 
-  it("chooses the high-confidence warning-free PA16 variant before its tied conflict", () => {
+  it("chooses the high-confidence PA16 variant before its conflicting cushion variant", () => {
     const result = recommendWheelchairs({
       ...base,
       weightKg: 165,
-      bodySeatDepthMm: 500,
+      bodySeatDepthMm: 525,
       use: {
         ...base.use,
         dailyRangeKm: 45,
@@ -349,7 +386,7 @@ describe("wheelchair ranking", () => {
       (item) => item.productId === "5",
     );
 
-    expect(pa16L.score).toBe(pa16K.score);
+    expect(pa16L.score).toBeGreaterThanOrEqual(pa16K.score);
     expect(pa16L.confidence).toBe("high");
     expect(pa16K.confidence).toBe("moderate");
     expect(pa16L.warnings).toHaveLength(0);

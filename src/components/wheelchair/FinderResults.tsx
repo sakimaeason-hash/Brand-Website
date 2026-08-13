@@ -20,7 +20,7 @@ export function FinderResults({ result, assessment, onEdit }: Props) {
   }
 
   if (result.recommendations.length === 0) {
-    return <div className="card border-warning p-6"><h3 className="text-xl font-semibold">No wheelchair passed every safety check</h3><p className="mt-2 text-warm-charcoal">We will not show a closest product as suitable. Recheck measurements or speak with an OT/ATP or other qualified professional.</p><button type="button" className="btn-secondary mt-5" onClick={onEdit}>Remeasure or edit scenarios</button></div>;
+    return <div className="card border-warning p-6"><h3 className="text-xl font-semibold">No wheelchair matches the required weight capacity and effective seat width</h3><p className="mt-2 text-warm-charcoal">These two hard checks are required before we show a product. Recheck your weight and seated hip width, or speak with an OT/ATP or other qualified professional.</p><button type="button" className="btn-secondary mt-5" onClick={onEdit}>Remeasure or edit scenarios</button></div>;
   }
 
   const toggleCompare = (id: string) => setCompareIds((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 3 ? [...current, id] : current);

@@ -10,6 +10,9 @@ describe("wheelchair units", () => {
   });
 
   it("keeps safety and scoring weights explicit", () => {
+    expect(FINDER_RULES.seatDepth.idealBodyOffsetMm).toBe(55);
+    expect(FINDER_RULES.seatDepth.bodyOffsetMinMm).toBe(50);
+    expect(FINDER_RULES.seatDepth.bodyOffsetMaxMm).toBe(60);
     expect(FINDER_RULES.seatDepth.shortfallHardLimitMm).toBe(100);
     expect(FINDER_RULES.seatDepth.kneeClearanceMinMm).toBe(30);
     expect(Object.values(FINDER_RULES.scoreWeights).reduce((a, b) => a + b, 0)).toBe(100);
