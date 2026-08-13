@@ -19,4 +19,12 @@ describe("wheelchair finder review interactions", () => {
     expect(source).toMatch(/window\.print\(\)/);
     expect(source).toMatch(/role=\"table\"/);
   });
+
+  it("supports direct keyboard entry with draft text and blur commits", () => {
+    expect(source).toMatch(/inputMode:\s*\"decimal\"/);
+    expect(source).toMatch(/inputDrafts/);
+    expect(source).toMatch(/onBlur=/);
+    expect(source).toMatch(/Object\.prototype\.hasOwnProperty/);
+    expect(source).not.toMatch(/type=\"number\"/);
+  });
 });

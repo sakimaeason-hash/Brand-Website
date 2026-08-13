@@ -8,7 +8,7 @@ export const FINDER_RULES = {
   footrest: { idealToleranceMm: 20, hardToleranceMm: 50 },
   capacity: { cautionRatio: 0.9 },
   airline: { maxRemovableLithiumWh: 300 },
-  scoreWeights: { fit: 45, environment: 25, transport: 20, preferences: 10 },
+  scoreWeights: { fit: 55, environment: 20, transport: 15, preferences: 10 },
   outputBands: { best: 85, good: 70, potential: 55 },
   maxRecommendations: 3,
 } as const;

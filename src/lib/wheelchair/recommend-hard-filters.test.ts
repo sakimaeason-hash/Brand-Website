@@ -106,6 +106,16 @@ describe("hard safety filters", () => {
     );
   });
 
+  it("hard-excludes a confirmed narrow cushion support surface", () => {
+    const variant = getWheelchairSpec("7").variants[0];
+
+    expect(variant.cushionWidthMm).toBe(440);
+    expect(variant.source.status.cushionWidthMm).toBeUndefined();
+    expect(
+      evaluateHardConstraints({ ...assessment, hipWidthMm: 450 }, variant),
+    ).toContain("seat-too-narrow");
+  });
+
   it("blocks seat depth and fixed footrest mismatches at configured boundaries", () => {
     const variant = getWheelchairSpec("1").variants[0];
 

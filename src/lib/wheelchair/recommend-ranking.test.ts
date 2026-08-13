@@ -50,6 +50,15 @@ const compareCodePoint = (left: string, right: string) =>
   left < right ? -1 : left > right ? 1 : 0;
 
 describe("wheelchair ranking", () => {
+  it("prioritizes fit while retaining meaningful use-case weighting", () => {
+    expect(FINDER_RULES.scoreWeights).toEqual({
+      fit: 55,
+      environment: 20,
+      transport: 15,
+      preferences: 10,
+    });
+  });
+
   it("returns at most three unique storefront products", () => {
     const result = recommendWheelchairs(base);
 

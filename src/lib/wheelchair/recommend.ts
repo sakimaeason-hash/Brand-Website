@@ -73,7 +73,7 @@ export function evaluateHardConstraints(
       return exclusions;
     }
 
-    const effectiveWidth = Math.min(variant.seatWidthMm, variant.armrestSpacingMm);
+    const effectiveWidth = verifiedSupportWidthMm(variant);
     if (assessment.hipWidthMm > effectiveWidth) {
       exclusions.push("seat-too-narrow");
     }
@@ -175,6 +175,17 @@ function supportWidthMm(variant: WheelchairVariantSpec) {
     variant.armrestSpacingMm,
     variant.cushionWidthMm ?? Number.POSITIVE_INFINITY,
   );
+}
+
+function verifiedSupportWidthMm(variant: WheelchairVariantSpec) {
+  const widths = [variant.seatWidthMm, variant.armrestSpacingMm];
+  const cushionStatus = variant.source.status.cushionWidthMm;
+
+  if (variant.cushionWidthMm !== null && cushionStatus !== "conflicting" && cushionStatus !== "missing") {
+    widths.push(variant.cushionWidthMm);
+  }
+
+  return Math.min(...widths);
 }
 
 const descendingRatio = (value: number, fullScoreAt: number, zeroScoreAt: number) => {

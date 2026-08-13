@@ -1,42 +1,329 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useWheelchairAssessment } from "@/hooks/useWheelchairAssessment";
-import { inchesToMm, kgToLb, lbToKg, mmToInches, kmToMiles, milesToKm } from "@/lib/wheelchair/units";
-import type { UnitSystem } from "@/lib/wheelchair/types";
 import { FinderResults } from "@/components/wheelchair/FinderResults";
+import { useWheelchairAssessment } from "@/hooks/useWheelchairAssessment";
+import {
+  inchesToMm,
+  kgToLb,
+  kmToMiles,
+  lbToKg,
+  milesToKm,
+  mmToInches,
+} from "@/lib/wheelchair/units";
+import type { UnitSystem } from "@/lib/wheelchair/types";
 
 type MeasurementKey = "hipWidthMm" | "bodySeatDepthMm" | "lowerLegMm";
-const measurementInfo: Record<MeasurementKey, { title: string; image: string; alt: string; help: string; warning: string }> = {
-  hipWidthMm: { title: "Hip width", image: "/wheelchair-finder/measure-hip-width.png", alt: "Caregiver measuring hip width at the widest point", help: "Sit upright on a firm chair. Measure horizontally across the widest part of the hips or thighs, not the waist.", warning: "Keep the tape level and do not add extra room." },
-  bodySeatDepthMm: { title: "Body seat depth", image: "/wheelchair-finder/measure-seat-depth.png", alt: "Caregiver measuring from the back to the back of the knee", help: "Sit with your back against the chair. Measure your body from the back of the pelvis to the crease behind the knee — not the chair cushion.", warning: "Stop at the knee crease; this leaves clearance for safe leg positioning." },
-  lowerLegMm: { title: "Lower-leg length", image: "/wheelchair-finder/measure-lower-leg.png", alt: "Caregiver measuring from below the knee to the lowest point of the heel", help: "With your usual shoes on, measure from just below the knee to the lowest point of the heel or shoe sole.", warning: "Keep the ruler vertical; this screens the seat-to-footrest distance." },
+type StorageDimension = "length" | "width" | "height";
+
+const measurementInfo: Record<
+  MeasurementKey,
+  { title: string; image: string; alt: string; help: string; warning: string }
+> = {
+  hipWidthMm: {
+    title: "Hip width",
+    image: "/wheelchair-finder/measure-hip-width.png",
+    alt: "Caregiver measuring hip width at the widest point",
+    help: "Sit upright on a firm chair. Measure horizontally across the widest part of the hips or thighs, not the waist.",
+    warning: "Keep the tape level and do not add extra room.",
+  },
+  bodySeatDepthMm: {
+    title: "Body seat depth",
+    image: "/wheelchair-finder/measure-seat-depth.png",
+    alt: "Caregiver measuring from the back to the back of the knee",
+    help: "Sit with your back against the chair. Measure your body from the back of the pelvis to the crease behind the knee — not the chair cushion.",
+    warning: "Stop at the knee crease; this leaves clearance for safe leg positioning.",
+  },
+  lowerLegMm: {
+    title: "Lower-leg length",
+    image: "/wheelchair-finder/measure-lower-leg.png",
+    alt: "Caregiver measuring from below the knee to the lowest point of the heel",
+    help: "With your usual shoes on, measure from just below the knee to the lowest point of the heel or shoe sole.",
+    warning: "Keep the ruler vertical; this screens the seat-to-footrest distance.",
+  },
 };
-const displayLength = (mm: number | undefined, unit: UnitSystem) => mm === undefined ? "" : unit === "us" ? mmToInches(mm).toFixed(1) : (mm / 10).toFixed(1);
-const parseNumber = (value: string) => { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : NaN; };
+
+const displayLength = (mm: number | undefined, unit: UnitSystem) =>
+  mm === undefined ? "" : unit === "us" ? mmToInches(mm).toFixed(1) : (mm / 10).toFixed(1);
+
+const parseNumber = (value: string) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : NaN;
+};
 
 export default function WheelchairFinderPage() {
   const { assessment, step, update, next, back, reset, result } = useWheelchairAssessment();
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [inputDrafts, setInputDrafts] = useState<Record<string, string>>({});
   const unit = assessment.unitSystem;
-  const labels = useMemo(() => unit === "us" ? { length: "in", height: "in", weight: "lb" } : { length: "cm", height: "cm", weight: "kg" }, [unit]);
-  const updateBasic = (field: "heightMm" | "weightKg", raw: string) => { const value = parseNumber(raw); if (!Number.isFinite(value)) return; update(field === "heightMm" ? { heightMm: unit === "us" ? inchesToMm(value) : value * 10 } : { weightKg: unit === "us" ? lbToKg(value) : value }); setErrors((current) => ({ ...current, [field]: "" })); };
-  const updateMeasurement = (field: MeasurementKey, raw: string) => { const value = parseNumber(raw); if (!Number.isFinite(value)) return; update({ [field]: unit === "us" ? inchesToMm(value) : value * 10 }); setErrors((current) => ({ ...current, [field]: "" })); };
-  const updateRange = (raw: string) => { const value = parseNumber(raw); if (!Number.isFinite(value)) return; update({ use: { dailyRangeKm: unit === "us" ? milesToKm(value) : value } }); setErrors((current) => ({ ...current, dailyRangeKm: "" })); };
-  const updateLift = (raw: string) => { if (raw.trim() === "") { update({ use: { maxLiftKg: undefined } }); return; } const value = parseNumber(raw); if (!Number.isFinite(value)) return; update({ use: { maxLiftKg: unit === "us" ? lbToKg(value) : value } }); setErrors((current) => ({ ...current, maxLiftKg: "" })); };
-  const updateStorage = (dimension: "length" | "width" | "height", raw: string) => { if (raw.trim() === "") { update({ use: { storageMm: undefined } }); return; } const value = parseNumber(raw); if (!Number.isFinite(value)) return; const current = assessment.use.storageMm ?? { length: 100, width: 100, height: 100 }; update({ use: { storageMm: { ...current, [dimension]: unit === "us" ? inchesToMm(value) : value * 10 } } }); };
-  const validateBasic = () => { const nextErrors: Record<string, string> = {}; if (assessment.heightMm < 1000 || assessment.heightMm > 2400) nextErrors.heightMm = "Enter a height between 39.4 and 94.5 in (100–240 cm)."; if (assessment.weightKg < 20 || assessment.weightKg > 275) nextErrors.weightKg = "Enter a body weight between 20 and 275 kg (44.1–606.3 lb)."; setErrors(nextErrors); return Object.keys(nextErrors).length === 0; };
-  const validateMeasurements = () => { const nextErrors: Record<string, string> = {}; if (assessment.mode === "precision") { if (!assessment.hipWidthMm || assessment.hipWidthMm < 200 || assessment.hipWidthMm > 760) nextErrors.hipWidthMm = "Enter a hip width between 7.9 and 29.9 in (20–76 cm)."; if (!assessment.bodySeatDepthMm || assessment.bodySeatDepthMm < 250 || assessment.bodySeatDepthMm > 760) nextErrors.bodySeatDepthMm = "Enter a body seat depth between 9.8 and 29.9 in (25–76 cm)."; if (!assessment.lowerLegMm || assessment.lowerLegMm < 250 || assessment.lowerLegMm > 760) nextErrors.lowerLegMm = "Enter a lower-leg length between 9.8 and 29.9 in (25–76 cm)."; } setErrors(nextErrors); return Object.keys(nextErrors).length === 0; };
-  const validateUse = () => { const nextErrors: Record<string, string> = {}; if (assessment.use.dailyRangeKm < 1 || assessment.use.dailyRangeKm > 100) nextErrors.dailyRangeKm = "Enter a daily range between 1 and 100 km."; if (assessment.use.surfaces.length < 1) nextErrors.surfaces = "Select at least one surface."; if (assessment.use.priorities.length < 1 || assessment.use.priorities.length > 3) nextErrors.priorities = "Select one to three priorities."; if (nextErrors.surfaces || nextErrors.priorities) nextErrors.dailyRangeKm = [nextErrors.dailyRangeKm, nextErrors.surfaces, nextErrors.priorities].filter(Boolean).join(" "); if (assessment.use.maxLiftKg !== undefined && (assessment.use.maxLiftKg < 2 || assessment.use.maxLiftKg > 100)) nextErrors.maxLiftKg = "Enter a lift capacity between 2 and 100 kg."; const storage = assessment.use.storageMm; if (storage && Object.values(storage).some((value) => value < 100 || value > 3000)) nextErrors.storageMm = "Each storage dimension must be between 100 and 3,000 mm."; setErrors(nextErrors); return Object.keys(nextErrors).length === 0; };
-  const advance = () => { if (step === 1 && validateBasic()) next(); else if (step === 2 && Object.values(assessment.safety).some(Boolean)) setErrors({ safety: "For your safety, automated matching pauses here. Please consult an OT/ATP or other qualified seating professional." }); else if (step === 2) { setErrors({}); next(); } else if (step === 3 && validateMeasurements()) next(); else if (step === 4 && validateUse()) next(); };
-  return <main className="min-h-screen bg-cream px-4 py-10 text-deep-espresso sm:px-6"><div className="mx-auto max-w-4xl">
-    <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="editorial-label mb-2">GoldSeason fit guide</p><h1 className="text-4xl font-semibold sm:text-5xl">Find my wheelchair</h1><p className="mt-3 max-w-2xl text-base text-warm-charcoal">A private, self-service fit screen. It is not a clinical seating assessment.</p></div><div className="flex rounded-lg border border-stone bg-pure-white p-1" aria-label="Unit system"><button type="button" aria-pressed={unit === "us"} onClick={() => update({ unitSystem: "us" })} className={`rounded-md px-3 py-2 text-sm font-medium ${unit === "us" ? "bg-deep-espresso text-pure-white" : "text-warm-charcoal"}`}>US (in/lb)</button><button type="button" aria-pressed={unit === "metric"} onClick={() => update({ unitSystem: "metric" })} className={`rounded-md px-3 py-2 text-sm font-medium ${unit === "metric" ? "bg-deep-espresso text-pure-white" : "text-warm-charcoal"}`}>Metric (cm/kg)</button></div></header>
-    <div className="mb-8" aria-label={`Step ${step} of 5`} aria-live="polite"><div className="mb-2 flex justify-between text-sm text-warm-charcoal"><span aria-current="step">Step {step} of 5</span><span>{step === 1 ? "Basics" : step === 2 ? "Safety" : step === 3 ? "Body fit" : step === 4 ? "Use" : "Review"}</span></div><div className="h-2 overflow-hidden rounded-full bg-stone"><div className="h-full rounded-full bg-amber-gold transition-all" style={{ width: `${(step / 5) * 100}%` }} /></div></div>
-    {step === 1 && <section className="card p-6 sm:p-8" aria-labelledby="basics-heading"><h2 id="basics-heading" className="text-2xl font-semibold">Start with the basics</h2><p className="mt-2 text-warm-charcoal">These values help screen capacity and overall fit. You can change units at any time.</p><div className="mt-6 grid gap-5 sm:grid-cols-2"><label className="block">Height ({labels.height})<input aria-describedby={errors.heightMm ? "height-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" type="number" min="1" step="0.1" value={unit === "us" ? mmToInches(assessment.heightMm).toFixed(1) : (assessment.heightMm / 10).toFixed(1)} onChange={(event) => updateBasic("heightMm", event.target.value)} />{errors.heightMm && <span id="height-error" role="alert" className="mt-1 block text-sm text-error">{errors.heightMm}</span>}</label><label className="block">Weight ({labels.weight})<input aria-describedby={errors.weightKg ? "weight-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" type="number" min="1" step="0.1" value={unit === "us" ? kgToLb(assessment.weightKg).toFixed(1) : assessment.weightKg.toFixed(1)} onChange={(event) => updateBasic("weightKg", event.target.value)} />{errors.weightKg && <span id="weight-error" role="alert" className="mt-1 block text-sm text-error">{errors.weightKg}</span>}</label></div><label className="mt-6 block font-medium">General body build<select className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" value={assessment.bodyBuild} onChange={(event) => update({ bodyBuild: event.target.value as "slim" | "average" | "broad" })}><option value="slim">Slim</option><option value="average">Average</option><option value="broad">Broad</option></select></label><fieldset className="mt-6"><legend className="font-medium">Measurement mode</legend><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="mode" checked={assessment.mode === "quick"} onChange={() => update({ mode: "quick" })} /> <span className="ml-2 font-medium">Quick screen</span><span className="mt-1 block pl-6 text-sm text-warm-charcoal">Height, weight, and build. Preliminary confidence.</span></label><label className="rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="mode" checked={assessment.mode === "precision"} onChange={() => update({ mode: "precision" })} /> <span className="ml-2 font-medium">Precision fit</span><span className="mt-1 block pl-6 text-sm text-warm-charcoal">Add three body measurements for a more specific screen.</span></label></div></fieldset></section>}
-    {step === 2 && <section className="card p-6 sm:p-8" aria-labelledby="safety-heading"><h2 id="safety-heading" className="text-2xl font-semibold">A quick safety check</h2><p className="mt-2 text-warm-charcoal">A yes answer pauses automated matching and guides you to professional seating support.</p><div className="mt-6 space-y-3">{([["pressureInjuryConcern", "Do you have a current pressure injury or pressure-sore concern?"], ["posturalAsymmetry", "Do you have significant postural asymmetry?"], ["customPositioningNeed", "Do you need custom positioning or specialized supports?"]] as const).map(([key, label]) => <label key={key} className="flex items-start gap-3 rounded-lg border border-stone bg-pure-white p-4"><input type="checkbox" checked={assessment.safety[key]} onChange={(event) => update({ safety: { [key]: event.target.checked } })} className="mt-1" /><span>{label}</span></label>)}</div>{errors.safety && <p role="alert" className="mt-5 rounded-lg border border-error bg-pure-white p-4 text-sm text-error">{errors.safety}</p>}</section>}
-    {step === 3 && <section aria-labelledby="body-fit-heading"><div className="mb-5"><h2 id="body-fit-heading" className="text-2xl font-semibold">Measure for a closer fit</h2><p className="mt-2 text-warm-charcoal">Ask a caregiver to help. Use a firm chair and measure in your usual shoes where noted.</p></div>{assessment.mode === "quick" ? <div className="card p-6"><p className="font-medium">Quick screen selected</p><p className="mt-2 text-warm-charcoal">No extra measurements are required. Continue to describe how and where the chair will be used.</p></div> : <div className="space-y-6">{(Object.keys(measurementInfo) as MeasurementKey[]).map((key) => { const info = measurementInfo[key]; return <article key={key} className="card overflow-hidden"><div className="grid gap-0 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]"><img src={info.image} alt={info.alt} className="h-full min-h-64 w-full object-cover" /><div className="p-5 sm:p-6"><h3 className="text-xl font-semibold">{info.title}</h3><p className="mt-2 text-warm-charcoal">{info.help}</p><label className="mt-5 block font-medium">Your measurement ({labels.length})<input aria-describedby={`${key}-help ${errors[key] ? `${key}-error` : ""}`} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" type="number" min="0" step="0.1" value={displayLength(assessment[key], unit)} onChange={(event) => updateMeasurement(key, event.target.value)} /></label><p id={`${key}-help`} className="mt-2 text-sm text-warm-charcoal">{info.warning}</p>{errors[key] && <p id={`${key}-error`} role="alert" className="mt-1 text-sm text-error">{errors[key]}</p>}</div></div></article>; })}</div>}</section>}
-    {step === 4 && <section className="card p-6 sm:p-8" aria-labelledby="use-heading"><h2 id="use-heading" className="text-2xl font-semibold">Where will you use it?</h2><p className="mt-2 text-warm-charcoal">These choices help prioritize a chair for your home, neighborhood, travel, and storage needs.</p><fieldset className="mt-6"><legend className="font-medium">Typical environment</legend><div className="mt-3 grid gap-3 sm:grid-cols-3">{(["indoor", "outdoor", "mixed"] as const).map((value) => <label key={value} className="rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="environment" checked={assessment.use.environment === value} onChange={() => update({ use: { environment: value } })} /> <span className="ml-2 capitalize">{value}</span></label>)}</div></fieldset><fieldset className="mt-6"><legend className="font-medium">Surfaces and obstacles</legend><div className="mt-3 grid gap-3 sm:grid-cols-2">{(["smooth", "carpet", "grass", "gravel", "uneven"] as const).map((surface) => <label key={surface} className="rounded-lg border border-stone bg-pure-white p-3"><input type="checkbox" checked={assessment.use.surfaces.includes(surface)} onChange={(event) => update({ use: { surfaces: event.target.checked ? assessment.use.surfaces.concat(surface) : assessment.use.surfaces.filter((item) => item !== surface) } })} /> <span className="ml-2 capitalize">{surface}</span></label>)}</div><label className="mt-3 flex items-center gap-3"><input type="checkbox" checked={assessment.use.tightSpaces} onChange={(event) => update({ use: { tightSpaces: event.target.checked } })} /> Need to maneuver in tight spaces</label></fieldset><div className="mt-6 grid gap-5 sm:grid-cols-2"><label className="block">Typical daily range ({unit === "us" ? "mi" : "km"})<input aria-describedby={errors.dailyRangeKm ? "range-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" type="number" min="0" step="0.1" value={unit === "us" ? kmToMiles(assessment.use.dailyRangeKm).toFixed(1) : assessment.use.dailyRangeKm.toFixed(1)} onChange={(event) => updateRange(event.target.value)} />{errors.dailyRangeKm && <span id="range-error" role="alert" className="mt-1 block text-sm text-error">{errors.dailyRangeKm}</span>}</label><label className="flex items-center gap-3 self-end rounded-lg border border-stone bg-pure-white p-4"><input type="checkbox" checked={assessment.use.airlineTravel} onChange={(event) => update({ use: { airlineTravel: event.target.checked } })} /> Airline travel is required</label></div><fieldset className="mt-6"><legend className="font-medium">Caregiver lifting capacity ({unit === "us" ? "lb" : "kg"}, optional)</legend><input aria-describedby={errors.maxLiftKg ? "lift-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" type="number" min="0" step="0.1" value={assessment.use.maxLiftKg === undefined ? "" : unit === "us" ? kgToLb(assessment.use.maxLiftKg).toFixed(1) : assessment.use.maxLiftKg.toFixed(1)} onChange={(event) => updateLift(event.target.value)} placeholder="Leave blank if not applicable" />{errors.maxLiftKg && <span id="lift-error" role="alert" className="mt-1 block text-sm text-error">{errors.maxLiftKg}</span>}</fieldset><fieldset className="mt-6"><legend className="font-medium">Known vehicle or closet storage space ({unit === "us" ? "in" : "cm"}, optional)</legend><div className="mt-3 grid gap-3 sm:grid-cols-3">{(["length", "width", "height"] as const).map((dimension) => <label key={dimension} className="block text-sm capitalize">{dimension}<input aria-describedby={errors.storageMm ? "storage-error" : undefined} className="mt-1 w-full rounded-lg border border-stone bg-pure-white px-3 py-2" type="number" min="0" step="0.1" value={assessment.use.storageMm ? displayLength(assessment.use.storageMm[dimension], unit) : ""} onChange={(event) => updateStorage(dimension, event.target.value)} /></label>)}</div>{errors.storageMm && <p id="storage-error" role="alert" className="mt-2 text-sm text-error">{errors.storageMm}</p>}</fieldset><fieldset className="mt-6"><legend className="font-medium">Top priorities</legend><div className="mt-3 grid gap-3 sm:grid-cols-2">{(["fit", "portability", "range", "rough-terrain", "roominess"] as const).map((priority) => <label key={priority} className="rounded-lg border border-stone bg-pure-white p-3"><input type="checkbox" checked={assessment.use.priorities.includes(priority)} onChange={(event) => update({ use: { priorities: event.target.checked ? assessment.use.priorities.concat(priority) : assessment.use.priorities.filter((item) => item !== priority) } })} /> <span className="ml-2">{priority === "rough-terrain" ? "Rough terrain" : priority.charAt(0).toUpperCase() + priority.slice(1)}</span></label>)}</div></fieldset></section>}
-    {step === 5 && <section aria-labelledby="review-heading"><div className="mb-5"><h2 id="review-heading" className="text-2xl font-semibold">Your fit screen</h2><p className="mt-2 text-warm-charcoal">Results are a product-screening aid, not a clinical seating assessment. Review fit reasons and limitations before purchase.</p></div><FinderResults result={result} assessment={assessment} onEdit={back} /></section>}
-    <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><button type="button" className="btn-ghost" onClick={step === 1 ? reset : back}>{step === 1 ? "Reset" : "Back"}</button>{step < 5 && <button type="button" className="btn-primary" onClick={advance}>Continue</button>}</div>
-  </div></main>;
+  const labels = useMemo(
+    () =>
+      unit === "us"
+        ? { length: "in", height: "in", weight: "lb" }
+        : { length: "cm", height: "cm", weight: "kg" },
+    [unit],
+  );
+
+  const inputValue = (key: string, fallback: string) =>
+    Object.prototype.hasOwnProperty.call(inputDrafts, key) ? inputDrafts[key] : fallback;
+  const handleDraft = (key: string, raw: string, apply: (value: string) => void) => {
+    setInputDrafts((current) => ({ ...current, [key]: raw }));
+    apply(raw);
+  };
+  const commitDraft = (key: string) => {
+    setInputDrafts((current) => {
+      if (!Object.prototype.hasOwnProperty.call(current, key)) return current;
+      const nextDrafts = { ...current };
+      delete nextDrafts[key];
+      return nextDrafts;
+    });
+  };
+  const changeUnit = (nextUnit: UnitSystem) => {
+    setInputDrafts({});
+    update({ unitSystem: nextUnit });
+  };
+
+  const updateBasic = (field: "heightMm" | "weightKg", raw: string) => {
+    const value = parseNumber(raw);
+    if (!Number.isFinite(value)) return;
+    update(
+      field === "heightMm"
+        ? { heightMm: unit === "us" ? inchesToMm(value) : value * 10 }
+        : { weightKg: unit === "us" ? lbToKg(value) : value },
+    );
+    setErrors((current) => ({ ...current, [field]: "" }));
+  };
+  const updateMeasurement = (field: MeasurementKey, raw: string) => {
+    const value = parseNumber(raw);
+    if (!Number.isFinite(value)) return;
+    update({ [field]: unit === "us" ? inchesToMm(value) : value * 10 });
+    setErrors((current) => ({ ...current, [field]: "" }));
+  };
+  const updateRange = (raw: string) => {
+    const value = parseNumber(raw);
+    if (!Number.isFinite(value)) return;
+    update({ use: { dailyRangeKm: unit === "us" ? milesToKm(value) : value } });
+    setErrors((current) => ({ ...current, dailyRangeKm: "" }));
+  };
+  const updateLift = (raw: string) => {
+    if (raw.trim() === "") {
+      update({ use: { maxLiftKg: undefined } });
+      return;
+    }
+    const value = parseNumber(raw);
+    if (!Number.isFinite(value)) return;
+    update({ use: { maxLiftKg: unit === "us" ? lbToKg(value) : value } });
+    setErrors((current) => ({ ...current, maxLiftKg: "" }));
+  };
+  const updateStorage = (dimension: StorageDimension, raw: string) => {
+    if (raw.trim() === "") {
+      update({ use: { storageMm: undefined } });
+      return;
+    }
+    const value = parseNumber(raw);
+    if (!Number.isFinite(value)) return;
+    const current = assessment.use.storageMm ?? { length: 100, width: 100, height: 100 };
+    update({
+      use: {
+        storageMm: {
+          ...current,
+          [dimension]: unit === "us" ? inchesToMm(value) : value * 10,
+        },
+      },
+    });
+  };
+
+  const validateBasic = () => {
+    const nextErrors: Record<string, string> = {};
+    if (assessment.heightMm < 1000 || assessment.heightMm > 2400) {
+      nextErrors.heightMm = "Enter a height between 39.4 and 94.5 in (100–240 cm).";
+    }
+    if (assessment.weightKg < 20 || assessment.weightKg > 275) {
+      nextErrors.weightKg = "Enter a body weight between 20 and 275 kg (44.1–606.3 lb).";
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+  const validateMeasurements = () => {
+    const nextErrors: Record<string, string> = {};
+    if (assessment.mode === "precision") {
+      if (!assessment.hipWidthMm || assessment.hipWidthMm < 200 || assessment.hipWidthMm > 760) {
+        nextErrors.hipWidthMm = "Enter a hip width between 7.9 and 29.9 in (20–76 cm).";
+      }
+      if (
+        !assessment.bodySeatDepthMm ||
+        assessment.bodySeatDepthMm < 250 ||
+        assessment.bodySeatDepthMm > 760
+      ) {
+        nextErrors.bodySeatDepthMm = "Enter a body seat depth between 9.8 and 29.9 in (25–76 cm).";
+      }
+      if (!assessment.lowerLegMm || assessment.lowerLegMm < 250 || assessment.lowerLegMm > 760) {
+        nextErrors.lowerLegMm = "Enter a lower-leg length between 9.8 and 29.9 in (25–76 cm).";
+      }
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+  const validateUse = () => {
+    const nextErrors: Record<string, string> = {};
+    if (assessment.use.dailyRangeKm < 1 || assessment.use.dailyRangeKm > 100) {
+      nextErrors.dailyRangeKm = "Enter a daily range between 1 and 100 km.";
+    }
+    if (assessment.use.surfaces.length < 1) nextErrors.surfaces = "Select at least one surface.";
+    if (assessment.use.priorities.length < 1 || assessment.use.priorities.length > 3) {
+      nextErrors.priorities = "Select one to three priorities.";
+    }
+    if (nextErrors.surfaces || nextErrors.priorities) {
+      nextErrors.dailyRangeKm = [
+        nextErrors.dailyRangeKm,
+        nextErrors.surfaces,
+        nextErrors.priorities,
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+    if (assessment.use.maxLiftKg !== undefined && (assessment.use.maxLiftKg < 2 || assessment.use.maxLiftKg > 100)) {
+      nextErrors.maxLiftKg = "Enter a lift capacity between 2 and 100 kg.";
+    }
+    const storage = assessment.use.storageMm;
+    if (storage && Object.values(storage).some((value) => value < 100 || value > 3000)) {
+      nextErrors.storageMm = "Each storage dimension must be between 100 and 3,000 mm.";
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+  const advance = () => {
+    if (step === 1 && validateBasic()) next();
+    else if (step === 2 && Object.values(assessment.safety).some(Boolean)) {
+      setErrors({ safety: "For your safety, automated matching pauses here. Please consult an OT/ATP or other qualified seating professional." });
+    } else if (step === 2) {
+      setErrors({});
+      next();
+    } else if (step === 3 && validateMeasurements()) next();
+    else if (step === 4 && validateUse()) next();
+  };
+
+  const numericProps = {
+    type: "text" as const,
+    inputMode: "decimal" as const,
+    autoComplete: "off" as const,
+  };
+
+  return (
+    <main className="min-h-screen bg-cream px-4 py-10 text-deep-espresso sm:px-6">
+      <div className="mx-auto max-w-4xl">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="editorial-label mb-2">GoldSeason fit guide</p>
+            <h1 className="text-4xl font-semibold sm:text-5xl">Find my wheelchair</h1>
+            <p className="mt-3 max-w-2xl text-base text-warm-charcoal">
+              A private, self-service fit screen. It is not a clinical seating assessment.
+            </p>
+          </div>
+          <div className="flex rounded-lg border border-stone bg-pure-white p-1" aria-label="Unit system">
+            <button type="button" aria-pressed={unit === "us"} onClick={() => changeUnit("us")} className={`rounded-md px-3 py-2 text-sm font-medium ${unit === "us" ? "bg-deep-espresso text-pure-white" : "text-warm-charcoal"}`}>
+              US (in/lb)
+            </button>
+            <button type="button" aria-pressed={unit === "metric"} onClick={() => changeUnit("metric")} className={`rounded-md px-3 py-2 text-sm font-medium ${unit === "metric" ? "bg-deep-espresso text-pure-white" : "text-warm-charcoal"}`}>
+              Metric (cm/kg)
+            </button>
+          </div>
+        </header>
+
+        <div className="mb-8" aria-label={`Step ${step} of 5`} aria-live="polite">
+          <div className="mb-2 flex justify-between text-sm text-warm-charcoal">
+            <span aria-current="step">Step {step} of 5</span>
+            <span>{step === 1 ? "Basics" : step === 2 ? "Safety" : step === 3 ? "Body fit" : step === 4 ? "Use" : "Review"}</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-stone">
+            <div className="h-full rounded-full bg-amber-gold transition-all" style={{ width: `${(step / 5) * 100}%` }} />
+          </div>
+        </div>
+
+        {step === 1 && (
+          <section className="card p-6 sm:p-8" aria-labelledby="basics-heading">
+            <h2 id="basics-heading" className="text-2xl font-semibold">Start with the basics</h2>
+            <p className="mt-2 text-warm-charcoal">These values help screen capacity and overall fit. You can change units at any time.</p>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <label className="block">
+                Height ({labels.height})
+                <input aria-describedby={errors.heightMm ? "height-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" {...numericProps} value={inputValue("height", unit === "us" ? mmToInches(assessment.heightMm).toFixed(1) : (assessment.heightMm / 10).toFixed(1))} onChange={(event) => handleDraft("height", event.target.value, (raw) => updateBasic("heightMm", raw))} onBlur={() => commitDraft("height")} />
+                {errors.heightMm && <span id="height-error" role="alert" className="mt-1 block text-sm text-error">{errors.heightMm}</span>}
+              </label>
+              <label className="block">
+                Weight ({labels.weight})
+                <input aria-describedby={errors.weightKg ? "weight-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" {...numericProps} value={inputValue("weight", unit === "us" ? kgToLb(assessment.weightKg).toFixed(1) : assessment.weightKg.toFixed(1))} onChange={(event) => handleDraft("weight", event.target.value, (raw) => updateBasic("weightKg", raw))} onBlur={() => commitDraft("weight")} />
+                {errors.weightKg && <span id="weight-error" role="alert" className="mt-1 block text-sm text-error">{errors.weightKg}</span>}
+              </label>
+            </div>
+            <label className="mt-6 block font-medium">
+              General body build
+              <select className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" value={assessment.bodyBuild} onChange={(event) => update({ bodyBuild: event.target.value as "slim" | "average" | "broad" })}>
+                <option value="slim">Slim</option><option value="average">Average</option><option value="broad">Broad</option>
+              </select>
+            </label>
+            <fieldset className="mt-6">
+              <legend className="font-medium">Measurement mode</legend>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="mode" checked={assessment.mode === "quick"} onChange={() => update({ mode: "quick" })} /> <span className="ml-2 font-medium">Quick screen</span><span className="mt-1 block pl-6 text-sm text-warm-charcoal">Height, weight, and build. Preliminary confidence.</span></label>
+                <label className="rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="mode" checked={assessment.mode === "precision"} onChange={() => update({ mode: "precision" })} /> <span className="ml-2 font-medium">Precision fit</span><span className="mt-1 block pl-6 text-sm text-warm-charcoal">Add three body measurements for a more specific screen.</span></label>
+              </div>
+            </fieldset>
+          </section>
+        )}
+
+        {step === 2 && (
+          <section className="card p-6 sm:p-8" aria-labelledby="safety-heading">
+            <h2 id="safety-heading" className="text-2xl font-semibold">A quick safety check</h2>
+            <p className="mt-2 text-warm-charcoal">A yes answer pauses automated matching and guides you to professional seating support.</p>
+            <div className="mt-6 space-y-3">
+              {([
+                ["pressureInjuryConcern", "Do you have a current pressure injury or pressure-sore concern?"],
+                ["posturalAsymmetry", "Do you have significant postural asymmetry?"],
+                ["customPositioningNeed", "Do you need custom positioning or specialized supports?"],
+              ] as const).map(([key, label]) => (
+                <label key={key} className="flex items-start gap-3 rounded-lg border border-stone bg-pure-white p-4"><input type="checkbox" checked={assessment.safety[key]} onChange={(event) => update({ safety: { [key]: event.target.checked } })} className="mt-1" /><span>{label}</span></label>
+              ))}
+            </div>
+            {errors.safety && <p role="alert" className="mt-5 rounded-lg border border-error bg-pure-white p-4 text-sm text-error">{errors.safety}</p>}
+          </section>
+        )}
+
+        {step === 3 && (
+          <section aria-labelledby="body-fit-heading">
+            <div className="mb-5"><h2 id="body-fit-heading" className="text-2xl font-semibold">Measure for a closer fit</h2><p className="mt-2 text-warm-charcoal">Ask a caregiver to help. Use a firm chair and measure in your usual shoes where noted.</p></div>
+            {assessment.mode === "quick" ? (
+              <div className="card p-6"><p className="font-medium">Quick screen selected</p><p className="mt-2 text-warm-charcoal">No extra measurements are required. Continue to describe how and where the chair will be used.</p></div>
+            ) : (
+              <div className="space-y-6">
+                {(Object.keys(measurementInfo) as MeasurementKey[]).map((key) => {
+                  const info = measurementInfo[key];
+                  return <article key={key} className="card overflow-hidden"><div className="grid gap-0 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]"><img src={info.image} alt={info.alt} className="h-full min-h-64 w-full object-cover" /><div className="p-5 sm:p-6"><h3 className="text-xl font-semibold">{info.title}</h3><p className="mt-2 text-warm-charcoal">{info.help}</p><label className="mt-5 block font-medium">Your measurement ({labels.length})<input aria-describedby={`${key}-help ${errors[key] ? `${key}-error` : ""}`} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" {...numericProps} value={inputValue(key, displayLength(assessment[key], unit))} onChange={(event) => handleDraft(key, event.target.value, (raw) => updateMeasurement(key, raw))} onBlur={() => commitDraft(key)} /></label><p id={`${key}-help`} className="mt-2 text-sm text-warm-charcoal">{info.warning}</p>{errors[key] && <p id={`${key}-error`} role="alert" className="mt-1 text-sm text-error">{errors[key]}</p>}</div></div></article>;
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {step === 4 && (
+          <section className="card p-6 sm:p-8" aria-labelledby="use-heading">
+            <h2 id="use-heading" className="text-2xl font-semibold">Where will you use it?</h2>
+            <p className="mt-2 text-warm-charcoal">These choices help prioritize a chair for your home, neighborhood, travel, and storage needs.</p>
+            <fieldset className="mt-6"><legend className="font-medium">Typical environment</legend><div className="mt-3 grid gap-3 sm:grid-cols-3">{(["indoor", "outdoor", "mixed"] as const).map((value) => <label key={value} className="rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="environment" checked={assessment.use.environment === value} onChange={() => update({ use: { environment: value } })} /> <span className="ml-2 capitalize">{value}</span></label>)}</div></fieldset>
+            <fieldset className="mt-6"><legend className="font-medium">Surfaces and obstacles</legend><div className="mt-3 grid gap-3 sm:grid-cols-2">{(["smooth", "carpet", "grass", "gravel", "uneven"] as const).map((surface) => <label key={surface} className="rounded-lg border border-stone bg-pure-white p-3"><input type="checkbox" checked={assessment.use.surfaces.includes(surface)} onChange={(event) => update({ use: { surfaces: event.target.checked ? assessment.use.surfaces.concat(surface) : assessment.use.surfaces.filter((item) => item !== surface) } })} /> <span className="ml-2 capitalize">{surface}</span></label>)}</div><label className="mt-3 flex items-center gap-3"><input type="checkbox" checked={assessment.use.tightSpaces} onChange={(event) => update({ use: { tightSpaces: event.target.checked } })} /> Need to maneuver in tight spaces</label></fieldset>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2">
+              <label className="block">Typical daily range ({unit === "us" ? "mi" : "km"})<input aria-describedby={errors.dailyRangeKm ? "range-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" {...numericProps} value={inputValue("dailyRange", unit === "us" ? kmToMiles(assessment.use.dailyRangeKm).toFixed(1) : assessment.use.dailyRangeKm.toFixed(1))} onChange={(event) => handleDraft("dailyRange", event.target.value, updateRange)} onBlur={() => commitDraft("dailyRange")} />{errors.dailyRangeKm && <span id="range-error" role="alert" className="mt-1 block text-sm text-error">{errors.dailyRangeKm}</span>}</label>
+              <label className="flex items-center gap-3 self-end rounded-lg border border-stone bg-pure-white p-4"><input type="checkbox" checked={assessment.use.airlineTravel} onChange={(event) => update({ use: { airlineTravel: event.target.checked } })} /> Airline travel is required</label>
+            </div>
+            <fieldset className="mt-6"><legend className="font-medium">Caregiver lifting capacity ({unit === "us" ? "lb" : "kg"}, optional)</legend><label htmlFor="max-lift" className="sr-only">Caregiver lifting capacity</label><input id="max-lift" aria-describedby={errors.maxLiftKg ? "lift-error" : undefined} className="mt-2 w-full rounded-lg border border-stone bg-pure-white px-4 py-3" {...numericProps} value={inputValue("maxLift", assessment.use.maxLiftKg === undefined ? "" : unit === "us" ? kgToLb(assessment.use.maxLiftKg).toFixed(1) : assessment.use.maxLiftKg.toFixed(1))} onChange={(event) => handleDraft("maxLift", event.target.value, updateLift)} onBlur={() => commitDraft("maxLift")} placeholder="Leave blank if not applicable" />{errors.maxLiftKg && <span id="lift-error" role="alert" className="mt-1 block text-sm text-error">{errors.maxLiftKg}</span>}</fieldset>
+            <fieldset className="mt-6"><legend className="font-medium">Known vehicle or closet storage space ({unit === "us" ? "in" : "cm"}, optional)</legend><div className="mt-3 grid gap-3 sm:grid-cols-3">{(["length", "width", "height"] as const).map((dimension) => <label key={dimension} className="block text-sm capitalize">{dimension}<input aria-describedby={errors.storageMm ? "storage-error" : undefined} className="mt-1 w-full rounded-lg border border-stone bg-pure-white px-3 py-2" {...numericProps} value={inputValue(`storage-${dimension}`, assessment.use.storageMm ? displayLength(assessment.use.storageMm[dimension], unit) : "")} onChange={(event) => handleDraft(`storage-${dimension}`, event.target.value, (raw) => updateStorage(dimension, raw))} onBlur={() => commitDraft(`storage-${dimension}`)} /></label>)}</div>{errors.storageMm && <p id="storage-error" role="alert" className="mt-2 text-sm text-error">{errors.storageMm}</p>}</fieldset>
+            <fieldset className="mt-6"><legend className="font-medium">Top priorities</legend><div className="mt-3 grid gap-3 sm:grid-cols-2">{(["fit", "portability", "range", "rough-terrain", "roominess"] as const).map((priority) => <label key={priority} className="rounded-lg border border-stone bg-pure-white p-3"><input type="checkbox" checked={assessment.use.priorities.includes(priority)} onChange={(event) => update({ use: { priorities: event.target.checked ? assessment.use.priorities.concat(priority) : assessment.use.priorities.filter((item) => item !== priority) } })} /> <span className="ml-2">{priority === "rough-terrain" ? "Rough terrain" : priority.charAt(0).toUpperCase() + priority.slice(1)}</span></label>)}</div></fieldset>
+          </section>
+        )}
+
+        {step === 5 && <section aria-labelledby="review-heading"><div className="mb-5"><h2 id="review-heading" className="text-2xl font-semibold">Your fit screen</h2><p className="mt-2 text-warm-charcoal">Results are a product-screening aid, not a clinical seating assessment. Review fit reasons and limitations before purchase.</p></div><FinderResults result={result} assessment={assessment} onEdit={back} /></section>}
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><button type="button" className="btn-ghost" onClick={step === 1 ? reset : back}>{step === 1 ? "Reset" : "Back"}</button>{step < 5 && <button type="button" className="btn-primary" onClick={advance}>Continue</button>}</div>
+      </div>
+    </main>
+  );
 }
