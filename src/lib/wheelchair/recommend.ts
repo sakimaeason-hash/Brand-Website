@@ -10,7 +10,6 @@ import type {
   VariantEvaluation,
   WheelchairVariantSpec,
 } from "./types";
-import { batteryWh } from "./units";
 
 // The catalog has no manufacturer-verified side or inverted storage orientation.
 // Fail closed by keeping the height axis upright and only rotating the footprint.
@@ -78,45 +77,6 @@ export function evaluateHardConstraints(
       exclusions.push("seat-too-narrow");
     }
 
-    const clearance = assessment.bodySeatDepthMm - variant.seatDepthMm;
-    if (clearance < FINDER_RULES.seatDepth.kneeClearanceMinMm) {
-      exclusions.push("seat-too-deep");
-    }
-    if (clearance > FINDER_RULES.seatDepth.shortfallHardLimitMm) {
-      exclusions.push("seat-too-shallow");
-    }
-
-    if (
-      Math.abs(assessment.lowerLegMm - variant.seatToFootrestMm) >
-      FINDER_RULES.footrest.hardToleranceMm
-    ) {
-      exclusions.push("footrest-mismatch");
-    }
-  }
-
-  if (assessment.use.storageMm && !fitsStorage(variant.foldedMm, assessment.use.storageMm)) {
-    exclusions.push("storage-too-small");
-  }
-
-  if (assessment.use.maxLiftKg !== undefined) {
-    const liftKg = liftWeightKg(variant);
-    if (liftKg === null) {
-      exclusions.push("lift-data-missing");
-    } else if (liftKg > assessment.use.maxLiftKg) {
-      exclusions.push("too-heavy-to-lift");
-    }
-  }
-
-  if (assessment.use.airlineTravel) {
-    const wattHours = batteryWh(variant.battery.voltageV, variant.battery.capacityAh);
-    const verified =
-      variant.battery.removable &&
-      variant.battery.chemistry === "lithium" &&
-      variant.battery.manufacturerAirplaneFlag &&
-      wattHours !== null &&
-      wattHours <= FINDER_RULES.airline.maxRemovableLithiumWh;
-
-    if (!verified) exclusions.push("airline-not-verified");
   }
 
   return Array.from(new Set(exclusions));

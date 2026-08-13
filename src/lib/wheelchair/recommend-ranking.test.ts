@@ -124,7 +124,7 @@ describe("wheelchair ranking", () => {
     );
   });
 
-  it("retains hard exclusions in evaluations without recommending excluded variants", () => {
+  it("keeps airline verification out of hard exclusions", () => {
     const result = recommendWheelchairs({
       ...base,
       use: { ...base.use, airlineTravel: true, priorities: ["portability"] },
@@ -134,13 +134,7 @@ describe("wheelchair ranking", () => {
     );
 
     expect(excluded.length).toBeGreaterThan(0);
-    expect(
-      excluded.some(
-        (evaluation) =>
-          evaluation.productId === "2" &&
-          evaluation.exclusions.includes("airline-not-verified"),
-      ),
-    ).toBe(true);
+    expect(excluded.every((evaluation) => !evaluation.exclusions.includes("airline-not-verified"))).toBe(true);
     expect(
       excluded.every((evaluation) =>
         result.recommendations.every(
@@ -298,8 +292,8 @@ describe("wheelchair ranking", () => {
     });
     const productSeven = evaluationFor(result, "7", "PA13A100");
 
-    expect(productSeven.eligible).toBe(false);
-    expect(productSeven.exclusions).toContain("lift-data-missing");
+    expect(productSeven.eligible).toBe(true);
+    expect(productSeven.exclusions).toEqual([]);
     expect(productSeven.confidence).toBe("moderate");
     expect(productSeven.warnings).toContain(
       "Official batteryWeightKg data needs confirmation.",

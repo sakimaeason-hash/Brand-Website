@@ -116,18 +116,35 @@ describe("hard safety filters", () => {
     ).toContain("seat-too-narrow");
   });
 
-  it("blocks seat depth and fixed footrest mismatches at configured boundaries", () => {
+  it("uses only capacity and effective width as hard product filters", () => {
     const variant = getWheelchairSpec("1").variants[0];
+    const result = evaluateHardConstraints(
+      {
+        ...assessment,
+        weightKg: lbToKg(331),
+        hipWidthMm: 441,
+        bodySeatDepthMm: 440,
+        lowerLegMm: 460,
+        use: {
+          ...assessment.use,
+          storageMm: { length: 1, width: 1, height: 1 },
+          maxLiftKg: 1,
+        },
+      },
+      variant,
+    );
 
-    expect(evaluateHardConstraints({ ...assessment, bodySeatDepthMm: 440 }, variant)).toContain(
-      "seat-too-deep",
-    );
-    expect(evaluateHardConstraints({ ...assessment, lowerLegMm: 460 }, variant)).toContain(
-      "footrest-mismatch",
-    );
+    expect(result).toEqual(["over-capacity", "seat-too-narrow"]);
   });
 
-  it("fails closed on side storage and only rotates length and width while upright", () => {
+  it("keeps seat depth and footrest mismatches as non-hard fit signals", () => {
+    const variant = getWheelchairSpec("1").variants[0];
+
+    expect(evaluateHardConstraints({ ...assessment, bodySeatDepthMm: 440 }, variant)).not.toContain("seat-too-deep");
+    expect(evaluateHardConstraints({ ...assessment, lowerLegMm: 460 }, variant)).not.toContain("footrest-mismatch");
+  });
+
+  it("keeps storage fit as a non-hard transport signal", () => {
     const item = { length: 1, width: 2, height: 3 };
 
     expect(fitsStorage(item, { length: 3, width: 2, height: 1 })).toBe(false);
@@ -156,19 +173,13 @@ describe("hard safety filters", () => {
       },
     };
 
-    expect(evaluateHardConstraints(unsupportedSideStorage, variant)).toContain(
-      "storage-too-small",
-    );
-    expect(evaluateHardConstraints(fitsUprightRotated, variant)).not.toContain(
-      "storage-too-small",
-    );
-    expect(evaluateHardConstraints(tooSmall, variant)).toContain("storage-too-small");
+    expect(evaluateHardConstraints(unsupportedSideStorage, variant)).not.toContain("storage-too-small");
+    expect(evaluateHardConstraints(fitsUprightRotated, variant)).not.toContain("storage-too-small");
+    expect(evaluateHardConstraints(tooSmall, variant)).not.toContain("storage-too-small");
   });
 
-  it.each(airlineFailureCases)("rejects airline travel when $name", ({ variant }) => {
-    expect(evaluateHardConstraints(airlineAssessment, variant)).toContain(
-      "airline-not-verified",
-    );
+  it.each(airlineFailureCases)("keeps airline verification as a non-hard transport signal when $name", ({ variant }) => {
+    expect(evaluateHardConstraints(airlineAssessment, variant)).not.toContain("airline-not-verified");
   });
 
   it("accepts an otherwise compliant removable lithium battery at exactly 300 Wh", () => {
@@ -231,7 +242,7 @@ describe("hard safety filters", () => {
     expect(liftWeightKg({ ...fixedUnknown, batteryWeightKg: 2 })).toBe(31);
   });
 
-  it("blocks a product when its fixed-battery lift weight is unknown", () => {
+  it("keeps unknown fixed-battery lift weight as a non-hard transport signal", () => {
     const result = evaluateHardConstraints(
       {
         ...assessment,
@@ -240,10 +251,10 @@ describe("hard safety filters", () => {
       getWheelchairSpec("7").variants[0],
     );
 
-    expect(result).toEqual(["lift-data-missing"]);
+    expect(result).not.toContain("lift-data-missing");
   });
 
-  it("uses a strict upper lift-weight limit", () => {
+  it("keeps caregiver lift limits as non-hard transport signals", () => {
     const variant = getWheelchairSpec("1").variants[0];
     const atLimit = {
       ...assessment,
@@ -255,12 +266,10 @@ describe("hard safety filters", () => {
     };
 
     expect(evaluateHardConstraints(atLimit, variant)).not.toContain("too-heavy-to-lift");
-    expect(evaluateHardConstraints(belowRequiredWeight, variant)).toEqual([
-      "too-heavy-to-lift",
-    ]);
+    expect(evaluateHardConstraints(belowRequiredWeight, variant)).not.toContain("too-heavy-to-lift");
   });
 
-  it("blocks a seat whose depth exceeds the shortfall hard limit", () => {
+  it("keeps large seat-depth shortfalls as non-hard fit signals", () => {
     const variant = getWheelchairSpec("1").variants[0];
     const result = evaluateHardConstraints(
       {
@@ -271,7 +280,7 @@ describe("hard safety filters", () => {
       variant,
     );
 
-    expect(result).toEqual(["seat-too-shallow"]);
+    expect(result).not.toContain("seat-too-shallow");
   });
 
   it("deduplicates simultaneous exclusions", () => {
@@ -293,13 +302,6 @@ describe("hard safety filters", () => {
     );
 
     expect(new Set(result).size).toBe(result.length);
-    expect(result).toEqual([
-      "over-capacity",
-      "seat-too-narrow",
-      "seat-too-deep",
-      "footrest-mismatch",
-      "storage-too-small",
-      "too-heavy-to-lift",
-    ]);
+    expect(result).toEqual(["over-capacity", "seat-too-narrow"]);
   });
 });
