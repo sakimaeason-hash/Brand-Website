@@ -1,6 +1,22 @@
 import { OFFICIAL_WHEELCHAIR_SPECS } from "./wheelchair-specs";
 import { kgToLb, mmToInches } from "@/lib/wheelchair/units";
 
+type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends object
+    ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+    : T;
+
+function deepFreeze<T>(value: T): DeepReadonly<T> {
+  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
+    for (const nestedValue of Object.values(value as Record<string, unknown>)) {
+      deepFreeze(nestedValue);
+    }
+    Object.freeze(value);
+  }
+  return value as DeepReadonly<T>;
+}
+
 export type TransportSourceKind = "fda" | "nhtsa" | "standard" | "manufacturer";
 export type FdaVerificationStatus = "not_verified" | "verified";
 
@@ -12,7 +28,7 @@ export interface TransportSource {
   readonly href: string;
 }
 
-export const TRANSPORT_SOURCES: readonly TransportSource[] = Object.freeze([
+export const TRANSPORT_SOURCES: readonly TransportSource[] = deepFreeze([
   {
     kind: "fda",
     label: "FDA medical device databases",
@@ -38,7 +54,7 @@ export interface VehicleMethod {
   readonly caution: string;
 }
 
-export const VEHICLE_METHODS: readonly VehicleMethod[] = Object.freeze([
+export const VEHICLE_METHODS: readonly VehicleMethod[] = deepFreeze([
   {
     id: "sedan",
     title: "Sedan trunk",
@@ -72,22 +88,22 @@ export interface TransportProductRow {
 
 const oneDecimal = (value: number) => Number(value.toFixed(1));
 
-export const TRANSPORT_PRODUCT_ROWS: readonly TransportProductRow[] = Object.freeze(
+export const TRANSPORT_PRODUCT_ROWS: readonly TransportProductRow[] = deepFreeze(
   OFFICIAL_WHEELCHAIR_SPECS.map((product) => {
     const spec = product.variants[0];
-    return Object.freeze({
+    return {
       productId: product.productId,
       name: product.storefrontName,
       netWeightLb: oneDecimal(kgToLb(spec.netWeightWithoutBatteryKg)),
-      foldedIn: Object.freeze({
+      foldedIn: {
         length: oneDecimal(mmToInches(spec.foldedMm.length)),
         width: oneDecimal(mmToInches(spec.foldedMm.width)),
         height: oneDecimal(mmToInches(spec.foldedMm.height)),
-      }),
+      },
       seatWidthIn: oneDecimal(mmToInches(spec.seatWidthMm)),
       removableBattery: spec.battery.removable,
       fdaStatus: FDA_VERIFICATION_STATUS,
-      sources: Object.freeze(["manufacturer", "fda"] as const),
-    });
+      sources: ["manufacturer", "fda"] as const,
+    };
   }),
 );
