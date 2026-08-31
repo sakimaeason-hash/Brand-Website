@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { RevealOnScroll, HoverScale } from "@/components/animations";
 
-export type Story = {
+type Story = {
   id: number;
   name: string;
   location: string;
@@ -14,7 +14,7 @@ export type Story = {
   image?: string;
 };
 
-export const STORIES: readonly Story[] = [
+const stories: readonly Story[] = [
   {
     id: 1,
     name: "Hadji Reyes",
@@ -103,7 +103,7 @@ const featuredStory = {
 
 const filters = ["All", "Travel", "Family", "Independence", "Support"];
 
-export function FeaturedStory() {
+function FeaturedStory() {
   return (
     <div className="max-w-3xl mx-auto text-center relative">
       <span className="editorial-label text-[#C8956C]">Featured Story</span>
@@ -133,7 +133,7 @@ export function FeaturedStory() {
   );
 }
 
-export function StoryCard({ story }: { story: Story }) {
+function StoryCard({ story }: { story: Story }) {
   const [imageFailed, setImageFailed] = useState(false);
   const imageSrc = imageFailed ? undefined : story.image;
 
@@ -200,8 +200,8 @@ export default function StoriesPage() {
 
   const filteredStories =
     activeFilter === "All"
-      ? STORIES
-      : STORIES.filter((s) => s.tags.includes(activeFilter));
+      ? stories
+      : stories.filter((s) => s.tags.includes(activeFilter));
 
   return (
     <div className="bg-cream">
