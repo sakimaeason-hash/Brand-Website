@@ -4,7 +4,17 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { RevealOnScroll, HoverScale } from "@/components/animations";
 
-const stories = [
+export type Story = {
+  id: number;
+  name: string;
+  location: string;
+  quote: string;
+  product: string;
+  tags: string[];
+  image?: string;
+};
+
+export const STORIES: readonly Story[] = [
   {
     id: 1,
     name: "Hadji Reyes",
@@ -12,6 +22,7 @@ const stories = [
     quote: "It took only 3 days since I placed the order and it arrived in perfect conditions, the speed is reasonable enough to pass safely through small doors and slim passage way, I suggest new user like me should start from the lowest speed until you get use with it for proper handling. The weight is so light even I can load and unload it in my car trunk even I'm on non weight bearing restrictions with crutches, you only need to do it carefully and safely if you have strong other leg otherwise others can easily carry and do it for you.",
     product: "GoldSeason Travel Air W 03C",
     tags: ["Travel", "New User"],
+    image: "/stories/Hadji Reyes.jpg",
   },
   {
     id: 2,
@@ -44,6 +55,7 @@ const stories = [
     quote: "This motorized wheelchair feels sturdy and well-built. The large tires handle uneven surfaces and light outdoor terrain better than I expected, making it suitable for short trips outside as well as indoor use. The 330 lb capacity gives a sense of stability, and the chair remains steady during operation. Folding it for travel is manageable, and it fits into the trunk with some effort. The battery life is decent for regular use, and the overall performance has been consistent. A dependable option for both home and outdoor use.",
     product: "GoldSeason Basic 13L",
     tags: ["Travel", "Support"],
+    image: "/stories/Eddy Simon.jpg",
   },
   {
     id: 6,
@@ -60,6 +72,7 @@ const stories = [
     quote: "Wheelchair is light weight. Only thing we had to attach was the remote and it just slid on and tighten. We were able to sample a ride as the battery came with a slight charge. Easy to maneuver and handle. Chair comes with a cushion. But a very large person would not be comfortable or fit the seat. My husband loves it!",
     product: "GoldSeason Travel Air W 03C",
     tags: ["Travel", "Comfort"],
+    image: "/stories/Michele Guess.jpg",
   },
   {
     id: 8,
@@ -68,6 +81,7 @@ const stories = [
     quote: "It's a good chair so I understand why it's heavy. Also please read manual 2 or 3 times. Practice before you take it out on outing. My wheels were flat when I got it. So you might need to put air.",
     product: "GoldSeason Power Max 16L",
     tags: ["Support", "New User"],
+    image: "/stories/SmashOhh.jpg",
   },
 ];
 
@@ -89,13 +103,75 @@ const featuredStory = {
 
 const filters = ["All", "Travel", "Family", "Independence", "Support"];
 
+export function StoryCard({ story }: { story: Story }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageSrc = imageFailed ? undefined : story.image;
+
+  return (
+    <div className="editorial-card p-6 h-full flex flex-col">
+      {imageSrc ? (
+        <div className="aspect-[4/3] mb-6 overflow-hidden rounded-xl">
+          <img
+            src={imageSrc}
+            alt={`${story.name} using a GoldSeason wheelchair`}
+            className="w-full h-full object-cover"
+            onError={() => setImageFailed(true)}
+          />
+        </div>
+      ) : null}
+
+      {/* Quote */}
+      <blockquote className="text-warm leading-relaxed mb-6 flex-grow">
+        "{story.quote.length > 200
+          ? story.quote.substring(0, 200) + "..."
+          : story.quote}"
+      </blockquote>
+
+      {/* Tags */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {story.tags.map((tag) => (
+          <span
+            key={tag}
+            className="text-xs font-medium text-[#C8956C] bg-[#C8956C]/10 px-3 py-1 rounded-full"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+
+      {/* Author */}
+      <div className="flex items-center gap-3 pt-4 border-t border-stone">
+        {imageSrc ? (
+          <img
+            src={imageSrc}
+            alt=""
+            className="w-10 h-10 rounded-full object-cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8956C] to-[#8B7355] flex items-center justify-center text-white text-sm font-bold"
+            aria-label={`${story.name} initial`}
+          >
+            {story.name.charAt(0)}
+          </div>
+        )}
+        <div>
+          <p className="font-medium text-deep-espresso text-sm">{story.name}</p>
+          <p className="text-xs text-muted">{story.product}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StoriesPage() {
   const [activeFilter, setActiveFilter] = useState("All");
 
   const filteredStories =
     activeFilter === "All"
-      ? stories
-      : stories.filter((s) => s.tags.includes(activeFilter));
+      ? STORIES
+      : STORIES.filter((s) => s.tags.includes(activeFilter));
 
   return (
     <div className="bg-cream">
@@ -240,37 +316,7 @@ export default function StoriesPage() {
             {filteredStories.map((story, index) => (
               <RevealOnScroll key={story.id} delay={index * 0.1}>
                 <HoverScale scale={1.02}>
-                  <div className="editorial-card p-6 h-full flex flex-col">
-                    {/* Quote */}
-                    <blockquote className="text-warm leading-relaxed mb-6 flex-grow">
-                      "{story.quote.length > 200
-                        ? story.quote.substring(0, 200) + "..."
-                        : story.quote}"
-                    </blockquote>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {story.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs font-medium text-[#C8956C] bg-[#C8956C]/10 px-3 py-1 rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Author */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-stone">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8956C] to-[#8B7355] flex items-center justify-center text-white text-sm font-bold">
-                        {story.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-medium text-deep-espresso text-sm">{story.name}</p>
-                        <p className="text-xs text-muted">{story.product}</p>
-                      </div>
-                    </div>
-                  </div>
+                  <StoryCard story={story} />
                 </HoverScale>
               </RevealOnScroll>
             ))}
