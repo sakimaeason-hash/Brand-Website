@@ -151,7 +151,7 @@ export function StoryCard({ story }: { story: Story }) {
         ) : (
           <div
             className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C8956C] to-[#8B7355] flex items-center justify-center text-white text-sm font-bold"
-            aria-label={`${story.name} initial`}
+            aria-hidden="true"
           >
             {story.name.charAt(0)}
           </div>
