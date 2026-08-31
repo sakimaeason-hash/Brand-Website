@@ -103,6 +103,12 @@ const worksheetFields = [
   ["helper-capacity", "Helper safe handling capacity", "lb", "Use a conservative personal limit, not a maximum effort."],
 ] as const;
 
+const photoCredits = [
+  ["Vehicle ramp and lift photographs — John Robert McPherson (CC BY-SA 4.0)", "https://commons.wikimedia.org/wiki/Category:Wheelchair_accessible_vehicles"],
+  ["Wheelchair platform scale photograph — Xavier020 (CC0)", "https://commons.wikimedia.org/wiki/File:Wheelchair_scale,_hospital_in_Shimane_prefecture_-_Jan_27,_2026.jpg"],
+  ["Securement station photograph — Metropolitan Transportation Authority (CC BY 2.0)", "https://commons.wikimedia.org/wiki/File:Quantum_Self_Securement_Station_(53067875662).jpg"],
+] as const;
+
 function SectionHeading({ number, children }: { number: string; children: ReactNode }) {
   return (
     <div className="mb-6 border-b-2 border-[#315C4A] pb-3">
@@ -402,6 +408,10 @@ export default function OutdoorTransportationGuidePage() {
               <div className="mt-6 rounded-2xl border border-[#E8E8E8] bg-white p-6 text-sm leading-6 text-[#6B6B6B]">
                 <p><strong className="text-[#2D2D2D]">Verification note:</strong> Product measurements are labeled Manufacturer spec. FDA listing not verified is shown for every row until a specific model, manufacturer, and FDA record can be matched one-to-one.</p>
                 <p className="mt-3">Review date: August 2026. Confirm current instructions and local requirements before each installation or trip.</p>
+                <p className="mt-3"><strong className="text-[#2D2D2D]">Photography:</strong> The photographs are illustrative third-party images, not GoldSeason product photos. Attribution and license details:</p>
+                <ul className="mt-2 space-y-1">
+                  {photoCredits.map(([label, href]) => <li key={href}><a href={href} target="_blank" rel="noreferrer" className="text-[#315C4A] underline-offset-4 hover:underline">{label}</a></li>)}
+                </ul>
               </div>
             </section>
 
