@@ -57,6 +57,19 @@ const guides = [
     color: "#8BA4B4",
     sections: 9,
   },
+  {
+    slug: "outdoor-transportation",
+    title: "Outdoor Transportation",
+    subtitle: "Wheelchair Travel & Loading",
+    description:
+      "A photo-first guide to measuring your vehicle, choosing a loading method, and securing light or heavy wheelchairs for everyday drives.",
+    difficulty: "Medium",
+    budget: "$0–$8,000+",
+    duration: "30 minutes – 2 weeks",
+    icon: "🚐",
+    color: "#315C4A",
+    sections: 9,
+  },
 ];
 
 const features = [
