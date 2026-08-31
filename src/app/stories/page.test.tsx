@@ -16,7 +16,7 @@ vi.mock("@/components/animations", () => ({
   HoverScale: ({ children }: { children: ReactNode }) => children,
 }));
 
-import { STORIES, StoryCard } from "./page";
+import { FeaturedStory, STORIES, StoryCard } from "./page";
 
 const expectedStoryImages = [
   { name: "Hadji Reyes", image: "/stories/Hadji Reyes.jpg" },
@@ -134,5 +134,24 @@ describe("customer stories", () => {
     ).not.toBeInTheDocument();
     expect(within(hadjiCard).queryByAltText("")).not.toBeInTheDocument();
     expectInitialFallback(hadjiCard, "H");
+  });
+});
+
+describe("featured customer story", () => {
+  it("uses a text-led Eleanor story without unverified photo placeholders", () => {
+    render(<FeaturedStory />);
+
+    expect(
+      screen.getByRole("heading", {
+        name: '"I Regained My Independence at 75"',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Eleanor Watson")).toBeInTheDocument();
+    expect(
+      screen.getByText("Seattle, WA · Goldseason Power Max01 A"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Eleanor 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Eleanor 2")).not.toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 });

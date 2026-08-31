@@ -103,6 +103,36 @@ const featuredStory = {
 
 const filters = ["All", "Travel", "Family", "Independence", "Support"];
 
+export function FeaturedStory() {
+  return (
+    <div className="max-w-3xl mx-auto text-center relative">
+      <span className="editorial-label text-[#C8956C]">Featured Story</span>
+      <h2 className="editorial-tertiary text-deep-espresso mt-3 mb-6">
+        "I Regained My Independence at 75"
+      </h2>
+      <blockquote className="text-[1.25rem] text-warm italic mb-8 leading-relaxed border-l-4 border-[#C8956C] pl-6 text-left">
+        "{featuredStory.quote}"
+      </blockquote>
+      <div className="inline-flex items-center gap-4 text-left">
+        <div
+          className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8956C] to-[#8B7355] flex items-center justify-center text-white text-xl font-bold"
+          aria-hidden="true"
+        >
+          {featuredStory.avatar}
+        </div>
+        <div>
+          <p className="font-semibold text-deep-espresso text-lg">
+            {featuredStory.name}
+          </p>
+          <p className="text-sm text-muted">
+            {featuredStory.location} · {featuredStory.product}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function StoryCard({ story }: { story: Story }) {
   const [imageFailed, setImageFailed] = useState(false);
   const imageSrc = imageFailed ? undefined : story.image;
@@ -238,43 +268,7 @@ export default function StoriesPage() {
             <div className="absolute top-0 right-0 w-64 lg:w-96 h-64 lg:h-96 bg-[#C8956C]/5 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#9CAF88]/10 rounded-full blur-2xl" />
 
-            <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center relative">
-              {/* Image Side - Magazine Grid */}
-              <div className="lg:col-span-5 order-2 lg:order-1">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="aspect-[3/4] bg-gradient-to-br from-[#C8956C]/20 to-[#E8D5C4]/30 rounded-2xl flex items-center justify-center">
-                    <span className="text-muted text-sm">Eleanor 1</span>
-                  </div>
-                  <div className="aspect-[3/4] bg-gradient-to-br from-[#9CAF88]/20 to-[#8BA4B4]/20 rounded-2xl mt-8 flex items-center justify-center">
-                    <span className="text-muted text-sm">Eleanor 2</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Content Side */}
-              <div className="lg:col-span-7 order-1 lg:order-2">
-                <span className="editorial-label text-[#C8956C]">Featured Story</span>
-                <h2 className="editorial-tertiary text-deep-espresso mt-3 mb-6">
-                  "I Regained My Independence at 75"
-                </h2>
-                <blockquote className="text-[1.25rem] text-warm italic mb-8 leading-relaxed border-l-4 border-[#C8956C] pl-6">
-                  "{featuredStory.quote}"
-                </blockquote>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8956C] to-[#8B7355] flex items-center justify-center text-white text-xl font-bold">
-                    {featuredStory.avatar}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-deep-espresso text-lg">
-                      {featuredStory.name}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {featuredStory.location} · {featuredStory.product}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <FeaturedStory />
           </div>
         </div>
       </section>
