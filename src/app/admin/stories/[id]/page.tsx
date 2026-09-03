@@ -1,0 +1,5 @@
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ContentActions } from "@/components/admin/ContentActions";
+export default async function AdminStoryDetail({ params }: { params: { id: string } }) { const story = await prisma.customerStory.findUnique({ where: { id: params.id }, include: { images: true, product: true } }); if (!story) notFound(); return <article><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8956C]">Customer Story</p><div className="mt-2 flex flex-wrap items-center gap-3"><h2 className="text-3xl font-bold text-[#3D3330]">{story.displayName}</h2><StatusBadge status={story.status} /></div><p className="mt-2 text-[#5C534E]">{story.location || "Location not provided"} · {story.images.length} image(s)</p><blockquote className="mt-8 rounded-xl border border-[#E8DDD4] bg-white p-6 leading-relaxed text-[#3D3330]">{story.quote}</blockquote><ContentActions type="stories" id={story.id} status={story.status} /></article>; }
