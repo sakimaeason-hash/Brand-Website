@@ -1,0 +1,2 @@
+import { PromotionForm } from "@/components/admin/PromotionForm";
+export default function NewPromotionPage() { return <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8956C]">Promotions</p><h2 className="mt-2 text-3xl font-bold text-[#3D3330]">Create scheduled promotion</h2><p className="mt-2 mb-8 text-[#5C534E]">Use one sale price or one percentage discount, never both.</p><PromotionForm /></div>; }

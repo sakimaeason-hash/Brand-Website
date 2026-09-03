@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     const name = result.data.name.trim()
     const email = result.data.email.trim().toLowerCase()
     const { password } = result.data
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase()
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -53,11 +54,13 @@ export async function POST(request: Request) {
         name,
         email,
         password: hashedPassword,
+        role: email === adminEmail ? "ADMIN" : "USER",
       },
       select: {
         id: true,
         name: true,
         email: true,
+        role: true,
       },
     })
 

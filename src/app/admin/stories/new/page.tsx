@@ -1,0 +1,2 @@
+import { StoryForm } from "@/components/admin/StoryForm";
+export default function NewStoryPage() { return <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8956C]">Customer Stories</p><h2 className="mt-2 text-3xl font-bold text-[#3D3330]">Add real customer story</h2><p className="mt-2 mb-8 text-[#5C534E]">Images, source and location are optional. Review consent and accuracy before publishing.</p><StoryForm /></div>; }

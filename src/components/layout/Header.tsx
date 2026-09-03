@@ -174,6 +174,15 @@ export default function Header() {
                     >
                       Order History
                     </Link>
+                    {session.user?.role === "ADMIN" && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm font-semibold text-[#C8956C] hover:bg-[#FAF7F4]"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        Admin
+                      </Link>
+                    )}
                     <button
                       onClick={() => {
                         setUserMenuOpen(false);

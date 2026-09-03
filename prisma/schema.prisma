@@ -16,8 +16,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders    Order[]
-  reviews   Review[]
+  orders   Order[]
+  reviews  Review[]
+  products Product[]
+  stories  CustomerStory[]
 
   @@map("users")
 }
@@ -32,11 +34,11 @@ model Order {
   userId    String
   status    OrderStatus @default(PENDING)
   total     Decimal     @db.Decimal(10, 2)
-  items     Json        // Array of order items
+  items     Json // Array of order items
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
-  user      User        @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("orders")
 }
@@ -57,21 +59,21 @@ model Review {
   comment   String
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
   @@map("reviews")
 }
 
 model PromoCode {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  discount  Decimal  @db.Decimal(5, 2)
+  id        String       @id @default(cuid())
+  code      String       @unique
+  discount  Decimal      @db.Decimal(5, 2)
   type      DiscountType @default(PERCENTAGE)
-  minOrder  Decimal? @db.Decimal(10, 2)
+  minOrder  Decimal?     @db.Decimal(10, 2)
   expiresAt DateTime?
-  active   Boolean  @default(true)
-  createdAt DateTime @default(now())
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now())
 
   @@map("promo_codes")
 }
@@ -79,4 +81,120 @@ model PromoCode {
 enum DiscountType {
   PERCENTAGE
   FIXED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+model Product {
+  id             String        @id @default(cuid())
+  name           String
+  model          String
+  category       String        @default("wheelchair")
+  tagline        String?
+  description    String?
+  price          Decimal       @db.Decimal(10, 2)
+  originalPrice  Decimal?      @db.Decimal(10, 2)
+  amazonLink     String?
+  weightCapacity String?
+  seatWidth      String?
+  range          String?
+  maxSpeed       String?
+  productWeight  String?
+  features       Json
+  status         ContentStatus @default(DRAFT)
+  isFeatured     Boolean       @default(false)
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  images     ProductImage[]
+  stories    CustomerStory[]
+  promotions Promotion[]
+  User       User?           @relation(fields: [userId], references: [id])
+  userId     String?
+
+  @@index([status, sortOrder])
+  @@map("content_products")
+}
+
+model ProductImage {
+  id           String   @id @default(cuid())
+  productId    String
+  storagePath  String
+  publicUrl    String
+  originalName String
+  altText      String?
+  sourceNote   String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("content_product_images")
+}
+
+model CustomerStory {
+  id          String        @id @default(cuid())
+  displayName String
+  location    String?
+  quote       String
+  productId   String?
+  source      String?
+  tags        Json
+  status      ContentStatus @default(DRAFT)
+  isFeatured  Boolean       @default(false)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  product Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  images  StoryImage[]
+  User    User?        @relation(fields: [userId], references: [id])
+  userId  String?
+
+  @@index([status, sortOrder])
+  @@map("content_customer_stories")
+}
+
+model StoryImage {
+  id           String   @id @default(cuid())
+  storyId      String
+  storagePath  String
+  publicUrl    String
+  originalName String
+  altText      String?
+  sourceNote   String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  story CustomerStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId, sortOrder])
+  @@map("content_story_images")
+}
+
+model Promotion {
+  id                    String        @id @default(cuid())
+  name                  String
+  productId             String
+  startAt               DateTime
+  endAt                 DateTime
+  salePrice             Decimal?      @db.Decimal(10, 2)
+  discountPercent       Decimal?      @db.Decimal(5, 2)
+  label                 String?
+  bannerImageUrl        String?
+  status                ContentStatus @default(DRAFT)
+  isAutoScheduleEnabled Boolean       @default(true)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([status, startAt, endAt])
+  @@map("content_promotions")
 }
