@@ -17,11 +17,16 @@ describe("outdoor transportation guide page", () => {
     expect(source).toMatch(/Final Drive Checklist/);
   });
 
-  it("uses sourced product data and shows FDA verification conservatively", () => {
+  it("uses official product rows without a source-status column", () => {
     expect(source).toMatch(/TRANSPORT_PRODUCT_ROWS/);
-    expect(source).toMatch(/TRANSPORT_SOURCES/);
-    expect(source).toMatch(/FDA listing not verified/);
+    expect(source).not.toMatch(/Source status/);
+    expect(source).not.toMatch(/FDA listing not verified/);
     expect(source).not.toMatch(/FDA approved|FDA cleared/);
+  });
+
+  it("does not render a sources and verification section", () => {
+    expect(source).not.toMatch(/Sources and Verification/);
+    expect(source).not.toMatch(/TRANSPORT_SOURCES/);
   });
 
   it("uses descriptive alt text for every guide image", () => {

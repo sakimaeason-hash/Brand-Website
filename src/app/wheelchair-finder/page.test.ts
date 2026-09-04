@@ -27,4 +27,10 @@ describe("wheelchair finder review interactions", () => {
     expect(source).toMatch(/Object\.prototype\.hasOwnProperty/);
     expect(source).not.toMatch(/type=\"number\"/);
   });
+
+  it("requires an explicit safety response and offers none of the above", () => {
+    expect(source).toMatch(/None of the above/);
+    expect(source).toMatch(/Select one safety response before continuing/);
+    expect(source).toMatch(/type=\"radio\"/);
+  });
 });

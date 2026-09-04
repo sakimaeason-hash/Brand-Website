@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Car,
   Check,
-  ExternalLink,
   Printer,
   Ruler,
   ShieldCheck,
@@ -18,11 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  TRANSPORT_PRODUCT_ROWS,
-  TRANSPORT_SOURCES,
-  VEHICLE_METHODS,
-} from "@/data/outdoor-transportation";
+import { TRANSPORT_PRODUCT_ROWS, VEHICLE_METHODS } from "@/data/outdoor-transportation";
 
 const tableOfContents = [
   ["measure", "1. Measure Before Loading"],
@@ -33,7 +28,6 @@ const tableOfContents = [
   ["worksheet", "6. Vehicle Fit Worksheet"],
   ["checklist", "7. Final Drive Checklist"],
   ["help", "8. When to Get Professional Help"],
-  ["sources", "9. Sources and Verification"],
 ] as const;
 
 const measurements = [
@@ -101,12 +95,6 @@ const worksheetFields = [
   ["chair-weight", "Chair-only weight", "lb", "Exclude the battery and loose accessories."],
   ["battery-accessory-weight", "Battery and accessory weight", "lb", "Add every item loaded with the chair."],
   ["helper-capacity", "Helper safe handling capacity", "lb", "Use a conservative personal limit, not a maximum effort."],
-] as const;
-
-const photoCredits = [
-  ["Vehicle ramp and lift photographs — John Robert McPherson (CC BY-SA 4.0)", "https://commons.wikimedia.org/wiki/Category:Wheelchair_accessible_vehicles"],
-  ["Wheelchair platform scale photograph — Xavier020 (CC0)", "https://commons.wikimedia.org/wiki/File:Wheelchair_scale,_hospital_in_Shimane_prefecture_-_Jan_27,_2026.jpg"],
-  ["Securement station photograph — Metropolitan Transportation Authority (CC BY 2.0)", "https://commons.wikimedia.org/wiki/File:Quantum_Self_Securement_Station_(53067875662).jpg"],
 ] as const;
 
 function SectionHeading({ number, children }: { number: string; children: ReactNode }) {
@@ -204,7 +192,7 @@ export default function OutdoorTransportationGuidePage() {
                 A safe trip starts with a measured vehicle and a loading plan that matches the actual chair, battery, accessories, helper capacity, and whether the user stays seated during transport.
               </p>
               <p className="text-sm leading-6 text-[#6B6B6B]">
-                This is a planning guide, not a vehicle-fit guarantee. Follow the chair, ramp, lift, restraint, and vehicle instructions for the exact equipment in use. Federal and professional sources are listed at the end.
+                This is a planning guide, not a vehicle-fit guarantee. Follow the chair, ramp, lift, restraint, and vehicle instructions for the exact equipment in use.
               </p>
             </div>
 
@@ -317,7 +305,7 @@ export default function OutdoorTransportationGuidePage() {
               <SectionHeading number="5">GoldSeason Transport Fit</SectionHeading>
               <p className="mb-6 leading-7 text-[#6B6B6B]">These rows repeat the official GoldSeason product data already used by the fit finder. They help you compare pieces to a measured vehicle; they do not certify a vehicle match, ramp rating, or occupant restraint.</p>
               <div className="overflow-x-auto rounded-2xl border border-[#E8E8E8] bg-white shadow-sm" aria-label="GoldSeason wheelchair transport measurements">
-                <table className="min-w-[760px] w-full border-collapse text-left text-sm">
+                <table className="min-w-[640px] w-full border-collapse text-left text-sm">
                   <thead className="bg-[#E9F0EC] text-[#315C4A]">
                     <tr>
                       <th scope="col" className="px-4 py-3 font-semibold">Model</th>
@@ -325,7 +313,6 @@ export default function OutdoorTransportationGuidePage() {
                       <th scope="col" className="px-4 py-3 font-semibold">Folded L × W × H</th>
                       <th scope="col" className="px-4 py-3 font-semibold">Seat width</th>
                       <th scope="col" className="px-4 py-3 font-semibold">Battery</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Source status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -336,7 +323,6 @@ export default function OutdoorTransportationGuidePage() {
                         <td className="whitespace-nowrap px-4 py-4 text-[#4A4A4A]">{row.foldedIn.length.toFixed(1)} × {row.foldedIn.width.toFixed(1)} × {row.foldedIn.height.toFixed(1)} in</td>
                         <td className="px-4 py-4 text-[#4A4A4A]">{row.seatWidthIn.toFixed(1)} in</td>
                         <td className="px-4 py-4 text-[#4A4A4A]">{row.removableBattery ? "Removable" : "Not removable"}</td>
-                        <td className="px-4 py-4 text-xs leading-5 text-[#6B6B6B]"><span className="block font-semibold text-[#315C4A]">Manufacturer spec</span>{row.fdaStatus === "not_verified" ? "FDA listing not verified" : "FDA verification recorded"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -394,25 +380,6 @@ export default function OutdoorTransportationGuidePage() {
                 ].map(([title, text]) => <Card key={title}><CardContent className="p-5"><h3 className="mb-2 font-semibold text-[#2D2D2D]">{title}</h3><p className="text-sm leading-6 text-[#6B6B6B]">{text}</p></CardContent></Card>)}
               </div>
               <p className="mt-6 rounded-xl border border-[#315C4A]/25 bg-[#315C4A]/5 p-5 text-sm leading-6 text-[#4A4A4A]"><strong>Scope:</strong> This guide supports planning and professional conversations. It does not replace professional evaluation, equipment instructions, or applicable vehicle and accessibility requirements.</p>
-            </section>
-
-            <section id="sources" className="mb-14 scroll-mt-24">
-              <SectionHeading number="9">Sources and Verification</SectionHeading>
-              <p className="mb-6 text-sm leading-6 text-[#6B6B6B]">The source layers have different jobs. FDA resources are used for device-information verification; they are not used to certify vehicle fit, ramp capacity, tie-down installation, or occupant restraint performance.</p>
-              <div className="grid gap-4 md:grid-cols-2">
-                {TRANSPORT_SOURCES.map((source) => {
-                  const external = source.href.startsWith("https://");
-                  return <Card key={source.kind}><CardContent className="p-5"><div className="mb-2 flex items-center justify-between gap-3"><span className="text-xs font-bold uppercase tracking-wide text-[#315C4A]">{source.kind}</span>{external && <ExternalLink className="h-4 w-4 text-[#6B6B6B]" aria-hidden="true" />}</div><a href={source.href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} className="font-semibold text-[#315C4A] underline-offset-4 hover:underline">{source.label}</a><p className="mt-2 text-sm leading-6 text-[#6B6B6B]">{source.kind === "fda" ? "Device database reference; listing status for these models is not verified here." : source.kind === "nhtsa" ? "Vehicle safety and occupant-protection context." : source.kind === "standard" ? "Professional wheelchair transportation and securement standards." : "GoldSeason product specifications used for comparison."}</p></CardContent></Card>;
-                })}
-              </div>
-              <div className="mt-6 rounded-2xl border border-[#E8E8E8] bg-white p-6 text-sm leading-6 text-[#6B6B6B]">
-                <p><strong className="text-[#2D2D2D]">Verification note:</strong> Product measurements are labeled Manufacturer spec. FDA listing not verified is shown for every row until a specific model, manufacturer, and FDA record can be matched one-to-one.</p>
-                <p className="mt-3">Review date: August 2026. Confirm current instructions and local requirements before each installation or trip.</p>
-                <p className="mt-3"><strong className="text-[#2D2D2D]">Photography:</strong> The photographs are illustrative third-party images, not GoldSeason product photos. Attribution and license details:</p>
-                <ul className="mt-2 space-y-1">
-                  {photoCredits.map(([label, href]) => <li key={href}><a href={href} target="_blank" rel="noreferrer" className="text-[#315C4A] underline-offset-4 hover:underline">{label}</a></li>)}
-                </ul>
-              </div>
             </section>
 
             <div className="rounded-2xl border border-[#315C4A]/20 bg-[#E9F0EC] p-6">

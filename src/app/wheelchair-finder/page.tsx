@@ -15,6 +15,12 @@ import type { UnitSystem } from "@/lib/wheelchair/types";
 
 type MeasurementKey = "hipWidthMm" | "bodySeatDepthMm" | "lowerLegMm";
 type StorageDimension = "length" | "width" | "height";
+type SafetyResponse =
+  | ""
+  | "pressureInjuryConcern"
+  | "posturalAsymmetry"
+  | "customPositioningNeed"
+  | "none";
 
 const measurementInfo: Record<
   MeasurementKey,
@@ -55,6 +61,7 @@ export default function WheelchairFinderPage() {
   const { assessment, step, update, next, back, reset, result } = useWheelchairAssessment();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [inputDrafts, setInputDrafts] = useState<Record<string, string>>({});
+  const [safetyResponse, setSafetyResponse] = useState<SafetyResponse>("");
   const unit = assessment.unitSystem;
   const labels = useMemo(
     () =>
@@ -132,6 +139,17 @@ export default function WheelchairFinderPage() {
       },
     });
   };
+  const handleSafetyResponse = (response: Exclude<SafetyResponse, "">) => {
+    setSafetyResponse(response);
+    setErrors((current) => ({ ...current, safety: "" }));
+    update({
+      safety: {
+        pressureInjuryConcern: response === "pressureInjuryConcern",
+        posturalAsymmetry: response === "posturalAsymmetry",
+        customPositioningNeed: response === "customPositioningNeed",
+      },
+    });
+  };
 
   const validateBasic = () => {
     const nextErrors: Record<string, string> = {};
@@ -194,8 +212,13 @@ export default function WheelchairFinderPage() {
   };
   const advance = () => {
     if (step === 1 && validateBasic()) next();
-    else if (step === 2 && Object.values(assessment.safety).some(Boolean)) {
-      setErrors({ safety: "For your safety, automated matching pauses here. Please consult an OT/ATP or other qualified seating professional." });
+    else if (step === 2 && safetyResponse === "") {
+      setErrors({ safety: "Select one safety response before continuing." });
+    } else if (step === 2 && safetyResponse !== "none") {
+      setErrors({
+        safety:
+          "For your safety, automated matching pauses here. Please consult an OT/ATP or other qualified seating professional.",
+      });
     } else if (step === 2) {
       setErrors({});
       next();
@@ -275,16 +298,18 @@ export default function WheelchairFinderPage() {
         {step === 2 && (
           <section className="card p-6 sm:p-8" aria-labelledby="safety-heading">
             <h2 id="safety-heading" className="text-2xl font-semibold">A quick safety check</h2>
-            <p className="mt-2 text-warm-charcoal">A yes answer pauses automated matching and guides you to professional seating support.</p>
-            <div className="mt-6 space-y-3">
+            <p className="mt-2 text-warm-charcoal">Choose the one answer that best describes your situation. A risk answer pauses automated matching and guides you to professional seating support.</p>
+            <fieldset className="mt-6 space-y-3">
+              <legend className="font-medium">Choose one answer</legend>
               {([
                 ["pressureInjuryConcern", "Do you have a current pressure injury or pressure-sore concern?"],
                 ["posturalAsymmetry", "Do you have significant postural asymmetry?"],
                 ["customPositioningNeed", "Do you need custom positioning or specialized supports?"],
               ] as const).map(([key, label]) => (
-                <label key={key} className="flex items-start gap-3 rounded-lg border border-stone bg-pure-white p-4"><input type="checkbox" checked={assessment.safety[key]} onChange={(event) => update({ safety: { [key]: event.target.checked } })} className="mt-1" /><span>{label}</span></label>
+                <label key={key} className="flex items-start gap-3 rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="safety-response" value={key} checked={safetyResponse === key} onChange={() => handleSafetyResponse(key)} className="mt-1" /><span>{label}</span></label>
               ))}
-            </div>
+              <label className="flex items-start gap-3 rounded-lg border border-stone bg-pure-white p-4"><input type="radio" name="safety-response" value="none" checked={safetyResponse === "none"} onChange={() => handleSafetyResponse("none")} className="mt-1" /><span>None of the above</span></label>
+            </fieldset>
             {errors.safety && <p role="alert" className="mt-5 rounded-lg border border-error bg-pure-white p-4 text-sm text-error">{errors.safety}</p>}
           </section>
         )}
@@ -322,7 +347,7 @@ export default function WheelchairFinderPage() {
         )}
 
         {step === 5 && <section aria-labelledby="review-heading"><div className="mb-5"><h2 id="review-heading" className="text-2xl font-semibold">Your fit screen</h2><p className="mt-2 text-warm-charcoal">Results are a product-screening aid, not a clinical seating assessment. Review fit reasons and limitations before purchase.</p></div><FinderResults result={result} assessment={assessment} onEdit={back} /></section>}
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><button type="button" className="btn-ghost" onClick={step === 1 ? reset : back}>{step === 1 ? "Reset" : "Back"}</button>{step < 5 && <button type="button" className="btn-primary" onClick={advance}>Continue</button>}</div>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3"><button type="button" className="btn-ghost" onClick={step === 1 ? () => { setSafetyResponse(""); reset(); } : back}>{step === 1 ? "Reset" : "Back"}</button>{step < 5 && <button type="button" className="btn-primary" onClick={advance}>Continue</button>}</div>
       </div>
     </main>
   );

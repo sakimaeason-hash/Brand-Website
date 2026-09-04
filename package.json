@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
@@ -24,12 +24,13 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@shadcn/ui": "^0.0.4",
     "@supabase/supabase-js": "^2.106.2",
+    "@vercel/analytics": "^2.0.1",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.24.0",
-    "next": "14.2.35",
+    "next": "15.5.21",
     "next-auth": "^4.24.14",
     "prisma": "^5.22.0",
     "react": "^18",
@@ -37,7 +38,6 @@
     "react-hook-form": "^7.76.1",
     "recharts": "^3.9.2",
     "tailwind-merge": "^3.5.0",
-    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -51,11 +51,16 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "15.5.21",
     "jsdom": "^29.1.1",
-    "postcss": "^8",
+    "postcss": "8.5.26",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "nanoid": "3.3.18",
+    "postcss": "8.5.26",
+    "sharp": "0.35.3"
   }
 }
