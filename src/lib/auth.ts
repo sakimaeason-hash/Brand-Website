@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { isConfiguredAdminEmail } from "@/lib/admin/identity";
 
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_ATTEMPTS = 5;
@@ -62,13 +63,15 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role === "ADMIN" && isConfiguredAdminEmail(user.email) ? "ADMIN" : "USER";
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user && token.id) session.user.id = token.id;
-      if (session.user && token.role) session.user.role = token.role;
+      if (session.user && token.role) {
+        session.user.role = token.role === "ADMIN" && isConfiguredAdminEmail(token.email) ? "ADMIN" : "USER";
+      }
       return session;
     },
   },

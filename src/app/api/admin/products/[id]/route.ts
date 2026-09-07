@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin/authorization";
 import { adminErrorResponse, parseJsonField } from "@/lib/admin/http";
 import { productInputSchema, MAX_CONTENT_IMAGES } from "@/lib/content/validation";
 import { removeContentImage, uploadContentImage } from "@/lib/content/storage";
+import { parseImageMetadata, shouldRemoveFromContentStorage } from "@/lib/content/media";
 
 type Params = { params: { id: string } };
 type ImageRow = { id: string; storagePath: string; sortOrder: number; altText?: string | null; sourceNote?: string | null };
@@ -15,7 +16,7 @@ function payloadOf(form: FormData): Record<string, unknown> {
 }
 function versionError(form: FormData, payload: Record<string, unknown>, actual: Date) {
   const raw = form.get("updatedAt") ?? payload.updatedAt;
-  if (raw == null || raw === "") return null;
+  if (raw == null || raw === "") return errorResponse("updatedAt is required");
   if (typeof raw !== "string") return errorResponse("updatedAt must be an ISO timestamp");
   const expected = new Date(raw);
   if (Number.isNaN(expected.getTime())) return errorResponse("updatedAt must be an ISO timestamp");
@@ -56,7 +57,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const existingImages = existing.images as ImageRow[];
     if (action === "delete") {
       if (form.get("confirm") !== "true") return errorResponse("Confirmation required");
-      try { for (const image of existingImages) await removeContentImage(image.storagePath); }
+      try { for (const image of existingImages) if (shouldRemoveFromContentStorage(image.storagePath)) await removeContentImage(image.storagePath); }
       catch (error) { console.error("Product image deletion failed", error); return errorResponse("Unable to remove product images from storage", 502); }
       await prisma.product.delete({ where: { id: params.id } }); return NextResponse.json({ success: true });
     }
@@ -72,16 +73,19 @@ export async function PATCH(request: Request, { params }: Params) {
     const removed = existingImages.filter((image) => removeSet.has(image.id));
     const files = form.getAll("images").filter((value): value is File => value instanceof File && value.size > 0);
     const remainingCount = existingImages.length - removed.length + files.length; if (remainingCount > MAX_CONTENT_IMAGES) return errorResponse("Too many images");
+    let metadata;
+    try { const rawMetadata = form.get("imageMetadata"); metadata = parseImageMetadata(typeof rawMetadata === "string" ? rawMetadata : null, files.length); }
+    catch (error) { return errorResponse(error instanceof Error ? error.message : "Invalid image metadata"); }
     const name = typeof data.name === "string" ? data.name : existing.name; const model = typeof data.model === "string" ? data.model : existing.model; const price = data.price == null ? Number(existing.price) : Number(data.price);
     if (action === "publish" && (!name.trim() || !model.trim() || !Number.isFinite(price) || price <= 0 || remainingCount < 1)) return errorResponse("Name, model, price and at least one image are required before publishing");
-    try { for (const image of removed) await removeContentImage(image.storagePath); }
+    try { for (const image of removed) if (shouldRemoveFromContentStorage(image.storagePath)) await removeContentImage(image.storagePath); }
     catch (error) { console.error("Product image deletion failed", error); return errorResponse("Unable to remove product images from storage", 502); }
     for (const image of removed) await prisma.productImage.delete({ where: { id: image.id } });
     if (entries) for (let index = 0; index < entries.length; index += 1) { const entry = entries[index];
       const current = existingImages.find((image) => image.id === entry.id); if (!current || removeSet.has(entry.id)) continue;
-      const sortOrder = entry.sortOrder ?? index; const imageData: Record<string, unknown> = {}; if (current.sortOrder !== sortOrder) imageData.sortOrder = sortOrder; if (entry.altText !== undefined && entry.altText !== current.altText) imageData.altText = entry.altText || null; if (entry.sourceNote !== undefined && entry.sourceNote !== current.sourceNote) imageData.sourceNote = entry.sourceNote || null; if (Object.keys(imageData).length) await prisma.productImage.update({ where: { id: current.id }, data: imageData });
+      const sortOrder = entry.sortOrder ?? index; const imageData: Record<string, unknown> = {}; if (current.sortOrder !== sortOrder) imageData.sortOrder = sortOrder; if (entry.altText !== undefined && entry.altText !== current.altText) imageData.altText = entry.altText?.trim() || null; if (entry.sourceNote !== undefined && entry.sourceNote !== current.sourceNote) imageData.sourceNote = entry.sourceNote?.trim() || null; if (Object.keys(imageData).length) await prisma.productImage.update({ where: { id: current.id }, data: imageData });
     }
-    const uploaded: string[] = []; try { const start = entries ? entries.length : existingImages.length - removed.length; for (let index = 0; index < files.length; index += 1) { const media = await uploadContentImage("products", params.id, files[index], start + index); uploaded.push(media.storagePath); await prisma.productImage.create({ data: { productId: params.id, ...media, sortOrder: start + index } }); } }
+    const uploaded: string[] = []; try { const start = entries ? entries.length : existingImages.length - removed.length; for (let index = 0; index < files.length; index += 1) { const media = await uploadContentImage("products", params.id, files[index], start + index); uploaded.push(media.storagePath); await prisma.productImage.create({ data: { productId: params.id, ...media, ...metadata[index], sortOrder: start + index } }); } }
     catch { await Promise.all(uploaded.map((path) => removeContentImage(path).catch(() => undefined))); return errorResponse("Image upload failed", 502); }
     data.status = action === "publish" ? "PUBLISHED" : action === "unpublish" ? "UNPUBLISHED" : "DRAFT";
     return NextResponse.json(await prisma.product.update({ where: { id: params.id }, data: data as never, include: { images: { orderBy: { sortOrder: "asc" } } } }));

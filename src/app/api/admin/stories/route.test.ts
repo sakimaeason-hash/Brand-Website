@@ -1,18 +1,18 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const { requireAdmin, storyFindUnique, storyUpdate, storyDelete, storyImageDelete, storyImageUpdate, removeContentImage } = vi.hoisted(() => ({
+const { requireAdmin, storyFindUnique, storyUpdate, storyDelete, storyImageCreate, storyImageDelete, storyImageUpdate, removeContentImage, uploadContentImage } = vi.hoisted(() => ({
   requireAdmin: vi.fn(), storyFindUnique: vi.fn(), storyUpdate: vi.fn(), storyDelete: vi.fn(),
-  storyImageDelete: vi.fn(), storyImageUpdate: vi.fn(), removeContentImage: vi.fn(),
+  storyImageCreate: vi.fn(), storyImageDelete: vi.fn(), storyImageUpdate: vi.fn(), removeContentImage: vi.fn(), uploadContentImage: vi.fn(),
 }));
 
-vi.mock("@/lib/admin/authorization", () => ({ requireAdmin }));
+vi.mock("@/lib/admin/authorization", () => ({ requireAdmin, AdminAuthError: class AdminAuthError extends Error {} }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     customerStory: { findUnique: storyFindUnique, update: storyUpdate, delete: storyDelete },
-    storyImage: { delete: storyImageDelete, update: storyImageUpdate },
+    storyImage: { create: storyImageCreate, delete: storyImageDelete, update: storyImageUpdate },
   },
 }));
-vi.mock("@/lib/content/storage", () => ({ removeContentImage }));
+vi.mock("@/lib/content/storage", () => ({ removeContentImage, uploadContentImage }));
 
 import { PATCH } from "./[id]/route";
 
@@ -29,12 +29,21 @@ function form(fields: Record<string, string>) {
   return body;
 }
 
+function requestWith(body: FormData): Request {
+  return { formData: vi.fn().mockResolvedValue(body) } as unknown as Request;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   requireAdmin.mockResolvedValue({ userId: "admin" });
   storyFindUnique.mockResolvedValue(story());
   storyUpdate.mockResolvedValue(story());
   removeContentImage.mockResolvedValue(undefined);
+  uploadContentImage.mockResolvedValue({
+    storagePath: "stories/s1/abc-0-story.jpg",
+    publicUrl: "https://cdn.test/story.jpg",
+    originalName: "story.jpg",
+  });
 });
 
 describe("admin story item route", () => {
@@ -45,6 +54,16 @@ describe("admin story item route", () => {
     }), { params: { id: "s1" } });
 
     expect(response.status).toBe(409);
+    expect(storyUpdate).not.toHaveBeenCalled();
+  });
+
+  it("requires updatedAt for every item write", async () => {
+    const response = await PATCH(new Request("http://test", {
+      method: "PATCH",
+      body: form({ action: "save-draft" }),
+    }), { params: { id: "s1" } });
+
+    expect(response.status).toBe(400);
     expect(storyUpdate).not.toHaveBeenCalled();
   });
 
@@ -89,5 +108,44 @@ describe("admin story item route", () => {
 
     expect(response.status).toBe(502);
     expect(storyDelete).not.toHaveBeenCalled();
+  });
+
+  it("stores metadata for newly uploaded images", async () => {
+    const body = form({
+      action: "save-draft",
+      updatedAt: updatedAt.toISOString(),
+      imageMetadata: JSON.stringify([{ altText: " At the park ", sourceNote: " Customer upload " }]),
+    });
+    body.append("images", new File(["image"], "story.jpg", { type: "image/jpeg" }));
+
+    const response = await PATCH(requestWith(body), { params: { id: "s1" } });
+
+    expect(response.status).toBe(200);
+    expect(storyImageCreate).toHaveBeenCalledWith({ data: expect.objectContaining({
+      storyId: "s1",
+      altText: "At the park",
+      sourceNote: "Customer upload",
+      sortOrder: 0,
+    }) });
+  });
+
+  it("removes repository images from the database without calling Storage", async () => {
+    storyFindUnique.mockResolvedValue({
+      ...story(),
+      images: [{ id: "img1", storagePath: "/stories/customer.jpg", sortOrder: 0 }],
+    });
+
+    const response = await PATCH(new Request("http://test", {
+      method: "PATCH",
+      body: form({
+        action: "save-draft",
+        updatedAt: updatedAt.toISOString(),
+        payload: JSON.stringify({ images: [] }),
+      }),
+    }), { params: { id: "s1" } });
+
+    expect(response.status).toBe(200);
+    expect(removeContentImage).not.toHaveBeenCalled();
+    expect(storyImageDelete).toHaveBeenCalledWith({ where: { id: "img1" } });
   });
 });

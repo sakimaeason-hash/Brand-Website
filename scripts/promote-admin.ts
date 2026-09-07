@@ -1,14 +1,8 @@
 import { prisma } from "../src/lib/db";
+import { promoteSoleAdmin } from "../src/lib/admin/promote";
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  if (!email) throw new Error("ADMIN_EMAIL is required");
-
-  const user = await prisma.user.update({
-    where: { email },
-    data: { role: "ADMIN" },
-    select: { id: true, email: true, role: true },
-  });
+  const user = await promoteSoleAdmin(prisma, process.env.ADMIN_EMAIL);
   console.log(`Promoted ${user.email} to ${user.role} (${user.id})`);
 }
 

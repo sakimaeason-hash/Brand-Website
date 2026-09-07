@@ -15,4 +15,25 @@ describe("MediaUploader", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove" }));
     expect(onChange).toHaveBeenLastCalledWith([]);
   });
+
+  it("edits metadata and reorders existing images", () => {
+    const onChange = vi.fn();
+    const value = [
+      { id: "1", preview: "/one.jpg", name: "one.jpg", persisted: true, altText: "", sourceNote: "" },
+      { id: "2", preview: "/two.jpg", name: "two.jpg", persisted: true, altText: "", sourceNote: "" },
+    ];
+    render(<MediaUploader value={value} onChange={onChange} />);
+
+    fireEvent.change(screen.getByLabelText("Alt text for one.jpg"), { target: { value: "Front view" } });
+    expect(onChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ id: "1", altText: "Front view" }),
+      expect.objectContaining({ id: "2" }),
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Move two.jpg up" }));
+    expect(onChange).toHaveBeenLastCalledWith([
+      expect.objectContaining({ id: "2" }),
+      expect.objectContaining({ id: "1" }),
+    ]);
+  });
 });

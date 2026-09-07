@@ -1,4 +1,8 @@
 -- Additive content-management tables. Existing commerce tables are untouched.
+-- Keep the single verified administrator and remove stale administrator grants.
+UPDATE "users" SET "role" = 'USER' WHERE "role" = 'ADMIN' AND LOWER("email") <> 'goldseasonofficial001@gmail.com';
+UPDATE "users" SET "role" = 'ADMIN' WHERE LOWER("email") = 'goldseasonofficial001@gmail.com';
+
 CREATE TYPE "ContentStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'UNPUBLISHED');
 
 CREATE TABLE "content_products" (

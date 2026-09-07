@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { RevealOnScroll, HoverScale } from "@/components/animations";
 
 type Story = {
-  id: number;
+  id: string | number;
   name: string;
   location: string;
   quote: string;
@@ -197,7 +197,22 @@ function StoryCard({ story }: { story: Story }) {
 
 export default function StoriesCatalog({ initialStories }: { initialStories?: readonly Story[] }) {
   const [activeFilter, setActiveFilter] = useState("All");
-  const storyItems = initialStories?.length ? initialStories : stories;
+  const [remoteStories, setRemoteStories] = useState<readonly Story[] | null>(initialStories ?? null);
+
+  useEffect(() => {
+    if (initialStories !== undefined) return;
+    let active = true;
+    fetch("/api/content/stories")
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Stories unavailable"))))
+      .then((value: unknown) => {
+        if (!active || !Array.isArray(value)) return;
+        setRemoteStories(value as Story[]);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [initialStories]);
+
+  const storyItems = remoteStories ?? stories;
 
   const filteredStories =
     activeFilter === "All"
@@ -315,6 +330,11 @@ export default function StoriesCatalog({ initialStories }: { initialStories?: re
                 </HoverScale>
               </RevealOnScroll>
             ))}
+            {filteredStories.length === 0 && (
+              <p className="md:col-span-2 lg:col-span-3 text-center text-muted">
+                No customer stories are published yet.
+              </p>
+            )}
           </div>
         </div>
       </section>

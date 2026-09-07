@@ -1,0 +1,91 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { productFindUnique, productFindMany, storyFindUnique, promotionFindUnique } = vi.hoisted(() => ({
+  productFindUnique: vi.fn(),
+  productFindMany: vi.fn(),
+  storyFindUnique: vi.fn(),
+  promotionFindUnique: vi.fn(),
+}));
+
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    product: { findUnique: productFindUnique, findMany: productFindMany },
+    customerStory: { findUnique: storyFindUnique },
+    promotion: { findUnique: promotionFindUnique },
+  },
+}));
+vi.mock("next/navigation", () => ({ notFound: vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); }) }));
+vi.mock("@/components/admin/ProductForm", () => ({
+  ProductForm: ({ initialData }: { initialData: unknown }) => <pre data-testid="product-form">{JSON.stringify(initialData)}</pre>,
+}));
+vi.mock("@/components/admin/StoryForm", () => ({
+  StoryForm: ({ initialData, products }: { initialData: unknown; products: unknown }) => <pre data-testid="story-form">{JSON.stringify({ initialData, products })}</pre>,
+}));
+vi.mock("@/components/admin/PromotionForm", () => ({
+  PromotionForm: ({ initialData, products }: { initialData: unknown; products: unknown }) => <pre data-testid="promotion-form">{JSON.stringify({ initialData, products })}</pre>,
+}));
+vi.mock("@/components/admin/StatusBadge", () => ({ StatusBadge: () => null }));
+vi.mock("@/components/admin/ContentActions", () => ({ ContentActions: () => null }));
+
+import ProductDetailPage from "./products/[id]/page";
+import StoryDetailPage from "./stories/[id]/page";
+import PromotionDetailPage from "./promotions/[id]/page";
+
+const updatedAt = new Date("2026-08-01T12:00:00.000Z");
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  productFindMany.mockResolvedValue([{ id: "p1", name: "Travel Air", model: "PA22" }]);
+});
+afterEach(() => cleanup());
+
+describe("admin content edit pages", () => {
+  it("serializes a product record into editable client data", async () => {
+    productFindUnique.mockResolvedValue({
+      id: "p1", updatedAt, name: "Travel Air", model: "PA22", category: "wheelchair",
+      tagline: null, description: "Compact", price: { toString: () => "899.95" }, originalPrice: null,
+      amazonLink: null, weightCapacity: "300 lb", seatWidth: "18 in", range: "15 mi",
+      maxSpeed: "4 mph", productWeight: "40 lb", features: ["Foldable"], isFeatured: true,
+      sortOrder: 1, status: "DRAFT", images: [],
+    });
+
+    render(await ProductDetailPage({ params: { id: "p1" } }));
+    const value = JSON.parse(screen.getByTestId("product-form").textContent || "{}");
+
+    expect(value.price).toBe(899.95);
+    expect(value.updatedAt).toBe(updatedAt.toISOString());
+    expect(value.features).toEqual(["Foldable"]);
+  });
+
+  it("loads product choices and serializes a story for editing", async () => {
+    storyFindUnique.mockResolvedValue({
+      id: "s1", updatedAt, displayName: "Alex", location: null, quote: "Great chair",
+      productId: "p1", source: "Amazon", tags: ["Travel"], isFeatured: false,
+      sortOrder: 2, status: "DRAFT", images: [], product: null,
+    });
+
+    render(await StoryDetailPage({ params: { id: "s1" } }));
+    const value = JSON.parse(screen.getByTestId("story-form").textContent || "{}");
+
+    expect(value.initialData.updatedAt).toBe(updatedAt.toISOString());
+    expect(value.initialData.tags).toEqual(["Travel"]);
+    expect(value.products).toEqual([{ id: "p1", name: "Travel Air", model: "PA22" }]);
+  });
+
+  it("serializes promotion dates and decimal values for editing", async () => {
+    promotionFindUnique.mockResolvedValue({
+      id: "promo-1", updatedAt, name: "Summer sale", productId: "p1",
+      startAt: new Date("2026-07-01T16:00:00.000Z"), endAt: new Date("2026-07-02T16:00:00.000Z"),
+      salePrice: { toString: () => "799.00" }, discountPercent: null, label: "Summer",
+      bannerImageUrl: null, isAutoScheduleEnabled: true, status: "DRAFT", product: { name: "Travel Air" },
+    });
+
+    render(await PromotionDetailPage({ params: { id: "promo-1" } }));
+    const value = JSON.parse(screen.getByTestId("promotion-form").textContent || "{}");
+
+    expect(value.initialData.salePrice).toBe(799);
+    expect(value.initialData.startAt).toBe("2026-07-01T16:00:00.000Z");
+    expect(value.products).toEqual([{ id: "p1", name: "Travel Air", model: "PA22" }]);
+  });
+});

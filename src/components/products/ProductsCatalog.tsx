@@ -80,7 +80,7 @@ export default function ProductsCatalog({ initialProducts }: { initialProducts?:
         break;
     }
     return result;
-  }, [activeCategory, sortBy]);
+  }, [activeCategory, sortBy, catalogProducts]);
 
   const handleAddToCart = (product: Product) => {
     addItem({

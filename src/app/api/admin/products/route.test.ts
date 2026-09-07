@@ -1,20 +1,21 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-const { requireAdmin, productFindUnique, productUpdate, productDelete, productImageDelete, productImageUpdate, removeContentImage } = vi.hoisted(() => ({
-  requireAdmin: vi.fn(), productFindUnique: vi.fn(), productUpdate: vi.fn(), productDelete: vi.fn(),
-  productImageDelete: vi.fn(), productImageUpdate: vi.fn(), removeContentImage: vi.fn(),
+const { requireAdmin, productCreate, productFindUnique, productUpdate, productDelete, productImageCreate, productImageDelete, productImageUpdate, removeContentImage, uploadContentImage } = vi.hoisted(() => ({
+  requireAdmin: vi.fn(), productCreate: vi.fn(), productFindUnique: vi.fn(), productUpdate: vi.fn(), productDelete: vi.fn(),
+  productImageCreate: vi.fn(), productImageDelete: vi.fn(), productImageUpdate: vi.fn(), removeContentImage: vi.fn(), uploadContentImage: vi.fn(),
 }));
 
-vi.mock("@/lib/admin/authorization", () => ({ requireAdmin }));
+vi.mock("@/lib/admin/authorization", () => ({ requireAdmin, AdminAuthError: class AdminAuthError extends Error {} }));
 vi.mock("@/lib/db", () => ({
   prisma: {
-    product: { findUnique: productFindUnique, update: productUpdate, delete: productDelete },
-    productImage: { delete: productImageDelete, update: productImageUpdate },
+    product: { create: productCreate, findUnique: productFindUnique, update: productUpdate, delete: productDelete },
+    productImage: { create: productImageCreate, delete: productImageDelete, update: productImageUpdate },
   },
 }));
-vi.mock("@/lib/content/storage", () => ({ removeContentImage }));
+vi.mock("@/lib/content/storage", () => ({ removeContentImage, uploadContentImage }));
 
 import { PATCH } from "./[id]/route";
+import { POST } from "./route";
 
 const updatedAt = new Date("2026-08-01T12:00:00.000Z");
 const product = () => ({
@@ -29,12 +30,55 @@ function form(fields: Record<string, string>) {
   return body;
 }
 
+function requestWith(body: FormData): Request {
+  return { formData: vi.fn().mockResolvedValue(body) } as unknown as Request;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   requireAdmin.mockResolvedValue({ userId: "admin" });
+  productCreate.mockResolvedValue(product());
   productFindUnique.mockResolvedValue(product());
   productUpdate.mockResolvedValue(product());
   removeContentImage.mockResolvedValue(undefined);
+  uploadContentImage.mockResolvedValue({
+    storagePath: "products/p1/abc-0-chair.jpg",
+    publicUrl: "https://cdn.test/chair.jpg",
+    originalName: "chair.jpg",
+  });
+});
+
+describe("admin product collection route", () => {
+  it("stores trimmed metadata with each uploaded image", async () => {
+    const body = form({
+      payload: JSON.stringify({ name: "Travel Air", model: "PA22", price: 1000 }),
+      imageMetadata: JSON.stringify([{ altText: " Front view ", sourceNote: " Studio sample " }]),
+    });
+    body.append("images", new File(["image"], "chair.jpg", { type: "image/jpeg" }));
+
+    const response = await POST(requestWith(body));
+
+    expect(response.status).toBe(201);
+    expect(productImageCreate).toHaveBeenCalledWith({ data: expect.objectContaining({
+      productId: "p1",
+      altText: "Front view",
+      sourceNote: "Studio sample",
+      sortOrder: 0,
+    }) });
+  });
+
+  it("rejects mismatched image metadata before creating a product", async () => {
+    const body = form({
+      payload: JSON.stringify({ name: "Travel Air", model: "PA22", price: 1000 }),
+      imageMetadata: "[]",
+    });
+    body.append("images", new File(["image"], "chair.jpg", { type: "image/jpeg" }));
+
+    const response = await POST(requestWith(body));
+
+    expect(response.status).toBe(400);
+    expect(productCreate).not.toHaveBeenCalled();
+  });
 });
 
 describe("admin product item route", () => {
@@ -45,6 +89,16 @@ describe("admin product item route", () => {
     }), { params: { id: "p1" } });
 
     expect(response.status).toBe(409);
+    expect(productUpdate).not.toHaveBeenCalled();
+  });
+
+  it("requires updatedAt for every item write", async () => {
+    const response = await PATCH(new Request("http://test", {
+      method: "PATCH",
+      body: form({ action: "save-draft" }),
+    }), { params: { id: "p1" } });
+
+    expect(response.status).toBe(400);
     expect(productUpdate).not.toHaveBeenCalled();
   });
 
@@ -91,5 +145,25 @@ describe("admin product item route", () => {
     expect(removeContentImage).toHaveBeenCalledWith("products/p1/abc-0-chair.jpg");
     expect(productImageDelete).toHaveBeenCalledWith({ where: { id: "img1" } });
     expect(productImageUpdate).toHaveBeenCalledWith({ where: { id: "img2" }, data: { sortOrder: 0 } });
+  });
+
+  it("removes repository images from the database without calling Storage", async () => {
+    productFindUnique.mockResolvedValue({
+      ...product(),
+      images: [{ id: "img1", storagePath: "/products/travel-air.jpg", sortOrder: 0 }],
+    });
+
+    const response = await PATCH(new Request("http://test", {
+      method: "PATCH",
+      body: form({
+        action: "save-draft",
+        updatedAt: updatedAt.toISOString(),
+        payload: JSON.stringify({ images: [] }),
+      }),
+    }), { params: { id: "p1" } });
+
+    expect(response.status).toBe(200);
+    expect(removeContentImage).not.toHaveBeenCalled();
+    expect(productImageDelete).toHaveBeenCalledWith({ where: { id: "img1" } });
   });
 });

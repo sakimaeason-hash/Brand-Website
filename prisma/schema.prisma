@@ -16,10 +16,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders   Order[]
-  reviews  Review[]
-  products Product[]
-  stories  CustomerStory[]
+  orders  Order[]
+  reviews Review[]
 
   @@map("users")
 }
@@ -114,8 +112,6 @@ model Product {
   images     ProductImage[]
   stories    CustomerStory[]
   promotions Promotion[]
-  User       User?           @relation(fields: [userId], references: [id])
-  userId     String?
 
   @@index([status, sortOrder])
   @@map("content_products")
@@ -154,8 +150,6 @@ model CustomerStory {
 
   product Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
   images  StoryImage[]
-  User    User?        @relation(fields: [userId], references: [id])
-  userId  String?
 
   @@index([status, sortOrder])
   @@map("content_customer_stories")

@@ -20,7 +20,18 @@ export function etInputToUtc(value: string): Date {
     const actual = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
     guess = new Date(guess.getTime() + desired - actual);
   }
-  return guess;
+
+  const matchingInstants = [-60, 0, 60]
+    .map((minutes) => new Date(guess.getTime() + minutes * 60_000))
+    .filter((candidate) => utcToEtInput(candidate) === value)
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  if (!matchingInstants.length) {
+    throw new Error(`Eastern Time ${value} does not exist because of the daylight saving transition`);
+  }
+
+  // During the fall transition, 01:00-01:59 occurs twice. Use the earlier EDT instant.
+  return matchingInstants[0];
 }
 
 export function isWithinPromotionWindow(now: Date, start: Date, end: Date) {

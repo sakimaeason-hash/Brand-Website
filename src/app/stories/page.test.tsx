@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { stories } from "@/data/stories";
 
 vi.mock("framer-motion", () => ({
   motion: new Proxy(
@@ -16,6 +17,12 @@ vi.mock("@/components/animations", () => ({
   HoverScale: ({ children }: { children: ReactNode }) => children,
 }));
 
+vi.mock("@/lib/content/repository", () => ({
+  listPublishedStories: vi.fn(async () => stories),
+}));
+
+import StoriesCatalog from "@/components/stories/StoriesCatalog";
+import { listPublishedStories } from "@/lib/content/repository";
 import StoriesPage from "./page";
 
 const expectedStoryImages = [
@@ -26,6 +33,10 @@ const expectedStoryImages = [
 ];
 
 afterEach(cleanup);
+
+function renderStories() {
+  return render(<StoriesCatalog initialStories={stories} />);
+}
 
 function getCard(name: string) {
   const card = screen.getByText(name).closest(".editorial-card");
@@ -45,7 +56,7 @@ function expectInitialFallback(card: HTMLElement, initial: string) {
 
 describe("customer stories", () => {
   it("renders only the four verified customer photo mappings", () => {
-    render(<StoriesPage />);
+    renderStories();
 
     expect(
       screen.getAllByRole("img").map((image) => ({
@@ -56,12 +67,10 @@ describe("customer stories", () => {
   });
 
   it("renders every verified customer photo with the expected media treatment", () => {
-    render(<StoriesPage />);
+    renderStories();
 
     for (const story of expectedStoryImages) {
-      const mainImage = screen.getByAltText(
-        `${story.name} using a GoldSeason wheelchair`,
-      );
+      const mainImage = screen.getByAltText(`${story.name} using a GoldSeason wheelchair`);
       const card = getCard(story.name);
       const thumbnail = within(card).getByAltText("");
 
@@ -75,7 +84,7 @@ describe("customer stories", () => {
   });
 
   it("renders Stephanie without a media area and with her hidden initial fallback", () => {
-    render(<StoriesPage />);
+    renderStories();
 
     const stephanieCard = getCard("Stephanie Freeman");
 
@@ -89,34 +98,26 @@ describe("customer stories", () => {
   });
 
   it("removes both Hadji images and renders his initial when the main photo fails", () => {
-    render(<StoriesPage />);
+    renderStories();
 
     const hadjiCard = getCard("Hadji Reyes");
-    fireEvent.error(
-      within(hadjiCard).getByAltText(
-        "Hadji Reyes using a GoldSeason wheelchair",
-      ),
-    );
+    fireEvent.error(within(hadjiCard).getByAltText("Hadji Reyes using a GoldSeason wheelchair"));
 
     expect(
-      within(hadjiCard).queryByAltText(
-        "Hadji Reyes using a GoldSeason wheelchair",
-      ),
+      within(hadjiCard).queryByAltText("Hadji Reyes using a GoldSeason wheelchair"),
     ).not.toBeInTheDocument();
     expect(within(hadjiCard).queryByAltText("")).not.toBeInTheDocument();
     expectInitialFallback(hadjiCard, "H");
   });
 
   it("removes both Hadji images and renders his initial when the thumbnail fails", () => {
-    render(<StoriesPage />);
+    renderStories();
 
     const hadjiCard = getCard("Hadji Reyes");
     fireEvent.error(within(hadjiCard).getByAltText(""));
 
     expect(
-      within(hadjiCard).queryByAltText(
-        "Hadji Reyes using a GoldSeason wheelchair",
-      ),
+      within(hadjiCard).queryByAltText("Hadji Reyes using a GoldSeason wheelchair"),
     ).not.toBeInTheDocument();
     expect(within(hadjiCard).queryByAltText("")).not.toBeInTheDocument();
     expectInitialFallback(hadjiCard, "H");
@@ -125,7 +126,7 @@ describe("customer stories", () => {
 
 describe("featured customer story", () => {
   it("uses a text-led Eleanor story without unverified photo placeholders", () => {
-    render(<StoriesPage />);
+    renderStories();
 
     const title = screen.getByRole("heading", {
       name: '"I Regained My Independence at 75"',
@@ -144,5 +145,14 @@ describe("featured customer story", () => {
     expect(within(featuredSection).queryByText("Eleanor 1")).not.toBeInTheDocument();
     expect(within(featuredSection).queryByText("Eleanor 2")).not.toBeInTheDocument();
     expect(within(featuredSection).queryByRole("img")).not.toBeInTheDocument();
+  });
+});
+
+describe("stories page content repository integration", () => {
+  it("passes the authoritative published list to the catalog", async () => {
+    const view = await StoriesPage();
+
+    expect(listPublishedStories).toHaveBeenCalledOnce();
+    expect(view.props.initialStories).toBe(stories);
   });
 });
