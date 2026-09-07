@@ -1,0 +1,2 @@
+import { ProductForm } from "@/components/admin/ProductForm";
+export default function NewProductPage() { return <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8956C]">Products</p><h2 className="mt-2 text-3xl font-bold text-[#3D3330]">Create product draft</h2><p className="mt-2 mb-8 text-[#5C534E]">Publish only after checking the official specifications and images.</p><ProductForm /></div>; }
