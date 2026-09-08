@@ -14,7 +14,7 @@ npm run dev
 
 打开 <http://localhost:3000>。复制 `.env.example` 为 `.env.local`，再填入本地或预览环境的值。不要提交 `.env.local`，也不要把服务密钥放在 `NEXT_PUBLIC_*` 变量中。
 
-## 环境变量与 Supabase Storage
+## 环境变量与 Vercel Blob Storage
 
 必须配置：
 
@@ -23,12 +23,10 @@ DATABASE_URL=postgresql://...
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=replace-with-a-random-secret
 ADMIN_EMAIL=goldseasonofficial001@gmail.com
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=replace-with-private-service-role-key
-SUPABASE_STORAGE_BUCKET=content-media
+BLOB_READ_WRITE_TOKEN=由 Vercel Blob 存储自动注入
 ```
 
-在 Supabase 中创建名为 `content-media`（或 `SUPABASE_STORAGE_BUCKET` 指定名称）的 bucket。`SUPABASE_SERVICE_ROLE_KEY` 仅供服务器端 Route Handler、seed 和 Storage helper 使用，必须作为 Vercel 私有环境变量保存；浏览器端和公开环境变量不能读取它。
+在 Vercel 项目中创建并连接一个公开 Blob store。`BLOB_READ_WRITE_TOKEN` 由 Vercel 自动注入，只有服务器端 Route Handler 可以使用；浏览器端不会读取写入令牌。当前生产项目使用名为 `content-media` 的 Blob store。
 
 `NEXTAUTH_URL` 必须按环境配置：本地使用 `http://localhost:3000`，Preview 使用本次 Vercel Preview 的 HTTPS URL，Production 使用 `https://goldseason.vip`。不要把本地 URL 配入 Vercel 的 Preview 或 Production 作用域。
 
@@ -60,11 +58,11 @@ npm run seed:content
 
 `seed:content` 将当前 `src/data/products.ts` 和 `src/data/stories.ts` 的静态快照导入为已发布内容。产品优先按静态记录 ID 查找，并兼容按 `name/model` 查找旧记录；故事按稳定的 `displayName` 查找。产品的 `model` 使用产品名称，记录 ID 仍沿用静态产品 ID，因此重复运行不会创建重复记录。静态目录中的 `weight` 是整车运输重量，只写入 `productWeight`；不能据此推断用户承重，`weightCapacity` 默认留空，等待官方承重规格补充。
 
-脚本只登记仓库中已有的公开 URL `/products/...` 和 `/stories/...`，同时写入 `storagePath`、`publicUrl` 和文件元数据，不会把这些文件重新上传到 Supabase Storage。任何 Prisma 连接、迁移或约束错误都会以清晰错误退出，不会静默跳过。
+脚本只登记仓库中已有的公开 URL `/products/...` 和 `/stories/...`，同时写入 `storagePath`、`publicUrl` 和文件元数据，不会把这些文件重新上传到 Blob Storage。任何 Prisma 连接、迁移或约束错误都会以清晰错误退出，不会静默跳过。
 
 ## 图片限制
 
-后台上传只接受 JPEG、PNG、WebP。单张图片最大 `10 MB`，单条产品或故事最多 `12` 张。SVG、可执行文件和其他 MIME 类型会被拒绝。删除上传图片时先删除 Storage 对象，再删除数据库引用；Storage 删除失败会保留数据库引用并返回错误。`/products/...`、`/stories/...` 仓库静态图片只删除数据库引用，不会错误调用 Supabase Storage。
+后台上传只接受 JPEG、PNG、WebP。单张图片最大 `10 MB`，单条产品或故事最多 `12` 张。SVG、可执行文件和其他 MIME 类型会被拒绝。删除上传图片时先删除 Storage 对象，再删除数据库引用；Storage 删除失败会保留数据库引用并返回错误。`/products/...`、`/stories/...` 仓库静态图片只删除数据库引用，不会错误调用 Blob Storage。
 
 ## 草稿、预览和公开内容
 

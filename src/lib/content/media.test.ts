@@ -9,9 +9,13 @@ describe("content media metadata", () => {
     expect(() => parseImageMetadata("[]", 1)).toThrow("match uploaded images");
   });
 
-  it("does not attempt to delete repository public assets from Supabase", () => {
+  it("does not attempt to delete repository public assets from Blob", () => {
     expect(shouldRemoveFromContentStorage("/products/chair.jpg")).toBe(false);
     expect(shouldRemoveFromContentStorage("/stories/alex.jpg")).toBe(false);
     expect(shouldRemoveFromContentStorage("products/p1/123e4567-e89b-12d3-a456-426614174000-0-chair.jpg")).toBe(true);
+  });
+
+  it("recognizes Vercel Blob paths as managed content storage", () => {
+    expect(shouldRemoveFromContentStorage("https://abc.public.blob.vercel-storage.com/products/p1/123e4567-e89b-12d3-a456-426614174000-0-image.jpg")).toBe(true);
   });
 });

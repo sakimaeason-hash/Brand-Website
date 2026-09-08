@@ -49,5 +49,6 @@ export function parseImageMetadata(raw: string | null, expectedCount: number): I
 }
 
 export function shouldRemoveFromContentStorage(path: string): boolean {
-  return /^(products|stories)\/[a-zA-Z0-9_-]+\/[a-f0-9-]+-\d+-[a-zA-Z0-9._-]+$/.test(path);
+  return /^(products|stories)\/[a-zA-Z0-9_-]+\/[a-f0-9-]+-\d+-[a-zA-Z0-9._-]+$/.test(path)
+    || /^https:\/\/[a-zA-Z0-9.-]+\.public\.blob\.vercel-storage\.com\/(products|stories)\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9-]+-\d+-[a-zA-Z0-9._-]+$/.test(path);
 }
