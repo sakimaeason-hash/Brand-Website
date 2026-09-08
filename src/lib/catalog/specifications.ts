@@ -22,14 +22,8 @@ function fail(field: SpecificationFieldDefinition, message: string): never {
   throw new SpecificationInputError(field.key, message);
 }
 
-function sourceNoteFor(
-  field: SpecificationFieldDefinition,
-  input: SpecificationInput,
-): string | undefined {
+function sourceNoteFor(input: SpecificationInput): string | undefined {
   const sourceNote = input.sourceNote?.trim();
-  if (input.status === "CONFLICTING" && !sourceNote) {
-    fail(field, "CONFLICTING values require a non-empty sourceNote.");
-  }
   return sourceNote || undefined;
 }
 
@@ -128,7 +122,7 @@ export function normalizeSpecification(
     return { status: "NOT_PROVIDED", value: null };
   }
 
-  const sourceNote = sourceNoteFor(field, input);
+  const sourceNote = sourceNoteFor(input);
 
   switch (field.dataType) {
     case "TEXT": {

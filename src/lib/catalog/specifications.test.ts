@@ -150,16 +150,28 @@ describe("normalizeSpecification", () => {
     });
   });
 
-  it("requires a non-empty source note for conflicting values", () => {
-    expect(() =>
-      normalizeSpecification(field(), {
+  it.each([undefined, "   "])(
+    "allows conflicting values with an optional source note: %s",
+    (sourceNote) => {
+      expect(
+        normalizeSpecification(field(), {
+          status: "CONFLICTING",
+          value: 18,
+          unit: "in",
+          sourceNote,
+        }),
+      ).toEqual({
         status: "CONFLICTING",
         value: 18,
-        unit: "in",
-        sourceNote: "   ",
-      }),
-    ).toThrow(/seatWidth/);
+        inputValue: 18,
+        inputUnit: "in",
+        normalizedValue: 457.2,
+        normalizedUnit: "mm",
+      });
+    },
+  );
 
+  it("trims and preserves a provided source note for conflicting values", () => {
     expect(
       normalizeSpecification(field(), {
         status: "CONFLICTING",
