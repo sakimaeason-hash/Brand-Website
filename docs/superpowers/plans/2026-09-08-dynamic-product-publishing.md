@@ -74,7 +74,7 @@
 - Create: `src/lib/catalog/specifications.ts`
 - Create: `src/lib/catalog/specifications.test.ts`
 
-- [ ] **Step 1: 写单位和规格解析失败测试**
+- [x] **Step 1: 写单位和规格解析失败测试**
 
 在 `units.test.ts` 覆盖 `lb -> kg`、`in -> mm`、`mi -> km`、`mph -> km/h`，并拒绝 `NaN`、负值和不属于单位族的单位。在 `specifications.test.ts` 构造长度、重量、布尔、选项和三维尺寸字段，验证缺失值不会被转换为零：
 
@@ -97,7 +97,7 @@ it("keeps NOT_PROVIDED distinct from zero", () => {
 });
 ```
 
-- [ ] **Step 2: 运行测试并确认按预期失败**
+- [x] **Step 2: 运行测试并确认按预期失败**
 
 运行：
 
@@ -107,7 +107,7 @@ npm.cmd test -- src/lib/catalog/units.test.ts src/lib/catalog/specifications.tes
 
 预期：FAIL，提示 `@/lib/catalog/units` 和 `specifications` 不存在。
 
-- [ ] **Step 3: 定义稳定 DTO**
+- [x] **Step 3: 定义稳定 DTO**
 
 在 `types.ts` 定义并导出以下核心类型，后续模块必须复用，不能复制近似接口：
 
@@ -141,7 +141,7 @@ export type FieldError = {
 };
 ```
 
-- [ ] **Step 4: 建立受保护语义注册表**
+- [x] **Step 4: 建立受保护语义注册表**
 
 `semantic-fields.ts` 导出 `SEMANTIC_FIELDS`、`POWERED_REQUIRED_SEMANTICS` 和 `MANUAL_REQUIRED_SEMANTICS`。语义键至少包含：
 
@@ -172,7 +172,7 @@ export const SEMANTIC_FIELDS = {
 
 `POWERED_REQUIRED_SEMANTICS` 包含设计文档第 7 节规定的全部电动轮椅字段；`MANUAL_REQUIRED_SEMANTICS` 包含手动轮椅字段。最大承重和有效座宽在两个列表中都标记为硬筛选字段。
 
-- [ ] **Step 5: 实现单位和模板驱动的规格规范化**
+- [x] **Step 5: 实现单位和模板驱动的规格规范化**
 
 `units.ts` 只实现已列出的单位族和显式转换表；`specifications.ts` 导出：
 
@@ -191,7 +191,7 @@ export function normalizeSpecificationMap(
 
 实现必须满足：`NOT_PROVIDED` 不要求值；`CONFLICTING` 保留 `sourceNote`；数字和尺寸按单位族换算；文本和选项 trim；未知字段、错误单位、错误数据类型和超出字段 `minValue/maxValue` 的值抛出含字段键的 `SpecificationInputError`。
 
-- [ ] **Step 6: 运行测试和类型检查**
+- [x] **Step 6: 运行测试和类型检查**
 
 ```powershell
 npm.cmd test -- src/lib/catalog/units.test.ts src/lib/catalog/specifications.test.ts
@@ -200,7 +200,7 @@ npx.cmd tsc --noEmit
 
 预期：全部 PASS，TypeScript 无错误。
 
-- [ ] **Step 7: 提交领域基础**
+- [x] **Step 7: 提交领域基础**
 
 ```powershell
 git add src/lib/catalog
