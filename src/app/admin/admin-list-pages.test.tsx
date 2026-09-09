@@ -19,6 +19,7 @@ vi.mock("@/components/admin/StatusBadge", () => ({ StatusBadge: ({ status }: { s
 import ProductsPage from "./products/page";
 import StoriesPage from "./stories/page";
 import PromotionsPage from "./promotions/page";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -29,6 +30,10 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("admin content list pages", () => {
+  it("includes product category management in the admin navigation", () => {
+    render(<AdminNav />);
+    expect(screen.getByRole("link", { name: "Product Categories" })).toHaveAttribute("href", "/admin/product-categories");
+  });
   it("shows product thumbnails and detail links", async () => {
     productFindMany.mockResolvedValue([{
       id: "p1", name: "Travel Air W 26", model: "PA22", status: "PUBLISHED",
