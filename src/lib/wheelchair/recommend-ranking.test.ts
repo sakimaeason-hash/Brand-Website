@@ -1,13 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { OFFICIAL_WHEELCHAIR_SPECS } from "@/data/wheelchair-specs";
 import { FINDER_RULES } from "./rules-config";
 import {
   matchBandForScore,
   portabilityRatioFor,
-  recommendWheelchairs,
+  recommendWheelchairs as recommendFromCandidates,
   targetFootrestHeightMm,
   targetSeatDepthMm,
 } from "./recommend";
-import type { FinderAssessment, Priority } from "./types";
+import type {
+  FinderAssessment,
+  Priority,
+  WheelchairCandidate,
+} from "./types";
 import { inchesToMm, lbToKg, milesToKm } from "./units";
 
 const base: FinderAssessment = {
@@ -33,6 +38,93 @@ const base: FinderAssessment = {
     priorities: ["fit"],
   },
 };
+
+const candidates: WheelchairCandidate[] = OFFICIAL_WHEELCHAIR_SPECS.flatMap(
+  (product) =>
+    product.variants.map((variant) => {
+      const verifiedWidths = [variant.seatWidthMm, variant.armrestSpacingMm];
+      const cushionStatus = variant.source.status.cushionWidthMm;
+      if (
+        variant.cushionWidthMm !== null &&
+        cushionStatus !== "missing" &&
+        cushionStatus !== "conflicting"
+      ) {
+        verifiedWidths.push(variant.cushionWidthMm);
+      }
+
+      return {
+        mobilityType: "powered" as const,
+        productId: product.productId,
+        productName: product.storefrontName,
+        variantId: variant.variantId,
+        sku: variant.variantId,
+        maxUserWeightKg: variant.maxUserWeightKg,
+        effectiveSeatWidthMm: Math.min(...verifiedWidths),
+        seatDepthMm: variant.seatDepthMm,
+        seatHeightMm: variant.seatHeightMm,
+        seatToFootrestMm: variant.seatToFootrestMm,
+        overallMm: variant.overallMm,
+        foldedMm: variant.foldedMm,
+        productUrl: `https://www.amazon.com/dp/${product.productId}`,
+        imageUrl: `/products/${product.productId}.jpg`,
+        dataWarnings: Object.entries(variant.source.status)
+          .filter(
+            ([, status]) => status === "missing" || status === "conflicting",
+          )
+          .map(([field]) => `Official ${field} data needs confirmation.`),
+        rangeKm: variant.rangeKm,
+        netWeightWithoutBatteryKg: variant.netWeightWithoutBatteryKg,
+        turningRadiusMm: variant.turningRadiusMm,
+        obstacleHeightMm: variant.obstacleHeightMm,
+        rearWheelMm: variant.rearWheelMm,
+        tireClass:
+          variant.tireClass === "mixed-pneumatic"
+            ? ("pneumatic" as const)
+            : variant.tireClass === "foam"
+              ? ("foam-filled" as const)
+              : ("solid" as const),
+        battery: {
+          weightKg: variant.batteryWeightKg,
+          removable: variant.battery.removable,
+          chemistry: variant.battery.chemistry,
+          voltageV: variant.battery.voltageV,
+          capacityAh: variant.battery.capacityAh,
+          manufacturerAirplaneFlag: variant.battery.manufacturerAirplaneFlag,
+        },
+      };
+    }),
+);
+
+const recommendWheelchairs = (assessment: FinderAssessment) =>
+  recommendFromCandidates(assessment, candidates);
+
+function manualCandidate(
+  overrides: Partial<Extract<WheelchairCandidate, { mobilityType: "manual" }>> = {},
+): Extract<WheelchairCandidate, { mobilityType: "manual" }> {
+  return {
+    mobilityType: "manual",
+    productId: "manual-chair",
+    productName: "Manual Chair",
+    variantId: "manual-variant",
+    sku: "MANUAL-1",
+    maxUserWeightKg: 140,
+    effectiveSeatWidthMm: 460,
+    seatDepthMm: 430,
+    seatHeightMm: 480,
+    seatToFootrestMm: 390,
+    overallMm: { length: 1050, width: 620, height: 930 },
+    foldedMm: { length: 800, width: 300, height: 720 },
+    productUrl: "https://www.amazon.com/dp/manual-chair",
+    imageUrl: "/manual-chair.jpg",
+    dataWarnings: [],
+    productWeightKg: 14,
+    propulsionType: "self-propel",
+    frontWheelMm: 190,
+    rearWheelMm: 600,
+    tireClass: "pneumatic",
+    ...overrides,
+  };
+}
 
 const evaluationFor = (
   result: ReturnType<typeof recommendWheelchairs>,
@@ -76,6 +168,125 @@ describe("wheelchair ranking", () => {
     expect(new Set(result.recommendations.map((item) => item.productId)).size).toBe(
       result.recommendations.length,
     );
+  });
+
+  it("uses only explicitly injected candidates", () => {
+    const dynamic = manualCandidate({
+      productId: "database-only",
+      variantId: "database-only-variant",
+    });
+
+    const result = recommendFromCandidates(base, [dynamic]);
+
+    expect(result.evaluations.map((evaluation) => evaluation.productId)).toEqual([
+      "database-only",
+    ]);
+    expect(result.recommendations.map((item) => item.productId)).toEqual([
+      "database-only",
+    ]);
+  });
+
+  it("fails closed when the injected catalog is empty", () => {
+    expect(recommendFromCandidates(base, [])).toEqual({
+      recommendations: [],
+      evaluations: [],
+    });
+  });
+
+  it("scores manual use from weight, fold, propulsion, wheels, and tires without powered facts", () => {
+    const light = manualCandidate({
+      productId: "light-manual",
+      variantId: "light-manual-variant",
+      productWeightKg: 12,
+      foldedMm: { length: 700, width: 260, height: 680 },
+      propulsionType: "self-propel",
+      rearWheelMm: 610,
+      tireClass: "pneumatic",
+    });
+    const heavy = manualCandidate({
+      productId: "heavy-manual",
+      variantId: "heavy-manual-variant",
+      productWeightKg: 35,
+      foldedMm: { length: 950, width: 500, height: 850 },
+      propulsionType: "transport",
+      rearWheelMm: 300,
+      tireClass: "solid",
+    });
+    const assessment = {
+      ...base,
+      use: {
+        ...base.use,
+        surfaces: ["gravel" as const],
+        priorities: ["portability" as const, "rough-terrain" as const],
+      },
+    };
+
+    const result = recommendFromCandidates(assessment, [heavy, light]);
+    const lightEvaluation = evaluationFor(
+      result,
+      "light-manual",
+      "light-manual-variant",
+    );
+    const heavyEvaluation = evaluationFor(
+      result,
+      "heavy-manual",
+      "heavy-manual-variant",
+    );
+
+    expect(lightEvaluation.scoreParts.transport).toBeGreaterThan(
+      heavyEvaluation.scoreParts.transport,
+    );
+    expect(lightEvaluation.scoreParts.environment).toBeGreaterThan(
+      heavyEvaluation.scoreParts.environment,
+    );
+    expect(lightEvaluation.reasons.join(" ")).not.toMatch(/range|battery/i);
+  });
+
+  it("ignores the powered-only range priority for manual candidates", () => {
+    const candidate = manualCandidate();
+    const preferencePart = (priorities: Priority[]) =>
+      evaluationFor(
+        recommendFromCandidates(
+          { ...base, use: { ...base.use, priorities } },
+          [candidate],
+        ),
+        candidate.productId,
+      ).scoreParts.preferences;
+
+    expect(preferencePart(["range"])).toBeCloseTo(
+      preferencePart(["portability"]),
+    );
+  });
+
+  it("uses storage fit and lift limits as soft transport signals", () => {
+    const candidate = manualCandidate();
+    const transportPart = (
+      use: Partial<FinderAssessment["use"]>,
+    ) =>
+      evaluationFor(
+        recommendFromCandidates(
+          { ...base, use: { ...base.use, ...use } },
+          [candidate],
+        ),
+        candidate.productId,
+      ).scoreParts.transport;
+
+    const baseline = transportPart({});
+    const fittingStorage = transportPart({
+      storageMm: { length: 800, width: 300, height: 720 },
+    });
+    const tooSmallStorage = transportPart({
+      storageMm: { length: 500, width: 250, height: 500 },
+    });
+    const liftAtWeight = transportPart({ maxLiftKg: candidate.productWeightKg });
+    const liftBelowWeight = transportPart({
+      maxLiftKg: candidate.productWeightKg / 2,
+    });
+
+    expect(fittingStorage).toBeGreaterThan(baseline);
+    expect(tooSmallStorage).toBeLessThan(baseline);
+    expect(liftAtWeight).toBeGreaterThan(baseline);
+    expect(liftBelowWeight).toBeLessThan(liftAtWeight);
   });
 
   it("shows an eligible product even when soft fit signals lower its score", () => {
@@ -291,12 +502,11 @@ describe("wheelchair ranking", () => {
     expect(pa15.exclusions).toEqual([]);
     expect(pa15.confidence).toBe("moderate");
     expect(pa15.scoreParts.preferences).toBeCloseTo(
-      (460 / 550) * FINDER_RULES.scoreWeights.preferences,
+      FINDER_RULES.scoreWeights.preferences,
     );
-    expect(warningText).toContain("460 mm");
-    expect(warningText).toContain("533 mm");
-    expect(warningText).toMatch(/replacement cushion|effective support width/i);
-    expect(warningText).toMatch(/before purchase/i);
+    expect(warningText).toContain(
+      "Official cushionWidthMm data needs confirmation.",
+    );
     expect(pa15.reasons).toContain(
       "Hard capacity and frame-geometry checks passed.",
     );

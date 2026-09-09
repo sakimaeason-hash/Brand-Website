@@ -1,9 +1,57 @@
 import { describe, expect, it } from "vitest";
-import { getWheelchairSpec } from "@/data/wheelchair-specs";
 import { FINDER_RULES } from "./rules-config";
-import type { FinderAssessment, WheelchairVariantSpec } from "./types";
+import type { FinderAssessment, WheelchairCandidate } from "./types";
 import { evaluateHardConstraints, fitsStorage, liftWeightKg } from "./recommend";
 import { inchesToMm, lbToKg, milesToKm } from "./units";
+
+type PoweredCandidate = Extract<
+  WheelchairCandidate,
+  { mobilityType: "powered" }
+>;
+
+function poweredCandidate(
+  overrides: Partial<Omit<PoweredCandidate, "battery">> & {
+    battery?: Partial<PoweredCandidate["battery"]>;
+  } = {},
+): PoweredCandidate {
+  const base: PoweredCandidate = {
+    mobilityType: "powered",
+    productId: "dynamic-powered",
+    productName: "Dynamic Powered Chair",
+    variantId: "dynamic-powered-variant",
+    sku: "DYNAMIC-POWERED",
+    maxUserWeightKg: lbToKg(330),
+    effectiveSeatWidthMm: 440,
+    seatDepthMm: 410,
+    seatHeightMm: 500,
+    seatToFootrestMm: 380,
+    overallMm: { length: 1000, width: 620, height: 930 },
+    foldedMm: { length: 800, width: 380, height: 720 },
+    productUrl: "https://www.amazon.com/dp/dynamic-powered",
+    imageUrl: "/dynamic-powered.jpg",
+    dataWarnings: [],
+    rangeKm: 32,
+    netWeightWithoutBatteryKg: 23,
+    turningRadiusMm: 850,
+    obstacleHeightMm: 45,
+    rearWheelMm: 320,
+    tireClass: "pneumatic",
+    battery: {
+      weightKg: 3,
+      removable: true,
+      chemistry: "lithium",
+      voltageV: 24,
+      capacityAh: 10,
+      manufacturerAirplaneFlag: true,
+    },
+  };
+
+  return {
+    ...base,
+    ...overrides,
+    battery: { ...base.battery, ...overrides.battery },
+  };
+}
 
 const assessment: FinderAssessment = {
   mode: "precision",
@@ -34,10 +82,10 @@ const airlineAssessment: FinderAssessment = {
   use: { ...assessment.use, airlineTravel: true },
 };
 
-const airlineBaseVariant = getWheelchairSpec("1").variants[0];
+const airlineBaseVariant = poweredCandidate();
 const airlineFailureCases: ReadonlyArray<{
   name: string;
-  variant: WheelchairVariantSpec;
+  variant: PoweredCandidate;
 }> = [
   {
     name: "battery watt-hours exceed 300 Wh",
@@ -69,7 +117,7 @@ const airlineFailureCases: ReadonlyArray<{
   },
   {
     name: "battery voltage is unknown",
-    variant: getWheelchairSpec("2").variants[0],
+    variant: poweredCandidate({ battery: { voltageV: null } }),
   },
 ];
 
@@ -89,14 +137,14 @@ describe("hard safety filters", () => {
           storageMm: { length: 1, width: 1, height: 1 },
         },
       },
-      getWheelchairSpec("1").variants[0],
+      poweredCandidate(),
     );
 
     expect(result).toEqual(["professional-assessment"]);
   });
 
   it("blocks over-capacity and too-narrow products", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
 
     expect(evaluateHardConstraints({ ...assessment, weightKg: lbToKg(331) }, variant)).toContain(
       "over-capacity",
@@ -107,17 +155,16 @@ describe("hard safety filters", () => {
   });
 
   it("hard-excludes a confirmed narrow cushion support surface", () => {
-    const variant = getWheelchairSpec("7").variants[0];
+    const variant = poweredCandidate({ effectiveSeatWidthMm: 440 });
 
-    expect(variant.cushionWidthMm).toBe(440);
-    expect(variant.source.status.cushionWidthMm).toBeUndefined();
+    expect(variant.effectiveSeatWidthMm).toBe(440);
     expect(
       evaluateHardConstraints({ ...assessment, hipWidthMm: 450 }, variant),
     ).toContain("seat-too-narrow");
   });
 
   it("uses only capacity and effective width as hard product filters", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
     const result = evaluateHardConstraints(
       {
         ...assessment,
@@ -138,7 +185,7 @@ describe("hard safety filters", () => {
   });
 
   it("keeps seat depth and footrest mismatches as non-hard fit signals", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
 
     expect(evaluateHardConstraints({ ...assessment, bodySeatDepthMm: 440 }, variant)).not.toContain("seat-too-deep");
     expect(evaluateHardConstraints({ ...assessment, lowerLegMm: 460 }, variant)).not.toContain("footrest-mismatch");
@@ -150,7 +197,7 @@ describe("hard safety filters", () => {
     expect(fitsStorage(item, { length: 3, width: 2, height: 1 })).toBe(false);
     expect(fitsStorage(item, { length: 2, width: 1, height: 3 })).toBe(true);
 
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
     const unsupportedSideStorage = {
       ...assessment,
       use: {
@@ -194,11 +241,11 @@ describe("hard safety filters", () => {
   });
 
   it("keeps exact capacity, width, depth, and footrest hard limits eligible", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
     const atLimits = {
       ...assessment,
       weightKg: variant.maxUserWeightKg,
-      hipWidthMm: Math.min(variant.seatWidthMm, variant.armrestSpacingMm),
+      hipWidthMm: variant.effectiveSeatWidthMm,
       bodySeatDepthMm: variant.seatDepthMm + 30,
       lowerLegMm: variant.seatToFootrestMm + 50,
     };
@@ -227,19 +274,45 @@ describe("hard safety filters", () => {
           maxLiftKg: 1,
         },
       },
-      getWheelchairSpec("2").variants[0],
+      poweredCandidate(),
     );
 
     expect(result).toEqual(["critical-data-missing"]);
   });
 
+  it("records capacity and effective-width exclusions before other missing measurements", () => {
+    const result = evaluateHardConstraints(
+      {
+        ...assessment,
+        weightKg: lbToKg(331),
+        hipWidthMm: 441,
+        bodySeatDepthMm: undefined,
+      },
+      poweredCandidate(),
+    );
+
+    expect(result).toEqual([
+      "over-capacity",
+      "seat-too-narrow",
+      "critical-data-missing",
+    ]);
+  });
+
   it("uses removable-battery lift weight and handles fixed-battery data", () => {
-    const removable = getWheelchairSpec("1").variants[0];
-    const fixedUnknown = getWheelchairSpec("7").variants[0];
+    const removable = poweredCandidate();
+    const fixedUnknown = poweredCandidate({
+      netWeightWithoutBatteryKg: 29,
+      battery: { removable: false, weightKg: null },
+    });
 
     expect(liftWeightKg(removable)).toBe(removable.netWeightWithoutBatteryKg);
     expect(liftWeightKg(fixedUnknown)).toBeNull();
-    expect(liftWeightKg({ ...fixedUnknown, batteryWeightKg: 2 })).toBe(31);
+    expect(
+      liftWeightKg({
+        ...fixedUnknown,
+        battery: { ...fixedUnknown.battery, weightKg: 2 },
+      }),
+    ).toBe(31);
   });
 
   it("keeps unknown fixed-battery lift weight as a non-hard transport signal", () => {
@@ -248,14 +321,14 @@ describe("hard safety filters", () => {
         ...assessment,
         use: { ...assessment.use, maxLiftKg: 30 },
       },
-      getWheelchairSpec("7").variants[0],
+      poweredCandidate({ battery: { removable: false, weightKg: null } }),
     );
 
     expect(result).not.toContain("lift-data-missing");
   });
 
   it("keeps caregiver lift limits as non-hard transport signals", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
     const atLimit = {
       ...assessment,
       use: { ...assessment.use, maxLiftKg: variant.netWeightWithoutBatteryKg },
@@ -270,7 +343,7 @@ describe("hard safety filters", () => {
   });
 
   it("keeps large seat-depth shortfalls as non-hard fit signals", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
     const result = evaluateHardConstraints(
       {
         ...assessment,
@@ -284,7 +357,7 @@ describe("hard safety filters", () => {
   });
 
   it("deduplicates simultaneous exclusions", () => {
-    const variant = getWheelchairSpec("1").variants[0];
+    const variant = poweredCandidate();
     const result = evaluateHardConstraints(
       {
         ...assessment,

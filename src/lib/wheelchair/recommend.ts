@@ -1,4 +1,3 @@
-import { OFFICIAL_WHEELCHAIR_SPECS } from "@/data/wheelchair-specs";
 import { FINDER_RULES } from "./rules-config";
 import type {
   Confidence,
@@ -7,12 +6,12 @@ import type {
   FinderAssessment,
   MatchBand,
   Recommendation,
+  TireClass,
   VariantEvaluation,
-  WheelchairVariantSpec,
+  WheelchairCandidate,
 } from "./types";
 
-// The catalog has no manufacturer-verified side or inverted storage orientation.
-// Fail closed by keeping the height axis upright and only rotating the footprint.
+// Without manufacturer verification, storage keeps the height axis upright.
 const permutations = (dimensions: DimensionsMm): DimensionsMm[] => [
   {
     length: dimensions.length,
@@ -35,10 +34,18 @@ export function fitsStorage(item: DimensionsMm, storage: DimensionsMm) {
   );
 }
 
-export function liftWeightKg(variant: WheelchairVariantSpec) {
-  if (variant.battery.removable) return variant.netWeightWithoutBatteryKg;
-  if (variant.batteryWeightKg === null) return null;
-  return variant.netWeightWithoutBatteryKg + variant.batteryWeightKg;
+export function liftWeightKg(candidate: WheelchairCandidate) {
+  if (candidate.mobilityType === "manual") return candidate.productWeightKg;
+  if (candidate.battery.removable === true) {
+    return candidate.netWeightWithoutBatteryKg;
+  }
+  if (
+    candidate.battery.removable !== false ||
+    candidate.battery.weightKg === null
+  ) {
+    return null;
+  }
+  return candidate.netWeightWithoutBatteryKg + candidate.battery.weightKg;
 }
 
 /** The hip-to-knee measurement is not the target wheelchair seat depth. */
@@ -52,49 +59,45 @@ export function targetFootrestHeightMm(seatHeightMm: number, lowerLegMm: number)
 }
 
 /** The catalog field is seat-surface-to-footrest, so derive its floor height. */
-export function productFootrestHeightMm(variant: WheelchairVariantSpec) {
-  return variant.seatHeightMm - variant.seatToFootrestMm;
+export function productFootrestHeightMm(candidate: WheelchairCandidate) {
+  return candidate.seatHeightMm - candidate.seatToFootrestMm;
 }
 
 export function evaluateHardConstraints(
   assessment: FinderAssessment,
-  variant: WheelchairVariantSpec,
+  candidate: WheelchairCandidate,
 ): ExclusionCode[] {
-  // Callers must validate the assessment with the assessment schema before evaluation.
-  const exclusions: ExclusionCode[] = [];
-  const safety = assessment.safety;
-
+  // Callers must validate the assessment with the assessment schema first.
   if (
-    safety.pressureInjuryConcern ||
-    safety.posturalAsymmetry ||
-    safety.customPositioningNeed
+    assessment.safety.pressureInjuryConcern ||
+    assessment.safety.posturalAsymmetry ||
+    assessment.safety.customPositioningNeed
   ) {
-    exclusions.push("professional-assessment");
-    return exclusions;
+    return ["professional-assessment"];
   }
 
-  if (assessment.weightKg > variant.maxUserWeightKg) {
+  const exclusions: ExclusionCode[] = [];
+  if (assessment.weightKg > candidate.maxUserWeightKg) {
     exclusions.push("over-capacity");
   }
 
   if (assessment.mode === "precision") {
+    if (
+      assessment.hipWidthMm !== undefined &&
+      assessment.hipWidthMm > candidate.effectiveSeatWidthMm
+    ) {
+      exclusions.push("seat-too-narrow");
+    }
     if (
       assessment.hipWidthMm === undefined ||
       assessment.bodySeatDepthMm === undefined ||
       assessment.lowerLegMm === undefined
     ) {
       exclusions.push("critical-data-missing");
-      return exclusions;
     }
-
-    const effectiveWidth = verifiedSupportWidthMm(variant);
-    if (assessment.hipWidthMm > effectiveWidth) {
-      exclusions.push("seat-too-narrow");
-    }
-
   }
 
-  return Array.from(new Set(exclusions));
+  return exclusions;
 }
 
 const clamp = (value: number, min: number, max: number) =>
@@ -105,48 +108,15 @@ const closeness = (difference: number, zeroScoreAt: number) =>
 
 function confidenceFor(
   assessment: FinderAssessment,
-  variant: WheelchairVariantSpec,
+  candidate: WheelchairCandidate,
 ): Confidence {
   if (assessment.mode === "quick") return "preliminary";
-
-  const critical = [
-    "seatWidthMm",
-    "seatDepthMm",
-    "batteryVoltageV",
-    "batteryWeightKg",
-    "cushionWidthMm",
-    "cushionDepthMm",
-  ] as const;
-  const hasIssue = critical.some((field) => {
-    const status = variant.source.status[field];
-    return status === "missing" || status === "conflicting";
-  });
-
-  return hasIssue ? "moderate" : "high";
-}
-
-function buildDataWarnings(
-  assessment: FinderAssessment,
-  variant: WheelchairVariantSpec,
-): string[] {
-  return Object.entries(variant.source.status)
-    .filter(([, status]) => status === "missing" || status === "conflicting")
-    .map(([field]) => {
-      if (
-        field === "cushionWidthMm" &&
-        assessment.mode === "precision" &&
-        assessment.hipWidthMm !== undefined &&
-        variant.cushionWidthMm !== null
-      ) {
-        return `Official cushion support is listed as ${variant.cushionWidthMm} mm versus your ${Math.round(assessment.hipWidthMm)} mm hip width; confirm a replacement cushion or the effective support width before purchase.`;
-      }
-      return `Official ${field} data needs confirmation.`;
-    });
+  return candidate.dataWarnings.length > 0 ? "moderate" : "high";
 }
 
 function buildSoftFitWarnings(
   assessment: FinderAssessment,
-  variant: WheelchairVariantSpec,
+  candidate: WheelchairCandidate,
 ): string[] {
   if (
     assessment.mode !== "precision" ||
@@ -157,7 +127,7 @@ function buildSoftFitWarnings(
   }
 
   const warnings: string[] = [];
-  const bodyOffset = assessment.bodySeatDepthMm - variant.seatDepthMm;
+  const bodyOffset = assessment.bodySeatDepthMm - candidate.seatDepthMm;
   if (bodyOffset < FINDER_RULES.seatDepth.bodyOffsetMinMm) {
     const deeperBy = FINDER_RULES.seatDepth.bodyOffsetMinMm - bodyOffset;
     warnings.push(
@@ -171,11 +141,11 @@ function buildSoftFitWarnings(
   }
 
   const targetFootrestHeight = targetFootrestHeightMm(
-    variant.seatHeightMm,
+    candidate.seatHeightMm,
     assessment.lowerLegMm,
   );
   const footrestDifference = Math.abs(
-    targetFootrestHeight - productFootrestHeightMm(variant),
+    targetFootrestHeight - productFootrestHeightMm(candidate),
   );
   if (footrestDifference > FINDER_RULES.footrest.hardToleranceMm) {
     warnings.push(
@@ -186,26 +156,11 @@ function buildSoftFitWarnings(
   return warnings;
 }
 
-function supportWidthMm(variant: WheelchairVariantSpec) {
-  return Math.min(
-    variant.seatWidthMm,
-    variant.armrestSpacingMm,
-    variant.cushionWidthMm ?? Number.POSITIVE_INFINITY,
-  );
-}
-
-function verifiedSupportWidthMm(variant: WheelchairVariantSpec) {
-  const widths = [variant.seatWidthMm, variant.armrestSpacingMm];
-  const cushionStatus = variant.source.status.cushionWidthMm;
-
-  if (variant.cushionWidthMm !== null && cushionStatus !== "conflicting" && cushionStatus !== "missing") {
-    widths.push(variant.cushionWidthMm);
-  }
-
-  return Math.min(...widths);
-}
-
-const descendingRatio = (value: number, fullScoreAt: number, zeroScoreAt: number) => {
+const descendingRatio = (
+  value: number,
+  fullScoreAt: number,
+  zeroScoreAt: number,
+) => {
   if (value <= fullScoreAt) return 1;
   if (value >= zeroScoreAt) return 0;
   return (zeroScoreAt - value) / (zeroScoreAt - fullScoreAt);
@@ -283,18 +238,230 @@ function validateAssessmentNumbers(assessment: FinderAssessment) {
   }
 }
 
+function scoreCommonFit(
+  assessment: FinderAssessment,
+  candidate: WheelchairCandidate,
+) {
+  if (
+    assessment.mode === "precision" &&
+    assessment.hipWidthMm !== undefined &&
+    assessment.bodySeatDepthMm !== undefined &&
+    assessment.lowerLegMm !== undefined
+  ) {
+    const widthGap = candidate.effectiveSeatWidthMm - assessment.hipWidthMm;
+    const seatDepthDifference =
+      candidate.seatDepthMm - targetSeatDepthMm(assessment.bodySeatDepthMm);
+    const targetFootrestHeight = targetFootrestHeightMm(
+      candidate.seatHeightMm,
+      assessment.lowerLegMm,
+    );
+    const footrestDifference =
+      targetFootrestHeight - productFootrestHeightMm(candidate);
+    return (
+      closeness(widthGap - 20, 100) +
+      closeness(seatDepthDifference, 60) +
+      closeness(footrestDifference, FINDER_RULES.footrest.hardToleranceMm)
+    ) / 3;
+  }
+
+  const capacityMargin =
+    (candidate.maxUserWeightKg - assessment.weightKg) /
+    candidate.maxUserWeightKg;
+  const bodyTarget =
+    assessment.bodyBuild === "slim"
+      ? 430
+      : assessment.bodyBuild === "broad"
+        ? 500
+        : 460;
+  return (
+    clamp(capacityMargin / 0.35, 0, 1) +
+    closeness(candidate.effectiveSeatWidthMm - bodyTarget, 140)
+  ) / 2;
+}
+
+function tireTerrainRatio(tireClass: TireClass) {
+  if (tireClass === "pneumatic") return 1;
+  if (tireClass === "foam-filled") return 0.8;
+  return 0.65;
+}
+
+function environmentRatioFor(
+  assessment: FinderAssessment,
+  indoorRatio: number,
+  outdoorRatio: number,
+) {
+  const baseRatio =
+    assessment.use.environment === "indoor"
+      ? indoorRatio
+      : assessment.use.environment === "outdoor"
+        ? outdoorRatio
+        : (indoorRatio + outdoorRatio) / 2;
+  const ratios = [
+    baseRatio,
+    ...assessment.use.surfaces.map((surface) =>
+      surface === "smooth" || surface === "carpet"
+        ? indoorRatio
+        : outdoorRatio,
+    ),
+  ];
+  if (assessment.use.tightSpaces) ratios.push(indoorRatio);
+  return ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
+}
+
+type UseScore = {
+  environment: number;
+  transport: number;
+  portability: number;
+  roughTerrain: number;
+  range: number | null;
+};
+
+function poweredAirlineRatio(
+  candidate: Extract<WheelchairCandidate, { mobilityType: "powered" }>,
+) {
+  const battery = candidate.battery;
+  if (
+    battery.removable !== true ||
+    battery.voltageV === null ||
+    battery.capacityAh === null
+  ) {
+    return 0;
+  }
+  return battery.voltageV * battery.capacityAh <=
+    FINDER_RULES.airline.maxRemovableLithiumWh
+    ? 1
+    : 0;
+}
+
+function scoreTransportFit(
+  assessment: FinderAssessment,
+  candidate: WheelchairCandidate,
+  baseline: number,
+) {
+  const ratios = [baseline];
+  if (assessment.use.storageMm) {
+    ratios.push(fitsStorage(candidate.foldedMm, assessment.use.storageMm) ? 1 : 0);
+  }
+  if (assessment.use.maxLiftKg !== undefined) {
+    const liftWeight = liftWeightKg(candidate);
+    if (liftWeight !== null) {
+      ratios.push(clamp(assessment.use.maxLiftKg / liftWeight, 0, 1));
+    }
+  }
+  return ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length;
+}
+
+function scorePoweredUse(
+  assessment: FinderAssessment,
+  candidate: Extract<WheelchairCandidate, { mobilityType: "powered" }>,
+): UseScore {
+  const indoor =
+    (closeness(candidate.turningRadiusMm - 800, 600) +
+      closeness(candidate.overallMm.width - 540, 180)) /
+    2;
+  const outdoor =
+    (clamp(candidate.obstacleHeightMm / 40, 0, 1) +
+      clamp(candidate.rearWheelMm / 330, 0, 1) +
+      tireTerrainRatio(candidate.tireClass)) /
+    3;
+  const portability = portabilityRatioFor(
+    candidate.netWeightWithoutBatteryKg,
+    candidate.foldedMm,
+  );
+  const baselineTransport = assessment.use.airlineTravel
+    ? poweredAirlineRatio(candidate)
+    : portability;
+  return {
+    environment: environmentRatioFor(assessment, indoor, outdoor),
+    transport: scoreTransportFit(assessment, candidate, baselineTransport),
+    portability,
+    roughTerrain: outdoor,
+    range: clamp(
+      candidate.rangeKm / Math.max(assessment.use.dailyRangeKm, 1),
+      0,
+      1,
+    ),
+  };
+}
+
+function scoreManualUse(
+  assessment: FinderAssessment,
+  candidate: Extract<WheelchairCandidate, { mobilityType: "manual" }>,
+): UseScore {
+  const indoor =
+    (closeness(candidate.overallMm.width - 560, 180) +
+      closeness(candidate.frontWheelMm - 180, 180)) /
+    2;
+  const outdoor =
+    (clamp(candidate.frontWheelMm / 200, 0, 1) +
+      clamp(candidate.rearWheelMm / 610, 0, 1) +
+      tireTerrainRatio(candidate.tireClass) +
+      (candidate.propulsionType === "self-propel" ? 1 : 0.55)) /
+    4;
+  const portability = portabilityRatioFor(
+    candidate.productWeightKg,
+    candidate.foldedMm,
+  );
+  const baselineTransport =
+    portability * (candidate.propulsionType === "transport" ? 1 : 0.9);
+  return {
+    environment: environmentRatioFor(assessment, indoor, outdoor),
+    transport: scoreTransportFit(assessment, candidate, baselineTransport),
+    portability,
+    roughTerrain: outdoor,
+    range: null,
+  };
+}
+
+function preferenceRatioFor(
+  assessment: FinderAssessment,
+  candidate: WheelchairCandidate,
+  fit: number,
+  use: UseScore,
+) {
+  const ratios: number[] = [];
+  for (const priority of assessment.use.priorities) {
+    switch (priority) {
+      case "fit":
+        ratios.push(fit);
+        break;
+      case "portability":
+        ratios.push(use.portability);
+        break;
+      case "range":
+        if (use.range !== null) ratios.push(use.range);
+        break;
+      case "rough-terrain":
+        ratios.push(use.roughTerrain);
+        break;
+      case "roominess":
+        ratios.push(clamp(candidate.effectiveSeatWidthMm / 550, 0, 1));
+        break;
+    }
+  }
+  return ratios.length > 0
+    ? ratios.reduce((sum, ratio) => sum + ratio, 0) / ratios.length
+    : use.portability;
+}
+
+function airlineWarning(candidate: WheelchairCandidate): string {
+  return candidate.mobilityType === "powered"
+    ? "Airline eligibility is not guaranteed; confirm the wheelchair and battery with the airline before travel."
+    : "Airline acceptance is not guaranteed; confirm folded dimensions and handling requirements with the airline before travel.";
+}
+
 function scoreVariant(
   assessment: FinderAssessment,
-  productId: string,
-  variant: WheelchairVariantSpec,
+  candidate: WheelchairCandidate,
 ): VariantEvaluation {
-  const confidence = confidenceFor(assessment, variant);
-  const dataWarnings = buildDataWarnings(assessment, variant);
-  const exclusions = evaluateHardConstraints(assessment, variant);
+  const confidence = confidenceFor(assessment, candidate);
+  const dataWarnings = [...candidate.dataWarnings];
+  const exclusions = evaluateHardConstraints(assessment, candidate);
   if (exclusions.length > 0) {
     return {
-      productId,
-      variantId: variant.variantId,
+      productId: candidate.productId,
+      variantId: candidate.variantId,
+      mobilityType: candidate.mobilityType,
       eligible: false,
       exclusions,
       score: 0,
@@ -305,119 +472,42 @@ function scoreVariant(
     };
   }
 
-  let fitRatio = 0.5;
-  if (
-    assessment.mode === "precision" &&
-    assessment.hipWidthMm !== undefined &&
-    assessment.bodySeatDepthMm !== undefined &&
-    assessment.lowerLegMm !== undefined
-  ) {
-    const widthGap = supportWidthMm(variant) - assessment.hipWidthMm;
-    const targetSeatDepth = targetSeatDepthMm(assessment.bodySeatDepthMm);
-    const seatDepthDifference = variant.seatDepthMm - targetSeatDepth;
-    const targetFootrestHeight = targetFootrestHeightMm(
-      variant.seatHeightMm,
-      assessment.lowerLegMm,
-    );
-    const footrestDifference =
-      targetFootrestHeight - productFootrestHeightMm(variant);
-    fitRatio =
-      (closeness(widthGap - 20, 100) +
-        closeness(seatDepthDifference, 60) +
-        closeness(footrestDifference, FINDER_RULES.footrest.hardToleranceMm)) /
-      3;
-  } else {
-    const capacityMargin =
-      (variant.maxUserWeightKg - assessment.weightKg) /
-      variant.maxUserWeightKg;
-    const bodyTarget =
-      assessment.bodyBuild === "slim"
-        ? 430
-        : assessment.bodyBuild === "broad"
-          ? 500
-          : 460;
-    fitRatio =
-      (clamp(capacityMargin / 0.35, 0, 1) +
-        closeness(variant.seatWidthMm - bodyTarget, 140)) /
-      2;
-  }
-
-  const indoorRatio =
-    (closeness(variant.turningRadiusMm - 800, 600) +
-      closeness(variant.overallMm.width - 540, 180)) /
-    2;
-  const outdoorRatio =
-    (clamp(variant.obstacleHeightMm / 40, 0, 1) +
-      clamp(variant.rearWheelMm / 330, 0, 1) +
-      (variant.tireClass === "mixed-pneumatic" ? 1 : 0.65)) /
-    3;
-  const baseEnvironmentRatio =
-    assessment.use.environment === "indoor"
-      ? indoorRatio
-      : assessment.use.environment === "outdoor"
-        ? outdoorRatio
-        : (indoorRatio + outdoorRatio) / 2;
-  const environmentRatios = [
-    baseEnvironmentRatio,
-    ...assessment.use.surfaces.map((surface) =>
-      surface === "smooth" || surface === "carpet" ? indoorRatio : outdoorRatio,
-    ),
-  ];
-  if (assessment.use.tightSpaces) environmentRatios.push(indoorRatio);
-  const environmentRatio =
-    environmentRatios.reduce((sum, ratio) => sum + ratio, 0) /
-    environmentRatios.length;
-
-  const portability = portabilityRatioFor(
-    variant.netWeightWithoutBatteryKg,
-    variant.foldedMm,
+  const fitRatio = scoreCommonFit(assessment, candidate);
+  const use =
+    candidate.mobilityType === "powered"
+      ? scorePoweredUse(assessment, candidate)
+      : scoreManualUse(assessment, candidate);
+  const preferenceRatio = preferenceRatioFor(
+    assessment,
+    candidate,
+    fitRatio,
+    use,
   );
-  const transportRatio = assessment.use.airlineTravel ? 1 : portability;
-  const rangeRatio = clamp(
-    variant.rangeKm / Math.max(assessment.use.dailyRangeKm, 1),
-    0,
-    1,
-  );
-  const priorityRatios = assessment.use.priorities.map((priority) => {
-    switch (priority) {
-      case "fit":
-        return fitRatio;
-      case "portability":
-        return portability;
-      case "range":
-        return rangeRatio;
-      case "rough-terrain":
-        return outdoorRatio;
-      case "roominess":
-        return clamp(supportWidthMm(variant) / 550, 0, 1);
-    }
-  });
-  const preferenceRatio =
-    priorityRatios.length > 0
-      ? priorityRatios.reduce((sum, ratio) => sum + ratio, 0) /
-        priorityRatios.length
-      : portability;
-
   const scoreParts = {
     fit: fitRatio * FINDER_RULES.scoreWeights.fit,
-    environment: environmentRatio * FINDER_RULES.scoreWeights.environment,
-    transport: transportRatio * FINDER_RULES.scoreWeights.transport,
+    environment: use.environment * FINDER_RULES.scoreWeights.environment,
+    transport: use.transport * FINDER_RULES.scoreWeights.transport,
     preferences: preferenceRatio * FINDER_RULES.scoreWeights.preferences,
   };
   const score = Math.round(
     Object.values(scoreParts).reduce((sum, value) => sum + value, 0),
   );
   const warnings = assessment.use.airlineTravel
-    ? [
-        ...dataWarnings,
-        "Airline eligibility is not guaranteed; confirm the wheelchair and battery with the airline before travel.",
-      ]
+    ? [...dataWarnings, airlineWarning(candidate)]
     : dataWarnings;
-  warnings.push(...buildSoftFitWarnings(assessment, variant));
+  warnings.push(...buildSoftFitWarnings(assessment, candidate));
+
+  const useReason =
+    candidate.mobilityType === "powered"
+      ? `Provides ${Math.round(candidate.rangeKm)} km of listed range.`
+      : candidate.propulsionType === "self-propel"
+        ? `Uses a self-propel configuration at ${candidate.productWeightKg} kg.`
+        : `Uses a transport configuration at ${candidate.productWeightKg} kg.`;
 
   return {
-    productId,
-    variantId: variant.variantId,
+    productId: candidate.productId,
+    variantId: candidate.variantId,
+    mobilityType: candidate.mobilityType,
     eligible: true,
     exclusions: [],
     score,
@@ -426,24 +516,24 @@ function scoreVariant(
     reasons: [
       `Supports the entered ${assessment.use.environment} use profile.`,
       "Hard capacity and frame-geometry checks passed.",
-      `Provides ${Math.round(variant.rangeKm)} km of listed range.`,
+      useReason,
     ],
     warnings,
   };
 }
 
-export function recommendWheelchairs(assessment: FinderAssessment): {
+export function recommendWheelchairs(
+  assessment: FinderAssessment,
+  candidates: readonly WheelchairCandidate[],
+): {
   recommendations: Recommendation[];
   evaluations: VariantEvaluation[];
 } {
   validateAssessmentNumbers(assessment);
 
-  const evaluations = OFFICIAL_WHEELCHAIR_SPECS.flatMap((product) =>
-    product.variants.map((variant) =>
-      scoreVariant(assessment, product.productId, variant),
-    ),
+  const evaluations = candidates.map((candidate) =>
+    scoreVariant(assessment, candidate),
   );
-
   const bestByProduct = new Map<string, VariantEvaluation>();
   evaluations
     .filter((evaluation) => evaluation.eligible)
@@ -475,6 +565,7 @@ export function recommendWheelchairs(assessment: FinderAssessment): {
     .map((evaluation) => ({
       productId: evaluation.productId,
       variantId: evaluation.variantId,
+      mobilityType: evaluation.mobilityType,
       score: evaluation.score,
       band: matchBandForScore(evaluation.score),
       confidence: evaluation.confidence,

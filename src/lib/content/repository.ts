@@ -72,8 +72,8 @@ function legacySpecificationGroups(product: StaticProduct): PublicSpecificationG
 
 function staticProductToPublicProduct(product: StaticProduct): PublicProduct {
   const category: PublicCategorySummary = product.category === "wheelchair"
-    ? { id: "legacy-wheelchairs", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" }
-    : { id: "legacy-scooters", name: "Mobility Scooters", slug: "mobility-scooters", role: "PRODUCT" };
+    ? { id: "legacy-wheelchairs", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT", recommendationProfile: "POWERED_WHEELCHAIR" }
+    : { id: "legacy-scooters", name: "Mobility Scooters", slug: "mobility-scooters", role: "PRODUCT", recommendationProfile: "NONE" };
   const variantCount = Math.max(1, product.colors.length, product.colorNames.length);
   return {
     id: product.id,
@@ -154,7 +154,7 @@ export async function listPublicCategories(): Promise<ReadonlyArray<PublicCatego
   try {
     return await prisma.productCategory.findMany({
       where: { status: "ACTIVE", products: { some: { status: "PUBLISHED" } } },
-      select: { id: true, name: true, slug: true, role: true },
+      select: { id: true, name: true, slug: true, role: true, recommendationProfile: true },
       orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     });
   } catch {

@@ -80,6 +80,7 @@ export type PublicCategorySummary = {
   name: string;
   slug: string;
   role: "PRODUCT" | "ACCESSORY";
+  recommendationProfile: RecommendationProfile;
 };
 
 export type PublicSpecificationItem = {
@@ -88,7 +89,7 @@ export type PublicSpecificationItem = {
   semanticKey?: string;
   status: SpecificationStatus;
   displayValue: string;
-  normalizedValue?: number | DimensionsValue;
+  normalizedValue?: string | number | boolean | DimensionsValue;
   normalizedUnit?: string;
 };
 

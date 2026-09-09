@@ -23,15 +23,18 @@ function productRow() {
       name: "Powered Wheelchairs",
       slug: "powered-wheelchairs",
       role: "PRODUCT",
+      recommendationProfile: "POWERED_WHEELCHAIR",
       status: "ACTIVE",
       fields: [
         { key: "finish", label: "Finish", group: "Appearance", scope: "PRODUCT", dataType: "SELECT", unitFamily: "NONE", defaultDisplayUnit: null, semanticKey: null, status: "ACTIVE", sortOrder: 0 },
         { key: "maxUserWeight", label: "Maximum user weight", group: "Fit", scope: "VARIANT", dataType: "NUMBER", unitFamily: "WEIGHT", defaultDisplayUnit: "lb", semanticKey: "maxUserWeight", status: "ACTIVE", sortOrder: 1 },
+        { key: "tireClass", label: "Tire type", group: "Wheels", scope: "VARIANT", dataType: "SELECT", unitFamily: "NONE", defaultDisplayUnit: null, semanticKey: "tireClass", status: "ACTIVE", sortOrder: 2 },
+        { key: "batteryRemovable", label: "Battery removable", group: "Battery", scope: "VARIANT", dataType: "BOOLEAN", unitFamily: "NONE", defaultDisplayUnit: null, semanticKey: "batteryRemovable", status: "ACTIVE", sortOrder: 3 },
       ],
     },
     images: [{ sortOrder: 0, publicUrl: "/chair.jpg", altText: "Red wheelchair" }],
     variants: [
-      { id: "v1", sku: "PA26-RED", factoryModel: "PA26", label: "Red", colorName: "Red", colorHex: "#AA0000", priceOverride: null, originalPriceOverride: null, purchaseLinkOverride: null, specifications: { maxUserWeight: { status: "PROVIDED", value: 300, inputValue: 300, inputUnit: "lb", normalizedValue: 136.077711, normalizedUnit: "kg" } }, isActive: true, sortOrder: 0 },
+      { id: "v1", sku: "PA26-RED", factoryModel: "PA26", label: "Red", colorName: "Red", colorHex: "#AA0000", priceOverride: null, originalPriceOverride: null, purchaseLinkOverride: null, specifications: { maxUserWeight: { status: "PROVIDED", value: 300, inputValue: 300, inputUnit: "lb", normalizedValue: 136.077711, normalizedUnit: "kg" }, tireClass: { status: "PROVIDED", value: "pneumatic" }, batteryRemovable: { status: "PROVIDED", value: true } }, isActive: true, sortOrder: 0 },
       { id: "v2", sku: "PA26-BLUE", factoryModel: "PA26", label: "Blue", colorName: "Blue", colorHex: "#0000AA", priceOverride: 699, originalPriceOverride: 899, purchaseLinkOverride: "https://www.amazon.com/dp/blue", specifications: { maxUserWeight: { status: "PROVIDED", value: 136.077711, unit: "kg", normalizedValue: 136.077711, normalizedUnit: "kg" } }, isActive: true, sortOrder: 1 },
       { id: "v3", sku: "PA26-OLD", factoryModel: null, label: null, colorName: null, colorHex: null, priceOverride: 1, originalPriceOverride: null, purchaseLinkOverride: null, specifications: {}, isActive: false, sortOrder: 2 },
     ],
@@ -60,6 +63,61 @@ describe("public catalog mapping", () => {
     const blueCapacity = product?.variants[1].specifications[0].items[0];
     expect(redCapacity).toMatchObject({ displayValue: "300 lb", normalizedValue: 136.077711, normalizedUnit: "kg", semanticKey: "maxUserWeight" });
     expect(blueCapacity?.displayValue).toBe("300 lb");
+  });
+
+  it("exposes recommendation profiles and normalized select and boolean values", () => {
+    const product = toPublicProduct(productRow(), now);
+    const items = product?.variants[0].specifications.flatMap((group) => group.items);
+
+    expect(product?.category.recommendationProfile).toBe("POWERED_WHEELCHAIR");
+    expect(items?.find((item) => item.semanticKey === "tireClass")).toMatchObject({
+      normalizedValue: "pneumatic",
+    });
+    expect(items?.find((item) => item.semanticKey === "batteryRemovable")).toMatchObject({
+      normalizedValue: true,
+    });
+  });
+
+  it("does not coerce malformed normalized numeric data", () => {
+    const row = productRow();
+    const product = toPublicProduct({
+      ...row,
+      categoryRelation: {
+        ...row.categoryRelation,
+        fields: [
+          ...row.categoryRelation.fields,
+          { key: "overallDimensions", label: "Overall dimensions", group: "Dimensions", scope: "VARIANT", dataType: "DIMENSIONS", unitFamily: "LENGTH", defaultDisplayUnit: "mm", semanticKey: "overallDimensions", status: "ACTIVE", sortOrder: 4 },
+        ],
+      },
+      variants: [
+        {
+          ...row.variants[0],
+          specifications: {
+            ...row.variants[0].specifications,
+            maxUserWeight: {
+              ...row.variants[0].specifications.maxUserWeight,
+              normalizedValue: "136.077711",
+            },
+            overallDimensions: {
+              status: "PROVIDED",
+              value: { length: 1000, width: 620, height: 930 },
+              normalizedValue: { length: "1000", width: 620, height: 930 },
+              normalizedUnit: "mm",
+            },
+          },
+        },
+      ],
+    }, now);
+
+    expect(
+      product?.variants[0].specifications[0].items[0].normalizedValue,
+    ).toBeUndefined();
+    expect(
+      product?.variants[0].specifications
+        .flatMap((group) => group.items)
+        .find((item) => item.semanticKey === "overallDimensions")
+        ?.normalizedValue,
+    ).toBeUndefined();
   });
 
   it("inherits the product original price when only current price is overridden", () => {

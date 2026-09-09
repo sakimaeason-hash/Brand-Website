@@ -246,7 +246,7 @@ export function useWheelchairAssessment() {
   const result = useMemo(() => {
     if (step !== FINAL_STEP) return null;
     const parsed = assessmentSchema.safeParse(assessment);
-    return parsed.success ? recommendWheelchairs(parsed.data) : null;
+    return parsed.success ? recommendWheelchairs(parsed.data, []) : null;
   }, [assessment, step]);
 
   return { assessment, step, update, next, back, reset, result };

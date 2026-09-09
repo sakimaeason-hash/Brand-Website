@@ -68,6 +68,7 @@ export type CatalogProductRow = {
     name: string;
     slug: string;
     role: "PRODUCT" | "ACCESSORY";
+    recommendationProfile: "NONE" | "POWERED_WHEELCHAIR" | "MANUAL_WHEELCHAIR";
     status: string;
     fields: readonly CatalogFieldRow[];
   } | null;
@@ -100,6 +101,12 @@ function finiteNumber(value: unknown): number | undefined {
   return Number.isFinite(number) ? number : undefined;
 }
 
+function strictFiniteNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
 function objectMap(value: unknown): Record<string, StoredValue> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, StoredValue> : {};
 }
@@ -110,6 +117,15 @@ function dimensions(value: unknown): DimensionsValue | undefined {
   const length = finiteNumber(candidate.length);
   const width = finiteNumber(candidate.width);
   const height = finiteNumber(candidate.height);
+  return length == null || width == null || height == null ? undefined : { length, width, height };
+}
+
+function strictDimensions(value: unknown): DimensionsValue | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const candidate = value as Partial<DimensionsValue>;
+  const length = strictFiniteNumber(candidate.length);
+  const width = strictFiniteNumber(candidate.width);
+  const height = strictFiniteNumber(candidate.height);
   return length == null || width == null || height == null ? undefined : { length, width, height };
 }
 
@@ -159,7 +175,22 @@ function toPublicSpecification(field: CatalogFieldRow, specification: StoredValu
     else if (field.dataType === "BOOLEAN") displayValue = specification?.value === true ? "Yes" : "No";
     else displayValue = typeof specification?.value === "string" ? specification.value : "Not provided";
   }
-  const normalizedValue = finiteNumber(specification?.normalizedValue) ?? dimensions(specification?.normalizedValue);
+  const normalizedValue = (() => {
+    if (field.dataType === "NUMBER") {
+      return strictFiniteNumber(specification?.normalizedValue);
+    }
+    if (field.dataType === "DIMENSIONS") {
+      return strictDimensions(specification?.normalizedValue);
+    }
+    if (field.dataType === "BOOLEAN") {
+      return typeof specification?.value === "boolean"
+        ? specification.value
+        : undefined;
+    }
+    return typeof specification?.value === "string"
+      ? specification.value
+      : undefined;
+  })();
   return {
     key: field.key,
     label: field.label,
@@ -245,7 +276,13 @@ export function toPublicProduct(row: CatalogProductRow, now = new Date()): Publi
     name: row.name,
     tagline: row.tagline ?? "",
     ...(row.description ? { description: row.description } : {}),
-    category: { id: category.id, name: category.name, slug: category.slug, role: category.role },
+    category: {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      role: category.role,
+      recommendationProfile: category.recommendationProfile,
+    },
     images: row.images.slice().sort((a, b) => a.sortOrder - b.sortOrder).map((image) => ({ url: image.publicUrl, alt: image.altText || row.name })),
     features: Array.isArray(row.features) ? row.features.filter((feature): feature is string => typeof feature === "string") : [],
     variants,

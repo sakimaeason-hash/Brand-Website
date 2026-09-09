@@ -26,7 +26,7 @@ describe("content repository", () => {
       id: "p1", name: "Published", model: "P1", category: "wheelchair", tagline: null, description: null,
       price: 10, originalPrice: null, amazonLink: "https://www.amazon.com/dp/p1", features: ["folds"], status: "PUBLISHED", isFeatured: false, sortOrder: 0,
       specifications: {}, images: [], promotions: [], inBoxItems: [], compatibleAccessories: [],
-      categoryRelation: { id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT", status: "ACTIVE", fields: [] },
+      categoryRelation: { id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT", recommendationProfile: "POWERED_WHEELCHAIR", status: "ACTIVE", fields: [] },
       variants: [{ id: "v1", sku: "P1-A", factoryModel: "P1", label: null, colorName: null, colorHex: null, priceOverride: null, originalPriceOverride: null, purchaseLinkOverride: null, specifications: {}, isActive: true, sortOrder: 0 }],
     }] as never);
     const products = await listPublishedProducts();
@@ -36,8 +36,8 @@ describe("content repository", () => {
   });
 
   it("lists active public categories that contain published products", async () => {
-    vi.mocked(prisma.productCategory.findMany).mockResolvedValue([{ id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" }] as never);
-    await expect(listPublicCategories()).resolves.toEqual([{ id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" }]);
+    vi.mocked(prisma.productCategory.findMany).mockResolvedValue([{ id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT", recommendationProfile: "POWERED_WHEELCHAIR" }] as never);
+    await expect(listPublicCategories()).resolves.toEqual([{ id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT", recommendationProfile: "POWERED_WHEELCHAIR" }]);
     expect(prisma.productCategory.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: { status: "ACTIVE", products: { some: { status: "PUBLISHED" } } },
     }));
@@ -46,6 +46,21 @@ describe("content repository", () => {
   it("falls back to static stories when the database fails", async () => {
     vi.mocked(prisma.customerStory.findMany).mockRejectedValue(new Error("offline"));
     expect((await listPublishedStories()).length).toBeGreaterThan(0);
+  });
+
+  it("labels static fallback categories for fail-closed recommendation filtering", async () => {
+    vi.mocked(prisma.product.findMany).mockRejectedValue(new Error("offline"));
+
+    const products = await listPublishedProducts();
+
+    expect(products.length).toBeGreaterThan(0);
+    expect(
+      products.every((product) =>
+        product.category.slug === "powered-wheelchairs"
+          ? product.category.recommendationProfile === "POWERED_WHEELCHAIR"
+          : product.category.recommendationProfile === "NONE",
+      ),
+    ).toBe(true);
   });
 
   it("keeps the storefront empty when no content is published", async () => {

@@ -64,6 +64,54 @@ export interface WheelchairProductSpec {
   readonly variants: readonly WheelchairVariantSpec[];
 }
 
+export type TireClass = "pneumatic" | "solid" | "foam-filled";
+
+export interface BatteryFacts {
+  readonly weightKg: number | null;
+  readonly removable: boolean | null;
+  readonly chemistry: "lithium" | "lead-acid" | null;
+  readonly voltageV: number | null;
+  readonly capacityAh: number | null;
+  readonly manufacturerAirplaneFlag: boolean | null;
+}
+
+interface CommonCandidate {
+  readonly productId: string;
+  readonly productName: string;
+  readonly variantId: string;
+  readonly sku: string;
+  readonly maxUserWeightKg: number;
+  readonly effectiveSeatWidthMm: number;
+  readonly seatDepthMm: number;
+  readonly seatHeightMm: number;
+  readonly seatToFootrestMm: number;
+  readonly overallMm: DimensionsMm;
+  readonly foldedMm: DimensionsMm;
+  readonly productUrl: string;
+  readonly imageUrl: string;
+  readonly dataWarnings: string[];
+}
+
+export type WheelchairCandidate =
+  | (CommonCandidate & {
+      readonly mobilityType: "powered";
+      readonly rangeKm: number;
+      readonly netWeightWithoutBatteryKg: number;
+      readonly turningRadiusMm: number;
+      readonly obstacleHeightMm: number;
+      readonly rearWheelMm: number;
+      readonly tireClass: TireClass;
+      readonly battery: BatteryFacts;
+    })
+  | (CommonCandidate & {
+      readonly mobilityType: "manual";
+      readonly productWeightKg: number;
+      readonly propulsionType: "self-propel" | "transport";
+      readonly frontWheelMm: number;
+      readonly rearWheelMm: number;
+      readonly tireClass: TireClass;
+    });
+
 export interface FinderAssessment {
   mode: AssessmentMode;
   unitSystem: UnitSystem;
@@ -106,6 +154,7 @@ export type ExclusionCode =
 export interface VariantEvaluation {
   productId: string;
   variantId: string;
+  mobilityType: WheelchairCandidate["mobilityType"];
   eligible: boolean;
   exclusions: ExclusionCode[];
   score: number;
@@ -118,6 +167,7 @@ export interface VariantEvaluation {
 export interface Recommendation {
   productId: string;
   variantId: string;
+  mobilityType: WheelchairCandidate["mobilityType"];
   score: number;
   band: MatchBand;
   confidence: Confidence;

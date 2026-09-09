@@ -6,9 +6,9 @@ import type { PublicProduct } from "@/lib/catalog/types";
 afterEach(() => cleanup());
 
 const categories = [
-  { id: "powered", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" as const },
-  { id: "shower", name: "Shower Chairs", slug: "shower-chairs", role: "PRODUCT" as const },
-  { id: "accessories", name: "Accessories", slug: "accessories", role: "ACCESSORY" as const },
+  { id: "powered", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" as const, recommendationProfile: "POWERED_WHEELCHAIR" as const },
+  { id: "shower", name: "Shower Chairs", slug: "shower-chairs", role: "PRODUCT" as const, recommendationProfile: "NONE" as const },
+  { id: "accessories", name: "Accessories", slug: "accessories", role: "ACCESSORY" as const, recommendationProfile: "NONE" as const },
 ];
 
 function product(overrides: Partial<PublicProduct> = {}): PublicProduct {
