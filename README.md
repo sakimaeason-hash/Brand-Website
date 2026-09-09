@@ -37,9 +37,10 @@ BLOB_READ_WRITE_TOKEN=由 Vercel Blob 存储自动注入
 ```bash
 npx prisma generate
 npx prisma migrate deploy
+npm run seed:catalog
 ```
 
-迁移只创建 `content_*` 表和 `ContentStatus` 枚举，并回填唯一管理员角色；不会重建订单、评论或促销码表。不要在预览或生产环境使用 `prisma db push`、`prisma migrate reset`，也不要删除已有迁移。迁移完成后，先注册使用 `ADMIN_EMAIL` 的账号，再由服务器端脚本提升其角色：
+迁移新增内容管理和动态产品目录表及相关枚举，并回填唯一管理员角色；不会重建订单、评论或促销码表。`seed:catalog` 会写入五个内置品类和受保护规格模板，必须在 `seed:content` 前运行。不要在预览或生产环境使用 `prisma db push`、`prisma migrate reset`，也不要删除已有迁移。迁移完成后，先注册使用 `ADMIN_EMAIL` 的账号，再由服务器端脚本提升其角色：
 
 ```bash
 npm run promote-admin
@@ -53,6 +54,7 @@ npm run promote-admin
 
 ```bash
 npx prisma generate
+npm run seed:catalog
 npm run seed:content
 ```
 
@@ -81,7 +83,7 @@ npm run seed:content
 
 1. 配置 Supabase bucket 和 Vercel 私有环境变量。
 2. 在独立预览数据库执行 `npx prisma migrate deploy`。
-3. 注册或提升管理员，执行 `npm run promote-admin` 和 `npm run seed:content`。
+3. 注册或提升管理员，执行 `npm run promote-admin`、`npm run seed:catalog` 和 `npm run seed:content`。
 4. 部署 Preview，并在浏览器验收普通用户的 `/admin` 403、管理员的草稿/预览/发布、产品和故事多图顺序、促销 ET 边界及静态回退。
 5. 将 Preview URL、迁移输出、测试结果、环境变量清单和已知限制交给项目负责人复核。
 6. **在获得明确批准前，不执行生产迁移，不运行 `vercel deploy --prod`，也不切换 `goldseason.vip`。**
@@ -90,6 +92,7 @@ npm run seed:content
 ```bash
 npx prisma migrate deploy
 npm run promote-admin
+npm run seed:catalog
 npm run seed:content
 npx vercel deploy --prod --yes --scope ethan-sakima-project --project brand-website
 ```

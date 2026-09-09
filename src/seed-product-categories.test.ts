@@ -8,6 +8,7 @@ type CategoryRow = {
   name: string;
   role: string;
   recommendationProfile: string;
+  status: string;
   templateVersion: number;
 };
 
@@ -82,5 +83,15 @@ describe("seedProductCategories", () => {
     await seedProductCategories(db as never);
 
     expect(custom?.label).toBe("Administrator label");
+  });
+
+  it("does not resurrect an archived built-in category", async () => {
+    const db = fakePrisma();
+    await seedProductCategories(db as never);
+    db.categories[0].status = "ARCHIVED";
+
+    await seedProductCategories(db as never);
+
+    expect(db.categories[0].status).toBe("ARCHIVED");
   });
 });

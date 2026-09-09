@@ -27,7 +27,6 @@ export async function seedProductCategories(client: SeedClient = prisma) {
           description: category.description,
           role: category.role,
           recommendationProfile: category.recommendationProfile,
-          status: "ACTIVE",
           sortOrder: category.sortOrder,
         },
       });
