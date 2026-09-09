@@ -26,6 +26,15 @@ const UNIT_FAMILIES: Readonly<
   ANGLE: { canonicalUnit: "deg", factors: { deg: 1 } },
 };
 
+export function unitsForFamily(family: UnitFamily): readonly string[] {
+  if (family === "NONE") return [];
+  return Object.keys(UNIT_FAMILIES[family].factors);
+}
+
+export function isUnitForFamily(unit: string, family: UnitFamily): boolean {
+  return unitsForFamily(family).includes(unit);
+}
+
 function stabilizeFloat(value: number): number {
   return Number(value.toPrecision(15));
 }

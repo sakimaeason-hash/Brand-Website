@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SEMANTIC_FIELDS } from "./semantic-fields";
+import { isUnitForFamily } from "./units";
 
 const fieldSchema = z.object({
   id: z.string().optional(),
@@ -20,6 +21,28 @@ const fieldSchema = z.object({
   isProtected: z.boolean().optional(),
   status: z.enum(["ACTIVE", "ARCHIVED"]).optional(),
   sortOrder: z.number().int().nonnegative().optional(),
+}).strict().superRefine((field, ctx) => {
+  if (field.minValue != null && field.maxValue != null && field.minValue > field.maxValue) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["maxValue"], message: "maxValue must be greater than or equal to minValue" });
+  }
+  if (["TEXT", "BOOLEAN", "SELECT"].includes(field.dataType) && field.unitFamily !== "NONE") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["unitFamily"], message: `${field.dataType} fields must use unit family NONE` });
+  }
+  if (field.dataType === "DIMENSIONS" && field.unitFamily !== "LENGTH") {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["unitFamily"], message: "Dimension fields must use unit family LENGTH" });
+  }
+  if (field.dataType === "SELECT" && (!field.options || field.options.length === 0)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["options"], message: "Select fields require at least one option" });
+  }
+  if (field.unitFamily === "NONE" && field.defaultDisplayUnit) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["defaultDisplayUnit"], message: "Unitless fields cannot define a display unit" });
+  }
+  if (field.unitFamily !== "NONE" && !field.defaultDisplayUnit) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["defaultDisplayUnit"], message: "A display unit is required for measured fields" });
+  }
+  if (field.defaultDisplayUnit && !isUnitForFamily(field.defaultDisplayUnit, field.unitFamily)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["defaultDisplayUnit"], message: `${field.defaultDisplayUnit} is not valid for ${field.unitFamily}` });
+  }
 });
 
 export const categoryInputSchema = z.object({
@@ -30,7 +53,7 @@ export const categoryInputSchema = z.object({
   recommendationProfile: z.enum(["NONE", "POWERED_WHEELCHAIR", "MANUAL_WHEELCHAIR"]).optional(),
   sortOrder: z.number().int().nonnegative().optional(),
   fields: z.array(fieldSchema).max(100).default([]),
-});
+}).strict();
 
 export type CategoryInput = z.infer<typeof categoryInputSchema>;
 

@@ -27,7 +27,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await requireAdmin();
-    const raw = await request.json();
+    let raw: unknown;
+    try { raw = await request.json(); } catch { return NextResponse.json({ error: "Request body must be valid JSON", code: "VALIDATION_ERROR", fields: [] }, { status: 400 }); }
     const parsed = categoryInputSchema.safeParse(raw);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message, code: "VALIDATION_ERROR", fields: parsed.error.errors }, { status: 400 });
     return NextResponse.json(await createCategory(parsed.data), { status: 201 });

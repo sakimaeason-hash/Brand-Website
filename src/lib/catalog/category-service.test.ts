@@ -9,7 +9,7 @@ import { POWERED_REQUIRED_SEMANTICS, SEMANTIC_FIELDS } from "./semantic-fields";
 
 const updatedAt = new Date("2026-09-01T00:00:00.000Z");
 
-function fakeDb(options: { publishedProducts?: any[] } = {}) {
+function fakeDb(options: { publishedProducts?: any[]; createCategoryError?: unknown } = {}) {
   const protectedFields = POWERED_REQUIRED_SEMANTICS.map((entry, index) => {
     const semantic = SEMANTIC_FIELDS[entry.semanticKey];
     return {
@@ -60,6 +60,7 @@ function fakeDb(options: { publishedProducts?: any[] } = {}) {
       },
       findFirst: async ({ where }: any) => categories.find((item) => item.slug === where.slug) ?? null,
       create: async ({ data }: any) => {
+        if (options.createCategoryError) throw options.createCategoryError;
         const row = { ...data, id: `cat-${++sequence}`, updatedAt, fields: [], products: [], _count: { products: 0 } };
         categories.push(row);
         return row;
@@ -139,10 +140,49 @@ describe("category service", () => {
     }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PROTECTED_FIELD" });
   });
 
+  it("rejects inventing a new protected semantic field during update", async () => {
+    const db = fakeDb();
+    await expect(updateCategory("cat-1", {
+      name: "Powered",
+      fields: [{
+        key: "propulsionType",
+        label: "Propulsion type",
+        group: "Performance",
+        scope: "VARIANT",
+        dataType: "SELECT",
+        unitFamily: "NONE",
+        options: ["rear-wheel"],
+        semanticKey: "propulsionType",
+        isProtected: true,
+      }],
+    }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PROTECTED_FIELD" });
+  });
+
+  it("rejects archiving an existing protected field", async () => {
+    const db = fakeDb();
+    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    await expect(updateCategory("cat-1", {
+      name: "Powered",
+      fields: [{ ...protectedField, status: "ARCHIVED" }],
+    }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PROTECTED_FIELD" });
+  });
+
   it("returns a conflict for a stale category update", async () => {
     const db = fakeDb();
     await expect(updateCategory("cat-1", { name: "Powered", fields: [] }, "2026-08-01T00:00:00.000Z", db))
       .rejects.toMatchObject({ code: "CONCURRENT_UPDATE" });
+  });
+
+  it.each(["not-a-date", "0", "2026-09-01 00:00:00"])("rejects non-canonical concurrency timestamp %s as validation error", async (timestamp) => {
+    const db = fakeDb();
+    await expect(updateCategory("cat-1", { name: "Powered", fields: [] }, timestamp, db))
+      .rejects.toMatchObject({ code: "INVALID_UPDATED_AT", status: 400 });
+  });
+
+  it("maps a database slug race to a conflict", async () => {
+    const db = fakeDb({ createCategoryError: { code: "P2002", meta: { target: ["slug"] } } });
+    await expect(createCategory({ name: "Racing category", fields: [] }, db))
+      .rejects.toMatchObject({ code: "SLUG_CONFLICT", status: 409 });
   });
 
   it("archives a category with optimistic concurrency", async () => {
@@ -174,6 +214,72 @@ describe("category service", () => {
     }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PUBLISHED_DATA_INCOMPLETE" });
   });
 
+  it("rejects making a field required when published data has the wrong type", async () => {
+    const db = fakeDb({
+      publishedProducts: [{
+        id: "product-1",
+        specifications: { isFoldable: { status: "PROVIDED", value: "yes" } },
+        variants: [],
+      }],
+    });
+
+    await expect(updateCategory("cat-1", {
+      name: "Powered",
+      fields: [{
+        key: "isFoldable",
+        label: "Foldable",
+        group: "Transport",
+        scope: "PRODUCT",
+        dataType: "BOOLEAN",
+        unitFamily: "NONE",
+        requiredForPublish: true,
+      }],
+    }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PUBLISHED_DATA_INCOMPLETE" });
+  });
+
+  it("revalidates stored measurements using their original input unit", async () => {
+    const db = fakeDb({
+      publishedProducts: [{
+        id: "product-1",
+        specifications: {
+          transportWeight: {
+            status: "PROVIDED",
+            value: 18,
+            inputValue: 18,
+            inputUnit: "lb",
+            normalizedValue: 8.16466266,
+            normalizedUnit: "kg",
+          },
+        },
+        variants: [],
+      }],
+    });
+
+    await expect(updateCategory("cat-1", {
+      name: "Powered",
+      fields: [{
+        key: "transportWeight",
+        label: "Transport weight",
+        group: "Transport",
+        scope: "PRODUCT",
+        dataType: "NUMBER",
+        unitFamily: "WEIGHT",
+        defaultDisplayUnit: "kg",
+        minValue: 10,
+        requiredForPublish: true,
+      }],
+    }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PUBLISHED_DATA_INCOMPLETE" });
+  });
+
+  it("rejects changing an established recommendation profile", async () => {
+    const db = fakeDb();
+    await expect(updateCategory("cat-1", {
+      name: "Powered",
+      recommendationProfile: "MANUAL_WHEELCHAIR",
+      fields: [],
+    }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "RECOMMENDATION_PROFILE_LOCKED" });
+  });
+
   it("increments the category template version when fields change", async () => {
     const db = fakeDb();
     const updated = await updateCategory("cat-1", {
@@ -189,6 +295,67 @@ describe("category service", () => {
     }, updatedAt.toISOString(), db);
 
     expect(updated.templateVersion).toBe(2);
+  });
+
+  it("preserves protected field display metadata when it is omitted", async () => {
+    const db = fakeDb();
+    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    protectedField.label = "Maximum supported user weight";
+    protectedField.helpText = "Use the real occupant weight.";
+    protectedField.sortOrder = 42;
+
+    const updated = await updateCategory("cat-1", { name: "Powered", fields: [] }, updatedAt.toISOString(), db);
+    const result = updated.fields.find((field: any) => field.key === "maxUserWeight");
+    expect(result).toMatchObject({ label: "Maximum supported user weight", helpText: "Use the real occupant weight.", sortOrder: 42 });
+  });
+
+  it("allows protected field display metadata to be edited", async () => {
+    const db = fakeDb();
+    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    const { categoryId: _categoryId, ...editableProtectedField } = protectedField;
+
+    const updated = await updateCategory("cat-1", {
+      name: "Powered",
+      fields: [{
+        ...editableProtectedField,
+        label: "Weight capacity",
+        helpText: "Enter the manufacturer's verified maximum user weight.",
+        sortOrder: 99,
+      }],
+    }, updatedAt.toISOString(), db);
+
+    expect(updated.fields.find((field: any) => field.key === "maxUserWeight")).toMatchObject({
+      label: "Weight capacity",
+      helpText: "Enter the manufacturer's verified maximum user weight.",
+      sortOrder: 99,
+    });
+  });
+
+  it("does not treat zero as equivalent to a null protected bound", async () => {
+    const db = fakeDb();
+    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    const { categoryId: _categoryId, ...submittedProtectedField } = protectedField;
+
+    await expect(updateCategory("cat-1", {
+      name: "Powered",
+      fields: [{
+        ...submittedProtectedField,
+        minValue: 0,
+      }],
+    }, updatedAt.toISOString(), db)).rejects.toMatchObject({ code: "PROTECTED_FIELD" });
+  });
+
+  it("never writes a client-provided specification field id", async () => {
+    const db = fakeDb();
+    await createCategory({ name: "Custom", fields: [{ id: "attacker-id", key: "finish", label: "Finish", group: "Overview", scope: "PRODUCT", dataType: "TEXT", unitFamily: "NONE" }] }, db);
+    expect(db.fields.some((field: any) => field.id === "attacker-id")).toBe(false);
+  });
+
+  it("rejects malformed template field combinations", async () => {
+    const db = fakeDb();
+    await expect(createCategory({ name: "Invalid", fields: [{ key: "lengthText", label: "Length", group: "Overview", scope: "PRODUCT", dataType: "TEXT", unitFamily: "LENGTH" }] }, db)).rejects.toMatchObject({ code: "INVALID_FIELD" });
+    await expect(createCategory({ name: "Invalid Select", fields: [{ key: "finish", label: "Finish", group: "Overview", scope: "PRODUCT", dataType: "SELECT", unitFamily: "NONE" }] }, db)).rejects.toMatchObject({ code: "INVALID_FIELD" });
+    await expect(createCategory({ name: "Invalid Unit", fields: [{ key: "seatWidth", label: "Seat width", group: "Fit", scope: "VARIANT", dataType: "NUMBER", unitFamily: "LENGTH", defaultDisplayUnit: "lb" }] }, db)).rejects.toMatchObject({ code: "INVALID_FIELD" });
   });
 
   it("exposes structured service errors", () => {
