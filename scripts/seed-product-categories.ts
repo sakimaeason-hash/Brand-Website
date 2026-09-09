@@ -51,10 +51,11 @@ export async function seedProductCategories(client: SeedClient = prisma) {
           status: field.status,
           sortOrder: field.sortOrder,
         };
+        const { status: _status, ...protectedUpdate } = protectedData;
         await tx.specificationField.upsert({
           where: { categoryId_key: { categoryId: row.id, key: field.key } },
           create: { categoryId: row.id, key: field.key, ...protectedData },
-          update: field.isProtected ? protectedData : {},
+          update: field.isProtected ? protectedUpdate : {},
         });
       }
     }

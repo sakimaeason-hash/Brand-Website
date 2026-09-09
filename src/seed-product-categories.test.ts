@@ -94,4 +94,16 @@ describe("seedProductCategories", () => {
 
     expect(db.categories[0].status).toBe("ARCHIVED");
   });
+
+  it("does not resurrect an archived protected field", async () => {
+    const db = fakePrisma();
+    await seedProductCategories(db as never);
+    const protectedField = db.fields.find((field) => field.semanticKey === "maxUserWeight");
+    expect(protectedField).toBeDefined();
+    protectedField!.status = "ARCHIVED";
+
+    await seedProductCategories(db as never);
+
+    expect(protectedField!.status).toBe("ARCHIVED");
+  });
 });
