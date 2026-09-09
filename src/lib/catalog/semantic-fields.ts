@@ -48,12 +48,10 @@ export const POWERED_REQUIRED_SEMANTICS = [
   { semanticKey: "foldedDimensions", role: "ranking" },
   { semanticKey: "netWeightWithoutBattery", role: "ranking" },
   { semanticKey: "range", role: "ranking" },
-  { semanticKey: "maxSpeed", role: "ranking" },
   { semanticKey: "turningRadius", role: "ranking" },
   { semanticKey: "obstacleHeight", role: "ranking" },
   { semanticKey: "rearWheelDiameter", role: "ranking" },
   { semanticKey: "tireClass", role: "ranking" },
-  { semanticKey: "motorPower", role: "ranking" },
 ] as const satisfies readonly RequiredSemantic[];
 
 export const MANUAL_REQUIRED_SEMANTICS = [

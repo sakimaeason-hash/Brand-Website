@@ -221,7 +221,7 @@ git commit -m "feat: add catalog specification domain"
 - Create: `src/seed-product-categories.test.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: 写内置模板和幂等种子失败测试**
+- [x] **Step 1: 写内置模板和幂等种子失败测试**
 
 测试必须断言四个产品品类和一个配件品类具有稳定 slug；电动/手动模板包含正确受保护字段；重复执行 seed 不增加重复品类或字段：
 
@@ -237,13 +237,13 @@ expect(powered.fields.find((field) => field.semanticKey === "effectiveSeatWidth"
   .toMatchObject({ isProtected: true, requiredForRecommendation: true });
 ```
 
-- [ ] **Step 2: 运行测试并确认失败**
+- [x] **Step 2: 运行测试并确认失败**
 
 运行：`npm.cmd test -- src/lib/catalog/builtin-templates.test.ts src/seed-product-categories.test.ts`。
 
 预期：FAIL，因为模板和 seed 尚不存在。
 
-- [ ] **Step 3: 扩展 Prisma schema**
+- [x] **Step 3: 扩展 Prisma schema**
 
 新增以下枚举和模型；保留 `Product.category` 作为本次兼容迁移字段，不在此版本删除：
 
@@ -376,11 +376,11 @@ model ProductAccessory {
 
 给 `Product` 增加 `categoryId String?`、`specifications Json @default("{}")`、`categoryTemplateVersion Int @default(1)` 以及上述关系字段。迁移 SQL 先创建表和内置品类，按旧 `category` 把产品回填到 `powered-wheelchairs` 或 `mobility-scooters`，但暂不把 `categoryId` 设为 NOT NULL，以便冲突数据进入人工复核。
 
-- [ ] **Step 4: 定义内置模板**
+- [x] **Step 4: 定义内置模板**
 
 `builtin-templates.ts` 使用 Task 1 的语义注册表生成模板，明确每个字段的 `scope`。共同人体适配字段和 SKU 性能字段采用 `VARIANT`；仅产品文案不进入规格 JSON。淋浴椅字段包括承重、座面宽深、整体尺寸、可调高度、材料、防滑脚、扶手、靠背和便桶兼容性。Accessories 默认不强制规格字段。
 
-- [ ] **Step 5: 实现幂等种子**
+- [x] **Step 5: 实现幂等种子**
 
 `seed-product-categories.ts` 使用 slug 和 `[categoryId,key]` upsert；只更新内置受保护字段，不覆盖管理员对普通自定义字段的修改。导出：
 
@@ -395,7 +395,7 @@ export async function seedProductCategories(client = prisma) {
 
 在 `package.json` 增加 `seed:catalog`。CLI 错误时设置非零退出码，成功打印品类和字段数量。
 
-- [ ] **Step 6: 验证 schema、迁移和 seed 测试**
+- [x] **Step 6: 验证 schema、迁移和 seed 测试**
 
 ```powershell
 npx.cmd prisma format
@@ -406,7 +406,7 @@ npx.cmd tsc --noEmit
 
 预期：schema valid、测试 PASS、类型检查通过。
 
-- [ ] **Step 7: 提交数据模型**
+- [x] **Step 7: 提交数据模型**
 
 ```powershell
 git add prisma src/lib/catalog/builtin-templates* scripts/seed-product-categories.ts src/seed-product-categories.test.ts package.json

@@ -19,15 +19,13 @@ describe("catalog semantic fields", () => {
     });
   });
 
-  it("requires powered speed and motor power for ranking", () => {
-    expect(POWERED_REQUIRED_SEMANTICS).toContainEqual({
-      semanticKey: "maxSpeed",
-      role: "ranking",
-    });
-    expect(POWERED_REQUIRED_SEMANTICS).toContainEqual({
-      semanticKey: "motorPower",
-      role: "ranking",
-    });
+  it("keeps optional powered performance semantics out of the required list", () => {
+    expect(POWERED_REQUIRED_SEMANTICS).not.toContainEqual(
+      expect.objectContaining({ semanticKey: "maxSpeed" }),
+    );
+    expect(POWERED_REQUIRED_SEMANTICS).not.toContainEqual(
+      expect.objectContaining({ semanticKey: "motorPower" }),
+    );
   });
 
   it("uses overall dimensions to carry manual vehicle width", () => {
