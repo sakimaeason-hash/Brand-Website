@@ -9,6 +9,16 @@ export function adminErrorResponse(error: unknown) {
     const status = (error as { status: 401 | 403 }).status;
     return NextResponse.json({ error: (error as { message?: string }).message || "Admin access required", code: status === 401 ? "AUTHENTICATION_REQUIRED" : "ADMIN_ACCESS_REQUIRED", fields: [] }, { status });
   }
+  if (error && typeof error === "object") {
+    const candidate = error as { message?: unknown; code?: unknown; status?: unknown; fields?: unknown };
+    if (typeof candidate.code === "string" && typeof candidate.status === "number" && candidate.status >= 400 && candidate.status < 500) {
+      return NextResponse.json({
+        error: typeof candidate.message === "string" ? candidate.message : "Admin request failed",
+        code: candidate.code,
+        fields: Array.isArray(candidate.fields) ? candidate.fields : [],
+      }, { status: candidate.status });
+    }
+  }
   console.error("Admin request failed", error);
   return NextResponse.json({ error: "Admin request failed", code: "INTERNAL_ERROR", fields: [] }, { status: 500 });
 }
