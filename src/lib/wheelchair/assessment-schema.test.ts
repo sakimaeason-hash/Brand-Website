@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assessmentSchema,
+  persistedAssessmentSchema,
   requiresProfessionalAssessment,
   sanitizeForAccount,
   sanitizeForLocalStorage,
@@ -9,6 +10,7 @@ import { inchesToMm, lbToKg, milesToKm } from "./units";
 import type { FinderAssessment } from "./types";
 
 const valid: FinderAssessment = {
+  mobilityType: "powered",
   mode: "precision",
   unitSystem: "us",
   heightMm: inchesToMm(68),
@@ -33,6 +35,20 @@ const valid: FinderAssessment = {
 };
 
 describe("assessment validation", () => {
+  it("accepts powered and manual mobility types but rejects unrelated products", () => {
+    expect(assessmentSchema.safeParse({ ...valid, mobilityType: "powered" }).success).toBe(true);
+    expect(assessmentSchema.safeParse({ ...valid, mobilityType: "manual" }).success).toBe(true);
+    expect(assessmentSchema.safeParse({ ...valid, mobilityType: "scooter" }).success).toBe(false);
+  });
+
+  it("migrates legacy persisted assessments without a mobility type to powered", () => {
+    const { mobilityType: _mobilityType, safety: _safety, ...legacy } = valid;
+
+    const parsed = persistedAssessmentSchema.parse(legacy);
+
+    expect(parsed.mobilityType).toBe("powered");
+  });
+
   it.each(["hipWidthMm", "bodySeatDepthMm", "lowerLegMm"] as const)(
     "requires %s in precision mode",
     (field) => {
@@ -189,6 +205,17 @@ describe("assessment privacy", () => {
     expect(serialized).not.toContain("pressureInjuryConcern");
     expect(serialized).not.toContain("posturalAsymmetry");
     expect(serialized).not.toContain("customPositioningNeed");
+    expect(local.mobilityType).toBe("powered");
+  });
+
+  it("accepts self-propulsion as a manual-wheelchair priority", () => {
+    expect(
+      assessmentSchema.safeParse({
+        ...valid,
+        mobilityType: "manual",
+        use: { ...valid.use, priorities: ["self-propulsion"] },
+      }).success,
+    ).toBe(true);
   });
 
   it("allowlists persisted fields from structurally wider assessments", () => {

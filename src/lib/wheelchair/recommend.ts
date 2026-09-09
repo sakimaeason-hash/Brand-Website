@@ -437,6 +437,11 @@ function preferenceRatioFor(
       case "roominess":
         ratios.push(clamp(candidate.effectiveSeatWidthMm / 550, 0, 1));
         break;
+      case "self-propulsion":
+        if (candidate.mobilityType === "manual") {
+          ratios.push(candidate.propulsionType === "self-propel" ? 1 : 0.55);
+        }
+        break;
     }
   }
   return ratios.length > 0
@@ -531,9 +536,9 @@ export function recommendWheelchairs(
 } {
   validateAssessmentNumbers(assessment);
 
-  const evaluations = candidates.map((candidate) =>
-    scoreVariant(assessment, candidate),
-  );
+  const evaluations = candidates
+    .filter((candidate) => candidate.mobilityType === assessment.mobilityType)
+    .map((candidate) => scoreVariant(assessment, candidate));
   const bestByProduct = new Map<string, VariantEvaluation>();
   evaluations
     .filter((evaluation) => evaluation.eligible)

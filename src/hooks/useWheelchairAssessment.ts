@@ -10,6 +10,7 @@ import { recommendWheelchairs } from "@/lib/wheelchair/recommend";
 import type {
   DimensionsMm,
   FinderAssessment,
+  WheelchairCandidate,
 } from "@/lib/wheelchair/types";
 
 export const WHEELCHAIR_ASSESSMENT_STORAGE_KEY =
@@ -25,6 +26,7 @@ const createSafetyAnswers = (): FinderAssessment["safety"] => ({
 });
 
 export const createDefaultAssessment = (): FinderAssessment => ({
+  mobilityType: "powered",
   mode: "quick",
   unitSystem: "us",
   heightMm: 1727,
@@ -97,7 +99,9 @@ const safeRemove = () => {
   }
 };
 
-export function useWheelchairAssessment() {
+export function useWheelchairAssessment(
+  candidates: readonly WheelchairCandidate[] = [],
+) {
   const [assessment, setAssessment] = useState<FinderAssessment>(() =>
     createDefaultAssessment(),
   );
@@ -182,6 +186,7 @@ export function useWheelchairAssessment() {
       const safetyPatch = patch.safety;
 
       return {
+        mobilityType: patch.mobilityType ?? current.mobilityType,
         mode: patch.mode ?? current.mode,
         unitSystem: patch.unitSystem ?? current.unitSystem,
         heightMm: patch.heightMm ?? current.heightMm,
@@ -246,8 +251,8 @@ export function useWheelchairAssessment() {
   const result = useMemo(() => {
     if (step !== FINAL_STEP) return null;
     const parsed = assessmentSchema.safeParse(assessment);
-    return parsed.success ? recommendWheelchairs(parsed.data, []) : null;
-  }, [assessment, step]);
+    return parsed.success ? recommendWheelchairs(parsed.data, candidates) : null;
+  }, [assessment, candidates, step]);
 
   return { assessment, step, update, next, back, reset, result };
 }

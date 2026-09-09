@@ -8,6 +8,62 @@ import {
   useWheelchairAssessment,
 } from "./useWheelchairAssessment";
 import type { FinderAssessmentUpdate } from "./useWheelchairAssessment";
+import type { WheelchairCandidate } from "@/lib/wheelchair/types";
+
+const poweredCandidate: WheelchairCandidate = {
+  mobilityType: "powered",
+  productId: "powered-product",
+  productName: "Powered Chair",
+  variantId: "powered-variant",
+  sku: "POWERED-1",
+  maxUserWeightKg: 150,
+  effectiveSeatWidthMm: 500,
+  seatDepthMm: 430,
+  seatHeightMm: 480,
+  seatToFootrestMm: 390,
+  overallMm: { length: 1000, width: 600, height: 950 },
+  foldedMm: { length: 700, width: 400, height: 750 },
+  productUrl: "https://www.amazon.com/dp/powered",
+  imageUrl: "/powered.jpg",
+  dataWarnings: [],
+  rangeKm: 30,
+  netWeightWithoutBatteryKg: 25,
+  turningRadiusMm: 800,
+  obstacleHeightMm: 40,
+  rearWheelMm: 330,
+  tireClass: "solid",
+  battery: {
+    weightKg: 2,
+    removable: true,
+    chemistry: "lithium",
+    voltageV: 24,
+    capacityAh: 12,
+    manufacturerAirplaneFlag: true,
+  },
+};
+
+const manualCandidate: WheelchairCandidate = {
+  mobilityType: "manual",
+  productId: "manual-product",
+  productName: "Manual Chair",
+  variantId: "manual-variant",
+  sku: "MANUAL-1",
+  maxUserWeightKg: 150,
+  effectiveSeatWidthMm: 500,
+  seatDepthMm: 430,
+  seatHeightMm: 480,
+  seatToFootrestMm: 390,
+  overallMm: { length: 1000, width: 600, height: 950 },
+  foldedMm: { length: 700, width: 300, height: 750 },
+  productUrl: "https://www.amazon.com/dp/manual",
+  imageUrl: "/manual.jpg",
+  dataWarnings: [],
+  productWeightKg: 14,
+  propulsionType: "self-propel",
+  frontWheelMm: 190,
+  rearWheelMm: 600,
+  tireClass: "pneumatic",
+};
 
 const storedDraft = (overrides: Record<string, unknown> = {}) => ({
   mode: "quick",
@@ -96,6 +152,39 @@ describe("useWheelchairAssessment", () => {
       expect(serialized).not.toContain("posturalAsymmetry");
       expect(serialized).not.toContain("customPositioningNeed");
     });
+  });
+
+  it("persists mobility type and recommends only candidates of that type", async () => {
+    const { result } = renderHook(() =>
+      useWheelchairAssessment([poweredCandidate, manualCandidate]),
+    );
+
+    act(() => {
+      result.current.update({ mobilityType: "manual" });
+      for (let index = 0; index < 4; index += 1) result.current.next();
+    });
+
+    expect(result.current.assessment.mobilityType).toBe("manual");
+    expect(result.current.result?.recommendations.map((item) => item.productId)).toEqual([
+      "manual-product",
+    ]);
+    await waitFor(() => {
+      const persisted = localStorage.getItem(WHEELCHAIR_ASSESSMENT_STORAGE_KEY);
+      expect(persisted).toContain('"mobilityType":"manual"');
+      expect(persisted).not.toContain('"safety"');
+    });
+  });
+
+  it("restores legacy drafts without mobility type as powered", async () => {
+    localStorage.setItem(
+      WHEELCHAIR_ASSESSMENT_STORAGE_KEY,
+      JSON.stringify(storedDraft({ heightMm: 1800 })),
+    );
+
+    const { result } = renderHook(() => useWheelchairAssessment([]));
+
+    await waitFor(() => expect(result.current.assessment.heightMm).toBe(1800));
+    expect(result.current.assessment.mobilityType).toBe("powered");
   });
 
   it("persists an update made by a consumer layout effect before hydration", async () => {

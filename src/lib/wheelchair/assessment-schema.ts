@@ -23,7 +23,14 @@ export const useProfileSchema = z.object({
   maxLiftKg: z.number().min(2).max(100).optional(),
   priorities: z
     .array(
-      z.enum(["fit", "portability", "range", "rough-terrain", "roominess"]),
+      z.enum([
+        "fit",
+        "portability",
+        "range",
+        "rough-terrain",
+        "roominess",
+        "self-propulsion",
+      ]),
     )
     .min(1)
     .max(3)
@@ -39,6 +46,7 @@ const safetySchema = z.object({
 });
 
 const assessmentObjectSchema = z.object({
+  mobilityType: z.enum(["powered", "manual"]).default("powered"),
   mode: z.enum(["quick", "precision"]),
   unitSystem: z.enum(["us", "metric"]),
   heightMm: z.number().min(900).max(2500),
@@ -95,6 +103,7 @@ export function requiresProfessionalAssessment(assessment: FinderAssessment) {
 
 export function sanitizeForLocalStorage(assessment: FinderAssessment) {
   return {
+    mobilityType: assessment.mobilityType,
     mode: assessment.mode,
     unitSystem: assessment.unitSystem,
     heightMm: assessment.heightMm,

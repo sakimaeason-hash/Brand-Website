@@ -4,10 +4,17 @@ export const RULES_VERSION = "1.0.0";
 export type VerificationStatus = "verified" | "conflicting" | "missing";
 export type UnitSystem = "us" | "metric";
 export type AssessmentMode = "quick" | "precision";
+export type MobilityType = "powered" | "manual";
 export type BodyBuild = "slim" | "average" | "broad";
 export type Environment = "indoor" | "outdoor" | "mixed";
 export type Surface = "smooth" | "carpet" | "grass" | "gravel" | "uneven";
-export type Priority = "fit" | "portability" | "range" | "rough-terrain" | "roominess";
+export type Priority =
+  | "fit"
+  | "portability"
+  | "range"
+  | "rough-terrain"
+  | "roominess"
+  | "self-propulsion";
 export type Confidence = "preliminary" | "moderate" | "high";
 export type MatchBand = "best" | "good" | "potential";
 export type NoMatchKind = "professional" | "incomplete" | "hard" | "soft-conflict";
@@ -113,6 +120,7 @@ export type WheelchairCandidate =
     });
 
 export interface FinderAssessment {
+  mobilityType: MobilityType;
   mode: AssessmentMode;
   unitSystem: UnitSystem;
   heightMm: number;

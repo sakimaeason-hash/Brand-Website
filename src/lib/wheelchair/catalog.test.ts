@@ -5,6 +5,7 @@ import type {
   PublicSpecificationItem,
 } from "@/lib/catalog/types";
 import {
+  listFinderCandidates,
   mapPublicVariantToCandidate,
   wheelchairCandidatesFromProducts,
 } from "./catalog";
@@ -122,6 +123,23 @@ function product(
 }
 
 describe("wheelchair catalog candidates", () => {
+  it("loads candidates through an injectable strict product source", async () => {
+    const powered = product("POWERED_WHEELCHAIR", poweredItems());
+
+    const result = await listFinderCandidates(async () => [powered]);
+
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0].mobilityType).toBe("powered");
+  });
+
+  it("propagates strict product query failures to the Server Page", async () => {
+    const failure = new Error("database offline");
+
+    await expect(
+      listFinderCandidates(async () => Promise.reject(failure)),
+    ).rejects.toBe(failure);
+  });
+
   it("maps a powered database DTO using semantic normalized values only", () => {
     const source = product("POWERED_WHEELCHAIR", poweredItems());
 

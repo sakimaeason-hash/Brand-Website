@@ -348,3 +348,14 @@ export function wheelchairCandidatesFromProducts(
 
   return { candidates, errors };
 }
+
+type ProductLoader = () => Promise<readonly PublicProduct[]>;
+
+export async function listFinderCandidates(
+  loadProducts?: ProductLoader,
+): Promise<WheelchairCatalogResult> {
+  const loader =
+    loadProducts ??
+    (await import("@/lib/content/repository")).listPublishedProductsStrict;
+  return wheelchairCandidatesFromProducts(await loader());
+}

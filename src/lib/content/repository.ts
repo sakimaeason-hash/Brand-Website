@@ -142,6 +142,12 @@ export async function listPublishedProducts(): Promise<ReadonlyArray<PublicProdu
   }
 }
 
+export async function listPublishedProductsStrict(): Promise<
+  ReadonlyArray<PublicProduct>
+> {
+  return publicProductsFromRows(await queryPublishedProducts());
+}
+
 export async function listFeaturedProducts(): Promise<ReadonlyArray<PublicProduct>> {
   try {
     return publicProductsFromRows(await queryPublishedProducts(true));

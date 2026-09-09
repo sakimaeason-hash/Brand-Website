@@ -16,6 +16,7 @@ import type {
 import { inchesToMm, lbToKg, milesToKm } from "./units";
 
 const base: FinderAssessment = {
+  mobilityType: "powered",
   mode: "precision",
   unitSystem: "us",
   heightMm: inchesToMm(68),
@@ -176,7 +177,10 @@ describe("wheelchair ranking", () => {
       variantId: "database-only-variant",
     });
 
-    const result = recommendFromCandidates(base, [dynamic]);
+    const result = recommendFromCandidates(
+      { ...base, mobilityType: "manual" },
+      [dynamic],
+    );
 
     expect(result.evaluations.map((evaluation) => evaluation.productId)).toEqual([
       "database-only",
@@ -184,6 +188,22 @@ describe("wheelchair ranking", () => {
     expect(result.recommendations.map((item) => item.productId)).toEqual([
       "database-only",
     ]);
+  });
+
+  it("evaluates only candidates matching the selected mobility type", () => {
+    const manual = manualCandidate();
+
+    const result = recommendFromCandidates(
+      { ...base, mobilityType: "manual" },
+      [candidates[0], manual],
+    );
+
+    expect(result.evaluations.map((item) => item.productId)).toEqual([
+      "manual-chair",
+    ]);
+    expect(result.recommendations.every((item) => item.mobilityType === "manual")).toBe(
+      true,
+    );
   });
 
   it("fails closed when the injected catalog is empty", () => {
@@ -214,6 +234,7 @@ describe("wheelchair ranking", () => {
     });
     const assessment = {
       ...base,
+      mobilityType: "manual" as const,
       use: {
         ...base.use,
         surfaces: ["gravel" as const],
@@ -247,7 +268,11 @@ describe("wheelchair ranking", () => {
     const preferencePart = (priorities: Priority[]) =>
       evaluationFor(
         recommendFromCandidates(
-          { ...base, use: { ...base.use, priorities } },
+          {
+            ...base,
+            mobilityType: "manual",
+            use: { ...base.use, priorities },
+          },
           [candidate],
         ),
         candidate.productId,
@@ -265,7 +290,11 @@ describe("wheelchair ranking", () => {
     ) =>
       evaluationFor(
         recommendFromCandidates(
-          { ...base, use: { ...base.use, ...use } },
+          {
+            ...base,
+            mobilityType: "manual",
+            use: { ...base.use, ...use },
+          },
           [candidate],
         ),
         candidate.productId,
@@ -287,6 +316,30 @@ describe("wheelchair ranking", () => {
     expect(tooSmallStorage).toBeLessThan(baseline);
     expect(liftAtWeight).toBeGreaterThan(baseline);
     expect(liftBelowWeight).toBeLessThan(liftAtWeight);
+  });
+
+  it("uses the self-propulsion priority only for manual candidates", () => {
+    const selfPropelled = manualCandidate({
+      productId: "self-propelled",
+      propulsionType: "self-propel",
+    });
+    const transport = manualCandidate({
+      productId: "transport",
+      variantId: "transport-variant",
+      propulsionType: "transport",
+    });
+    const result = recommendFromCandidates(
+      {
+        ...base,
+        mobilityType: "manual",
+        use: { ...base.use, priorities: ["self-propulsion"] },
+      },
+      [transport, selfPropelled],
+    );
+
+    expect(evaluationFor(result, "self-propelled").scoreParts.preferences).toBeGreaterThan(
+      evaluationFor(result, "transport").scoreParts.preferences,
+    );
   });
 
   it("shows an eligible product even when soft fit signals lower its score", () => {

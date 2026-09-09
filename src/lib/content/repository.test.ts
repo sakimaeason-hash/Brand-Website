@@ -16,6 +16,7 @@ import {
   listFeaturedProducts,
   listPublicCategories,
   listPublishedProducts,
+  listPublishedProductsStrict,
   listPublishedPromotions,
   listPublishedStories,
 } from "./repository";
@@ -61,6 +62,13 @@ describe("content repository", () => {
           : product.category.recommendationProfile === "NONE",
       ),
     ).toBe(true);
+  });
+
+  it("does not use the storefront fallback for strict finder product queries", async () => {
+    const failure = new Error("database offline");
+    vi.mocked(prisma.product.findMany).mockRejectedValue(failure);
+
+    await expect(listPublishedProductsStrict()).rejects.toBe(failure);
   });
 
   it("keeps the storefront empty when no content is published", async () => {

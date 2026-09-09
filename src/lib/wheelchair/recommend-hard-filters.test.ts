@@ -54,6 +54,7 @@ function poweredCandidate(
 }
 
 const assessment: FinderAssessment = {
+  mobilityType: "powered",
   mode: "precision",
   unitSystem: "us",
   heightMm: inchesToMm(68),
