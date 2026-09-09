@@ -46,4 +46,17 @@ describe("normalizeNumber", () => {
   it("rejects unsupported units instead of guessing", () => {
     expect(() => normalizeNumber(10, "cm", "LENGTH")).toThrow(/LENGTH/);
   });
+
+  it.each(["constructor", "toString", "valueOf"])(
+    "rejects prototype property %s as a unit",
+    (unit) => {
+      expect(() => normalizeNumber(10, unit, "WEIGHT")).toThrow(/WEIGHT/);
+    },
+  );
+
+  it("rejects a finite input whose converted result overflows", () => {
+    expect(() => normalizeNumber(Number.MAX_VALUE, "in", "LENGTH")).toThrow(
+      /finite/i,
+    );
+  });
 });

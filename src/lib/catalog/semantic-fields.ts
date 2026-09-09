@@ -18,10 +18,12 @@ export const SEMANTIC_FIELDS = {
   productWeight: { dataType: "NUMBER", unitFamily: "WEIGHT", canonicalUnit: "kg" },
   batteryWeight: { dataType: "NUMBER", unitFamily: "WEIGHT", canonicalUnit: "kg" },
   range: { dataType: "NUMBER", unitFamily: "DISTANCE", canonicalUnit: "km" },
+  maxSpeed: { dataType: "NUMBER", unitFamily: "SPEED", canonicalUnit: "km/h" },
   turningRadius: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   obstacleHeight: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   frontWheelDiameter: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   rearWheelDiameter: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
+  motorPower: { dataType: "NUMBER", unitFamily: "POWER", canonicalUnit: "W" },
   tireClass: { dataType: "SELECT", unitFamily: "NONE", canonicalUnit: null },
   propulsionType: { dataType: "SELECT", unitFamily: "NONE", canonicalUnit: null },
   batteryRemovable: { dataType: "BOOLEAN", unitFamily: "NONE", canonicalUnit: null },
@@ -46,10 +48,12 @@ export const POWERED_REQUIRED_SEMANTICS = [
   { semanticKey: "foldedDimensions", role: "ranking" },
   { semanticKey: "netWeightWithoutBattery", role: "ranking" },
   { semanticKey: "range", role: "ranking" },
+  { semanticKey: "maxSpeed", role: "ranking" },
   { semanticKey: "turningRadius", role: "ranking" },
   { semanticKey: "obstacleHeight", role: "ranking" },
   { semanticKey: "rearWheelDiameter", role: "ranking" },
   { semanticKey: "tireClass", role: "ranking" },
+  { semanticKey: "motorPower", role: "ranking" },
 ] as const satisfies readonly RequiredSemantic[];
 
 export const MANUAL_REQUIRED_SEMANTICS = [

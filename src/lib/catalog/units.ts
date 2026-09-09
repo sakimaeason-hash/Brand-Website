@@ -46,15 +46,19 @@ export function normalizeNumber(
   }
 
   const definition = UNIT_FAMILIES[family];
-  const factor = definition.factors[unit];
-  if (factor === undefined) {
+  if (!Object.prototype.hasOwnProperty.call(definition.factors, unit)) {
     throw new Error(`Unit ${unit || "(empty)"} does not belong to ${family}.`);
+  }
+  const factor = definition.factors[unit];
+  const normalizedValue = value * factor;
+  if (!Number.isFinite(normalizedValue)) {
+    throw new Error("Unit normalization produced a non-finite value.");
   }
 
   return {
     inputValue: value,
     inputUnit: unit,
-    normalizedValue: stabilizeFloat(value * factor),
+    normalizedValue: stabilizeFloat(normalizedValue),
     normalizedUnit: definition.canonicalUnit,
   };
 }
