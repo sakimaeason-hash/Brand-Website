@@ -149,16 +149,20 @@ export default function HomePage({
   testimonials?: readonly PublicStory[];
   promotion?: PublicPromotion;
 }) {
-  const featuredProducts = initialFeaturedProducts?.length
-    ? initialFeaturedProducts.slice(0, 4).map((product) => ({
-        id: product.id,
-        name: product.name,
-        tagline: product.tagline,
-        price: product.price,
-        badge: product.badge,
-        image: product.images[0] || "/products/Travel Air W 03C.png",
-        color: product.colors[0] || "#C8956C",
-      }))
+  const featuredProducts = initialFeaturedProducts !== undefined
+    ? initialFeaturedProducts.slice(0, 4).flatMap((product) => {
+        const variant = product.variants[0];
+        if (!variant) return [];
+        return [{
+          id: product.id,
+          name: product.name,
+          tagline: product.tagline,
+          price: variant.price,
+          badge: undefined,
+          image: product.images[0]?.url || "/products/Travel Air W 03C.png",
+          color: variant.colorHex || "#C8956C",
+        }];
+      })
     : fallbackFeaturedProducts;
   const testimonials: readonly HomeTestimonial[] = initialTestimonials?.length
     ? initialTestimonials.slice(0, 3).map((story) => ({

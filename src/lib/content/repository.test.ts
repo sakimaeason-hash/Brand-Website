@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     product: { findMany: vi.fn(), findUnique: vi.fn() },
+    productCategory: { findMany: vi.fn() },
     customerStory: { findMany: vi.fn(), findUnique: vi.fn() },
     promotion: { findMany: vi.fn(), findUnique: vi.fn() },
   },
@@ -13,6 +14,7 @@ import { requireAdmin } from "@/lib/admin/authorization";
 import {
   getDraftPreview,
   listFeaturedProducts,
+  listPublicCategories,
   listPublishedProducts,
   listPublishedPromotions,
   listPublishedStories,
@@ -20,10 +22,25 @@ import {
 
 describe("content repository", () => {
   it("filters database products to published records", async () => {
-    vi.mocked(prisma.product.findMany).mockResolvedValue([{ id: "p1", name: "Published", model: "P1", category: "wheelchair", tagline: null, description: null, price: 10, originalPrice: null, amazonLink: null, weightCapacity: "300 lb", seatWidth: "18 in", range: "15 mi", maxSpeed: "4 mph", productWeight: "40 lb", features: ["folds"], status: "PUBLISHED", isFeatured: false, sortOrder: 0, images: [] }] as never);
+    vi.mocked(prisma.product.findMany).mockResolvedValue([{
+      id: "p1", name: "Published", model: "P1", category: "wheelchair", tagline: null, description: null,
+      price: 10, originalPrice: null, amazonLink: "https://www.amazon.com/dp/p1", features: ["folds"], status: "PUBLISHED", isFeatured: false, sortOrder: 0,
+      specifications: {}, images: [], promotions: [], inBoxItems: [], compatibleAccessories: [],
+      categoryRelation: { id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT", status: "ACTIVE", fields: [] },
+      variants: [{ id: "v1", sku: "P1-A", factoryModel: "P1", label: null, colorName: null, colorHex: null, priceOverride: null, originalPriceOverride: null, purchaseLinkOverride: null, specifications: {}, isActive: true, sortOrder: 0 }],
+    }] as never);
     const products = await listPublishedProducts();
     expect(products[0].name).toBe("Published");
+    expect(products[0].variants[0].sku).toBe("P1-A");
     expect(prisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { status: "PUBLISHED" } }));
+  });
+
+  it("lists active public categories that contain published products", async () => {
+    vi.mocked(prisma.productCategory.findMany).mockResolvedValue([{ id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" }] as never);
+    await expect(listPublicCategories()).resolves.toEqual([{ id: "c1", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" }]);
+    expect(prisma.productCategory.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { status: "ACTIVE", products: { some: { status: "PUBLISHED" } } },
+    }));
   });
 
   it("falls back to static stories when the database fails", async () => {

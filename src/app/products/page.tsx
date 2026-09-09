@@ -1,9 +1,9 @@
 import ProductsCatalog from "@/components/products/ProductsCatalog";
-import { listPublishedProducts } from "@/lib/content/repository";
+import { listPublicCategories, listPublishedProducts } from "@/lib/content/repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const products = await listPublishedProducts();
-  return <ProductsCatalog initialProducts={products} />;
+  const [products, categories] = await Promise.all([listPublishedProducts(), listPublicCategories()]);
+  return <ProductsCatalog initialProducts={products} categories={categories} />;
 }

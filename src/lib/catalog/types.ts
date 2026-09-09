@@ -74,3 +74,62 @@ export type FieldError = {
   variantId?: string;
   message: string;
 };
+
+export type PublicCategorySummary = {
+  id: string;
+  name: string;
+  slug: string;
+  role: "PRODUCT" | "ACCESSORY";
+};
+
+export type PublicSpecificationItem = {
+  key: string;
+  label: string;
+  semanticKey?: string;
+  status: SpecificationStatus;
+  displayValue: string;
+  normalizedValue?: number | DimensionsValue;
+  normalizedUnit?: string;
+};
+
+export type PublicSpecificationGroup = {
+  name: string;
+  items: readonly PublicSpecificationItem[];
+};
+
+export type PublicProductVariant = {
+  id: string;
+  sku: string;
+  factoryModel?: string;
+  label?: string;
+  colorName?: string;
+  colorHex?: string;
+  price: number;
+  originalPrice?: number;
+  purchaseLink?: string;
+  specifications: readonly PublicSpecificationGroup[];
+};
+
+export type PublicAccessorySummary = {
+  id: string;
+  name: string;
+  model: string;
+  price: number;
+  image?: { url: string; alt: string };
+  purchaseLink?: string;
+};
+
+export type PublicProduct = {
+  id: string;
+  name: string;
+  tagline: string;
+  description?: string;
+  category: PublicCategorySummary;
+  images: readonly { url: string; alt: string }[];
+  features: readonly string[];
+  variants: readonly PublicProductVariant[];
+  specifications: readonly PublicSpecificationGroup[];
+  inBoxItems: readonly { name: string; quantity: number; note?: string }[];
+  compatibleAccessories: readonly PublicAccessorySummary[];
+  isFeatured: boolean;
+};

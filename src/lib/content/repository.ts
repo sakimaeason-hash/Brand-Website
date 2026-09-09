@@ -1,10 +1,12 @@
-import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/authorization";
+import { toPublicProduct } from "@/lib/catalog/public-catalog";
+import type { PublicCategorySummary, PublicProduct, PublicSpecificationGroup } from "@/lib/catalog/types";
 import { products as staticProducts, type Product as StaticProduct } from "@/data/products";
 import { stories as staticStories, type StaticStory } from "@/data/stories";
-import { isPromotionActive, calculateSalePrice } from "./promotions";
+import { prisma } from "@/lib/db";
+import { isPromotionActive } from "./promotions";
 
-export type PublicProduct = StaticProduct;
+export type { PublicProduct } from "@/lib/catalog/types";
 export type PublicStory = Omit<StaticStory, "id"> & { id: string | number };
 export type PublicPromotion = {
   id: string;
@@ -17,23 +19,6 @@ export type PublicPromotion = {
   endAt: string;
   salePrice?: number;
   discountPercent?: number;
-};
-
-type ProductRow = {
-  id: string;
-  name: string;
-  tagline: string | null;
-  price: unknown;
-  originalPrice: unknown;
-  category: string;
-  images?: Array<{ sortOrder: number; publicUrl: string }>;
-  features: unknown;
-  productWeight: string | null;
-  range: string | null;
-  seatWidth: string | null;
-  maxSpeed: string | null;
-  amazonLink: string | null;
-  promotions?: PromotionRow[];
 };
 
 type PromotionRow = {
@@ -51,28 +36,71 @@ type PromotionRow = {
   discountPercent: unknown;
 };
 
-function toProduct(row: ProductRow): PublicProduct {
-  const images = row.images?.slice().sort((a, b) => a.sortOrder - b.sortOrder).map((image) => image.publicUrl) ?? [];
+const publishedProductInclude = {
+  images: { orderBy: { sortOrder: "asc" as const } },
+  promotions: true,
+  categoryRelation: {
+    include: { fields: { where: { status: "ACTIVE" as const }, orderBy: { sortOrder: "asc" as const } } },
+  },
+  variants: { where: { isActive: true }, orderBy: { sortOrder: "asc" as const } },
+  inBoxItems: { orderBy: { sortOrder: "asc" as const } },
+  compatibleAccessories: {
+    orderBy: { sortOrder: "asc" as const },
+    include: {
+      accessoryProduct: {
+        include: {
+          categoryRelation: true,
+          images: { orderBy: { sortOrder: "asc" as const }, take: 1 },
+          variants: { where: { isActive: true }, orderBy: { sortOrder: "asc" as const } },
+        },
+      },
+    },
+  },
+};
+
+function legacySpecificationGroups(product: StaticProduct): PublicSpecificationGroup[] {
+  const items = [
+    ["weight", "Product weight", product.weight],
+    ["range", "Range", product.range],
+    ["seatWidth", "Seat width", product.seatWidth],
+    ["maxSpeed", "Maximum speed", product.maxSpeed],
+    ["warranty", "Warranty", product.warranty],
+  ] as const;
+  const present = items.flatMap(([key, label, value]) => value ? [{ key, label, status: "PROVIDED" as const, displayValue: value }] : []);
+  return present.length ? [{ name: "Product details", items: present }] : [];
+}
+
+function staticProductToPublicProduct(product: StaticProduct): PublicProduct {
+  const category: PublicCategorySummary = product.category === "wheelchair"
+    ? { id: "legacy-wheelchairs", name: "Powered Wheelchairs", slug: "powered-wheelchairs", role: "PRODUCT" }
+    : { id: "legacy-scooters", name: "Mobility Scooters", slug: "mobility-scooters", role: "PRODUCT" };
+  const variantCount = Math.max(1, product.colors.length, product.colorNames.length);
   return {
-    id: row.id,
-    name: row.name,
-    tagline: row.tagline || "",
-    price: Number(row.price),
-    originalPrice: row.originalPrice == null ? undefined : Number(row.originalPrice),
-    category: row.category === "scooter" ? "scooter" : "wheelchair",
-    images: images.length ? images : ["/products/Travel Air W 03C.png"],
-    colors: ["#2D2D2D"],
-    colorNames: ["Standard"],
-    features: Array.isArray(row.features) ? row.features.filter((value): value is string => typeof value === "string") : [],
-    weight: row.productWeight || undefined,
-    range: row.range || undefined,
-    seatWidth: row.seatWidth || undefined,
-    maxSpeed: row.maxSpeed || undefined,
-    amazonLink: row.amazonLink || undefined,
-    rating: 0,
-    reviews: 0,
+    id: product.id,
+    name: product.name,
+    tagline: product.tagline,
+    category,
+    images: product.images.map((url) => ({ url, alt: product.name })),
+    features: product.features,
+    variants: Array.from({ length: variantCount }, (_, index) => ({
+      id: `legacy-${product.id}-${index + 1}`,
+      sku: `LEGACY-${product.id.toUpperCase()}-${index + 1}`,
+      label: product.colorNames[index] || `Option ${index + 1}`,
+      colorName: product.colorNames[index],
+      colorHex: product.colors[index],
+      price: product.price,
+      ...(product.originalPrice == null ? {} : { originalPrice: product.originalPrice }),
+      ...(product.amazonLink ? { purchaseLink: product.amazonLink } : {}),
+      specifications: legacySpecificationGroups(product),
+    })),
+    specifications: [],
+    inBoxItems: [],
+    compatibleAccessories: [],
+    isFeatured: true,
   };
 }
+
+const staticPublicProducts = staticProducts.map(staticProductToPublicProduct);
 
 function toPromotion(row: PromotionRow): PublicPromotion | null {
   if (!row.id || !row.name || !row.productId || !row.product?.name) return null;
@@ -90,47 +118,48 @@ function toPromotion(row: PromotionRow): PublicPromotion | null {
   };
 }
 
-function applyActivePromotion(product: PublicProduct, promotions: PromotionRow[] | undefined, now: Date) {
-  const active = promotions?.find((promotion) =>
-    isPromotionActive(now, { ...promotion, startAt: new Date(promotion.startAt), endAt: new Date(promotion.endAt) }),
-  );
-  return active
-    ? {
-        ...product,
-        price: calculateSalePrice(product.price, {
-          salePrice: active.salePrice == null ? null : Number(active.salePrice),
-          discountPercent: active.discountPercent == null ? null : Number(active.discountPercent),
-        }),
-      }
-    : product;
+function publicProductsFromRows(rows: Awaited<ReturnType<typeof queryPublishedProducts>>, now = new Date()): PublicProduct[] {
+  return rows.flatMap((row) => {
+    const product = toPublicProduct(row, now);
+    return product ? [product] : [];
+  });
+}
+
+function queryPublishedProducts(featuredOnly = false) {
+  return prisma.product.findMany({
+    where: { status: "PUBLISHED", ...(featuredOnly ? { isFeatured: true } : {}) },
+    include: publishedProductInclude,
+    orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
+    ...(featuredOnly ? { take: 4 } : {}),
+  });
 }
 
 export async function listPublishedProducts(): Promise<ReadonlyArray<PublicProduct>> {
   try {
-    const rows = await prisma.product.findMany({
-      where: { status: "PUBLISHED" },
-      include: { images: { orderBy: { sortOrder: "asc" } }, promotions: true },
-      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
-    });
-    const now = new Date();
-    return rows.map((row) => applyActivePromotion(toProduct(row), row.promotions, now));
+    return publicProductsFromRows(await queryPublishedProducts());
   } catch {
-    return staticProducts;
+    return staticPublicProducts;
   }
 }
 
 export async function listFeaturedProducts(): Promise<ReadonlyArray<PublicProduct>> {
   try {
-    const rows = await prisma.product.findMany({
-      where: { status: "PUBLISHED", isFeatured: true },
-      include: { images: { orderBy: { sortOrder: "asc" } }, promotions: true },
-      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
-      take: 4,
-    });
-    const now = new Date();
-    return rows.map((row) => applyActivePromotion(toProduct(row), row.promotions, now));
+    return publicProductsFromRows(await queryPublishedProducts(true));
   } catch {
-    return staticProducts.slice(0, 4);
+    return staticPublicProducts.slice(0, 4);
+  }
+}
+
+export async function listPublicCategories(): Promise<ReadonlyArray<PublicCategorySummary>> {
+  try {
+    return await prisma.productCategory.findMany({
+      where: { status: "ACTIVE", products: { some: { status: "PUBLISHED" } } },
+      select: { id: true, name: true, slug: true, role: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+  } catch {
+    const unique = new Map(staticPublicProducts.map((product) => [product.category.id, product.category]));
+    return Array.from(unique.values());
   }
 }
 
