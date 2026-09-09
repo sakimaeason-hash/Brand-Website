@@ -6,9 +6,11 @@ type CategoryRow = {
   id: string;
   slug: string;
   name: string;
+  description?: string | null;
   role: string;
   recommendationProfile: string;
   status: string;
+  sortOrder?: number;
   templateVersion: number;
 };
 
@@ -105,5 +107,48 @@ describe("seedProductCategories", () => {
     await seedProductCategories(db as never);
 
     expect(protectedField!.status).toBe("ARCHIVED");
+  });
+
+  it("preserves administrator-managed metadata on existing built-in categories", async () => {
+    const db = fakePrisma();
+    await seedProductCategories(db as never);
+    const category = db.categories[0];
+    Object.assign(category, {
+      name: "Administrator category name",
+      description: "Administrator description",
+      sortOrder: 27,
+    });
+
+    await seedProductCategories(db as never);
+
+    expect(category).toMatchObject({
+      name: "Administrator category name",
+      description: "Administrator description",
+      sortOrder: 27,
+    });
+  });
+
+  it("preserves protected field display metadata while restoring machine semantics", async () => {
+    const db = fakePrisma();
+    await seedProductCategories(db as never);
+    const field = db.fields.find((item) => item.semanticKey === "maxUserWeight");
+    expect(field).toBeDefined();
+    Object.assign(field!, {
+      label: "Administrator weight label",
+      helpText: "Administrator guidance",
+      sortOrder: 42,
+      dataType: "TEXT",
+      unitFamily: "NONE",
+    });
+
+    await seedProductCategories(db as never);
+
+    expect(field).toMatchObject({
+      label: "Administrator weight label",
+      helpText: "Administrator guidance",
+      sortOrder: 42,
+      dataType: "NUMBER",
+      unitFamily: "WEIGHT",
+    });
   });
 });

@@ -22,13 +22,7 @@ export async function seedProductCategories(client: SeedClient = prisma) {
           sortOrder: category.sortOrder,
           templateVersion: 1,
         },
-        update: {
-          name: category.name,
-          description: category.description,
-          role: category.role,
-          recommendationProfile: category.recommendationProfile,
-          sortOrder: category.sortOrder,
-        },
+        update: {},
       });
 
       for (const field of category.fields) {
@@ -51,7 +45,20 @@ export async function seedProductCategories(client: SeedClient = prisma) {
           status: field.status,
           sortOrder: field.sortOrder,
         };
-        const { status: _status, ...protectedUpdate } = protectedData;
+        const protectedUpdate = {
+          group: field.group,
+          scope: field.scope,
+          dataType: field.dataType,
+          unitFamily: field.unitFamily,
+          defaultDisplayUnit: field.defaultDisplayUnit,
+          options: [...field.options],
+          minValue: field.minValue,
+          maxValue: field.maxValue,
+          requiredForPublish: field.requiredForPublish,
+          requiredForRecommendation: field.requiredForRecommendation,
+          semanticKey: field.semanticKey,
+          isProtected: field.isProtected,
+        };
         await tx.specificationField.upsert({
           where: { categoryId_key: { categoryId: row.id, key: field.key } },
           create: { categoryId: row.id, key: field.key, ...protectedData },
