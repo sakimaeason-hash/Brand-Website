@@ -18,6 +18,7 @@
     "promote-admin": "tsx scripts/promote-admin.ts",
     "seed:content": "tsx scripts/seed-content.ts",
     "seed:catalog": "tsx scripts/seed-product-categories.ts",
+    "migrate:catalog": "tsx scripts/migrate-product-catalog.ts",
     "security-audit": "npm audit --production",
     "security-fix": "npm audit fix"
   },

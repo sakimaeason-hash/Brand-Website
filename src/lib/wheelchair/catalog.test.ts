@@ -70,8 +70,10 @@ const poweredItems = (): PublicSpecificationItem[] => [
   item("obstacleHeight", 45),
   item("batteryWeight", 3),
   item("batteryRemovable", true),
+  item("batteryChemistry", "lithium"),
   item("batteryVoltage", 24),
   item("batteryCapacityAh", 12),
+  item("manufacturerAirplaneFlag", true),
 ];
 
 const manualItems = (): PublicSpecificationItem[] => [
@@ -162,8 +164,10 @@ describe("wheelchair catalog candidates", () => {
       battery: {
         weightKg: 3,
         removable: true,
+        chemistry: "lithium",
         voltageV: 24,
         capacityAh: 12,
+        manufacturerAirplaneFlag: true,
       },
     });
   });

@@ -9,12 +9,30 @@ import { seedContent } from "../scripts/seed-content";
 type ProductRow = Record<string, unknown> & { id: string; name: string; model: string };
 type StoryRow = Record<string, unknown> & { id: string; displayName: string };
 type SeedImageRow = Record<string, unknown> & { id?: string; productId?: string; storyId?: string; storagePath: string };
+type CategoryRow = Record<string, unknown> & {
+  id: string;
+  slug: string;
+  templateVersion: number;
+};
+type FieldRow = Record<string, unknown> & {
+  id: string;
+  categoryId: string;
+  key: string;
+};
+type VariantRow = Record<string, unknown> & {
+  id: string;
+  productId: string;
+  sku: string;
+};
 
 function fakePrisma(initial: { products?: ProductRow[]; stories?: StoryRow[] } = {}) {
   const productRows = [...(initial.products ?? [])];
   const storyRows = [...(initial.stories ?? [])];
   const productImages: SeedImageRow[] = [];
   const storyImages: SeedImageRow[] = [];
+  const categories: CategoryRow[] = [];
+  const fields: FieldRow[] = [];
+  const variants: VariantRow[] = [];
   let sequence = 0;
   const product = {
     findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
@@ -78,7 +96,72 @@ function fakePrisma(initial: { products?: ProductRow[]; stories?: StoryRow[] } =
       return row;
     }),
   };
-  return { product, customerStory, productImage, storyImage, productRows, storyRows };
+  const productCategory = {
+    findUnique: vi.fn(async ({ where }: { where: { slug: string } }) =>
+      categories.find((row) => row.slug === where.slug) ?? null),
+    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+      const existing = categories.find((row) => row.slug === where.slug);
+      if (existing) {
+        Object.assign(existing, update);
+        return existing;
+      }
+      const row = {
+        ...create,
+        id: `cat-${categories.length + 1}`,
+      } as CategoryRow;
+      categories.push(row);
+      return row;
+    }),
+  };
+  const specificationField = {
+    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+      const existing = fields.find(
+        (row) =>
+          row.categoryId === where.categoryId_key.categoryId &&
+          row.key === where.categoryId_key.key,
+      );
+      if (existing) {
+        Object.assign(existing, update);
+        return existing;
+      }
+      const row = { ...create, id: `field-${fields.length + 1}` } as FieldRow;
+      fields.push(row);
+      return row;
+    }),
+  };
+  const productVariant = {
+    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+      const existing = variants.find((row) => row.sku === where.sku);
+      if (existing) {
+        Object.assign(existing, update);
+        return existing;
+      }
+      const row = {
+        ...create,
+        id: `variant-${variants.length + 1}`,
+      } as VariantRow;
+      variants.push(row);
+      return row;
+    }),
+  };
+  const db = {
+    product,
+    customerStory,
+    productImage,
+    storyImage,
+    productCategory,
+    specificationField,
+    productVariant,
+    productRows,
+    storyRows,
+    categories,
+    fields,
+    variants,
+    $transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) =>
+      callback(db),
+    ),
+  };
+  return db;
 }
 
 describe("content seed", () => {
@@ -112,6 +195,31 @@ describe("content seed", () => {
       productWeight: product.weight,
       weightCapacity: null,
     });
+  });
+
+  it("seeds category references and one stable default SKU per product", async () => {
+    const db = fakePrisma();
+    const selected = [products[0], products.find((product) => product.id === "1")!];
+
+    await seedContent(db as never, { products: selected, stories: [] });
+    const wheelchairVariant = db.variants.find(
+      (variant) => variant.sku === "LEGACY-1",
+    );
+    expect(wheelchairVariant).toBeDefined();
+    if (!wheelchairVariant) return;
+    wheelchairVariant.isActive = false;
+    await seedContent(db as never, { products: selected, stories: [] });
+
+    expect(db.categories).toHaveLength(5);
+    expect(db.variants).toHaveLength(2);
+    expect(db.productRows.every((product) => Boolean(product.categoryId))).toBe(true);
+    expect(
+      db.productRows.every((product) => product.categoryTemplateVersion === 1),
+    ).toBe(true);
+    expect(db.variants.find((variant) => variant.sku === "LEGACY-S1"))
+      .toMatchObject({ specifications: {}, isActive: true });
+    expect(db.variants.find((variant) => variant.sku === "LEGACY-1"))
+      .toMatchObject({ specifications: {}, isActive: false });
   });
 
   it("updates an earlier static-id seed instead of trying to create a duplicate", async () => {

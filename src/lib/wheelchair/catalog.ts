@@ -255,7 +255,13 @@ export function mapPublicVariantToCandidate(
         (value): value is boolean => typeof value === "boolean",
         dataWarnings,
       ),
-      chemistry: null,
+      chemistry: optionalValue(
+        items,
+        "batteryChemistry",
+        (value): value is "lithium" | "lead-acid" =>
+          value === "lithium" || value === "lead-acid",
+        dataWarnings,
+      ),
       voltageV: optionalValue(
         items,
         "batteryVoltage",
@@ -268,7 +274,12 @@ export function mapPublicVariantToCandidate(
         isPositiveNumber,
         dataWarnings,
       ),
-      manufacturerAirplaneFlag: null,
+      manufacturerAirplaneFlag: optionalValue(
+        items,
+        "manufacturerAirplaneFlag",
+        (value): value is boolean => typeof value === "boolean",
+        dataWarnings,
+      ),
     } as const;
 
     if (errors.length > 0) return { candidate: null, errors };

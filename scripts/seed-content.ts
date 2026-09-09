@@ -1,6 +1,7 @@
 import { prisma } from "../src/lib/db";
 import { products as staticProducts, type Product as StaticProduct } from "../src/data/products";
 import { stories as staticStories, type StaticStory } from "../src/data/stories";
+import { seedProductCategories } from "./seed-product-categories";
 
 type SeedDb = {
   product: {
@@ -16,11 +17,28 @@ type SeedDb = {
   };
   productImage: SeedImageDelegate;
   storyImage: SeedImageDelegate;
+  productCategory: {
+    findUnique(args: { where: { slug: string } }): Promise<SeedCategoryRow | null>;
+    upsert(args: Record<string, unknown>): Promise<SeedCategoryRow>;
+  };
+  specificationField: {
+    upsert(args: Record<string, unknown>): Promise<unknown>;
+  };
+  productVariant: {
+    upsert(args: Record<string, unknown>): Promise<unknown>;
+  };
+  $transaction<T>(callback: (tx: unknown) => Promise<T>): Promise<T>;
 };
 
 type SeedProductRow = { id: string; name: string; model: string };
 type SeedStoryRow = { id: string; displayName: string };
 type SeedImageRow = { id?: string; productId?: string; storyId?: string; storagePath: string };
+type SeedCategoryRow = {
+  id: string;
+  slug: string;
+  status: string;
+  templateVersion: number;
+};
 type SeedImageDelegate = {
   findFirst(args: { where: Record<string, unknown> }): Promise<SeedImageRow | null>;
   create(args: { data: Record<string, unknown> }): Promise<SeedImageRow>;
@@ -32,13 +50,19 @@ type SeedOptions = {
   stories?: readonly StaticStory[];
 };
 
-function productData(product: StaticProduct, sortOrder: number) {
+function productData(
+  product: StaticProduct,
+  sortOrder: number,
+  category: SeedCategoryRow,
+) {
   // Static catalog files provide transport weight, not a verified user weight capacity.
   return {
     id: product.id,
     name: product.name,
     model: product.name,
     category: product.category,
+    categoryId: category.id,
+    categoryTemplateVersion: category.templateVersion,
     tagline: product.tagline || null,
     description: null,
     price: product.price,
@@ -71,8 +95,13 @@ function storyData(story: StaticStory, sortOrder: number, productId: string | nu
   };
 }
 
-async function upsertProduct(client: SeedDb, product: StaticProduct, sortOrder: number) {
-  const data = productData(product, sortOrder);
+async function upsertProduct(
+  client: SeedDb,
+  product: StaticProduct,
+  sortOrder: number,
+  category: SeedCategoryRow,
+) {
+  const data = productData(product, sortOrder, category);
   const existingById = await client.product.findUnique({ where: { id: data.id } });
   const existing = existingById ?? await client.product.findFirst({ where: { name: data.name, model: data.model } });
   const row = existing
@@ -99,6 +128,32 @@ async function upsertProduct(client: SeedDb, product: StaticProduct, sortOrder: 
       await client.productImage.create({ data: imageData });
     }
   }
+
+  const sku = `LEGACY-${product.id.toUpperCase()}`;
+  await client.productVariant.upsert({
+    where: { sku },
+    create: {
+      productId: row.id,
+      sku,
+      factoryModel: null,
+      label: "Default",
+      priceOverride: null,
+      originalPriceOverride: null,
+      purchaseLinkOverride: null,
+      specifications: {},
+      isActive: true,
+      sortOrder: 0,
+    },
+    update: {
+      factoryModel: null,
+      label: "Default",
+      priceOverride: null,
+      originalPriceOverride: null,
+      purchaseLinkOverride: null,
+      specifications: {},
+      sortOrder: 0,
+    },
+  });
   return row;
 }
 
@@ -138,10 +193,23 @@ export async function seedContent(client: SeedDb = prisma as unknown as SeedDb, 
   const products = options.products ?? staticProducts;
   const stories = options.stories ?? staticStories;
   const seededProducts = new Map<string, SeedProductRow>();
+  await seedProductCategories(client as never);
+  const [poweredCategory, scooterCategory] = await Promise.all([
+    client.productCategory.findUnique({ where: { slug: "powered-wheelchairs" } }),
+    client.productCategory.findUnique({ where: { slug: "mobility-scooters" } }),
+  ]);
+  if (!poweredCategory || !scooterCategory) {
+    throw new Error("Built-in product categories are unavailable after seeding.");
+  }
 
   for (let index = 0; index < products.length; index += 1) {
     const product = products[index];
-    seededProducts.set(product.id, await upsertProduct(client, product, index));
+    const category =
+      product.category === "wheelchair" ? poweredCategory : scooterCategory;
+    seededProducts.set(
+      product.id,
+      await upsertProduct(client, product, index, category),
+    );
   }
 
   for (let index = 0; index < stories.length; index += 1) {

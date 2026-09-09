@@ -10,6 +10,14 @@ The normalized records preserve selected rule-relevant workbook evidence in `sou
 
 The runtime catalog retains normalized values, rule-relevant raw evidence, and workbook column references. The complete external workbook remains the source of truth; the runtime catalog does not claim to preserve every workbook field.
 
+## Runtime catalog migration
+
+The database SKU records are a runtime copy of the official specifications, not a replacement for the source workbook or the normalized records in `src/data/wheelchair-specs.ts`. The workbook, this quality register, and the normalized static records remain the audit trail used to review database values.
+
+`npm run migrate:catalog -- --dry-run` reports the products, SKUs, missing values, conflicts, and missing Amazon links without writing data. A reviewed non-dry run upserts official SKUs by their stable SKU values and is safe to repeat. It never converts a static transport weight into maximum user capacity, and it does not resolve missing or conflicting official facts.
+
+Future administrator edits must keep each specification's `sourceNote` and explicit `PROVIDED`, `NOT_PROVIDED`, or `CONFLICTING` status. A missing value must not become zero, and a conflicting value must not become recommendation-ready until an updated official source has been reviewed.
+
 | Storefront product | SKU | Workbook columns | Authoritative metric fields | Conflicts | Missing critical values | Affected rule | UI treatment |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Travel Air W 03 | GI03H102, GI04H103, GI05H104, GI06H105 | I, J, K, L | 440 mm seat width; 420 mm seat depth; 15 kg net weight without battery; 340 x 540 x 840 mm folded dimensions; 25.2 V, 10 Ah battery | None recorded | None recorded | Seat fit, lifting, storage, and airline battery checks | Show normalized values and retain each SKU's raw packed weight. A 25.2 V x 10 Ah battery derives to 252 Wh. |

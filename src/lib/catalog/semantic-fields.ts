@@ -10,7 +10,10 @@ export const SEMANTIC_FIELDS = {
   maxUserWeight: { dataType: "NUMBER", unitFamily: "WEIGHT", canonicalUnit: "kg" },
   effectiveSeatWidth: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   seatDepth: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
+  cushionWidth: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
+  cushionDepth: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   seatHeight: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
+  armrestSpacing: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   seatToFootrest: { dataType: "NUMBER", unitFamily: "LENGTH", canonicalUnit: "mm" },
   overallDimensions: { dataType: "DIMENSIONS", unitFamily: "LENGTH", canonicalUnit: "mm" },
   foldedDimensions: { dataType: "DIMENSIONS", unitFamily: "LENGTH", canonicalUnit: "mm" },
@@ -27,8 +30,10 @@ export const SEMANTIC_FIELDS = {
   tireClass: { dataType: "SELECT", unitFamily: "NONE", canonicalUnit: null },
   propulsionType: { dataType: "SELECT", unitFamily: "NONE", canonicalUnit: null },
   batteryRemovable: { dataType: "BOOLEAN", unitFamily: "NONE", canonicalUnit: null },
+  batteryChemistry: { dataType: "SELECT", unitFamily: "NONE", canonicalUnit: null },
   batteryVoltage: { dataType: "NUMBER", unitFamily: "VOLTAGE", canonicalUnit: "V" },
   batteryCapacityAh: { dataType: "NUMBER", unitFamily: "CAPACITY_AH", canonicalUnit: "Ah" },
+  manufacturerAirplaneFlag: { dataType: "BOOLEAN", unitFamily: "NONE", canonicalUnit: null },
 } as const satisfies Record<string, SemanticField>;
 
 export type SemanticFieldKey = keyof typeof SEMANTIC_FIELDS;

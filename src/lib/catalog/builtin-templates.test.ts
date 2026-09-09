@@ -29,6 +29,21 @@ describe("builtin catalog templates", () => {
       .toMatchObject({ isProtected: true, requiredForRecommendation: true });
   });
 
+  it("retains official seating and battery audit fields in the powered template", () => {
+    const powered = getBuiltinCategory("powered-wheelchairs");
+    const semanticKeys = powered?.fields.map((field) => field.semanticKey);
+
+    expect(semanticKeys).toEqual(
+      expect.arrayContaining([
+        "cushionWidth",
+        "cushionDepth",
+        "armrestSpacing",
+        "batteryChemistry",
+        "manufacturerAirplaneFlag",
+      ]),
+    );
+  });
+
   it("keeps shower-chair and accessory templates catalog-only by default", () => {
     expect(getBuiltinCategory("shower-chairs")).toMatchObject({
       role: "PRODUCT",
