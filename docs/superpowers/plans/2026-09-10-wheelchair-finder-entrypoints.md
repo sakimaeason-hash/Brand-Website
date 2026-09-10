@@ -280,7 +280,7 @@ git commit -m "test: cover wheelchair finder entrypoints"
 **Files:**
 - No source file changes.
 
-- [ ] **Step 1: Confirm repository state**
+- [x] **Step 1: Confirm repository state**
 
 ```powershell
 git status --short --branch
@@ -289,7 +289,7 @@ git log -4 --oneline
 
 Expected: the branch is clean and contains the design, navigation, homepage, and E2E commits.
 
-- [ ] **Step 2: Push the verified branch**
+- [x] **Step 2: Push the verified branch**
 
 ```powershell
 git push origin codex/admin-content-management
@@ -297,7 +297,7 @@ git push origin codex/admin-content-management
 
 Expected: GitHub accepts the new commits on `codex/admin-content-management`.
 
-- [ ] **Step 3: Deploy the bound production project**
+- [x] **Step 3: Deploy the bound production project**
 
 ```powershell
 npx.cmd vercel deploy --prod --yes --scope ethan-sakima-project --project brand-website
@@ -305,6 +305,6 @@ npx.cmd vercel deploy --prod --yes --scope ethan-sakima-project --project brand-
 
 Expected: deployment reaches `READY` and aliases to `https://goldseason.vip`.
 
-- [ ] **Step 4: Verify production entrypoints**
+- [x] **Step 4: Verify production entrypoints**
 
 Check `https://goldseason.vip/` at desktop and mobile widths. Confirm the respective navigation entry, the hero `Find Your Perfect Fit` CTA, successful navigation to `/wheelchair-finder`, HTTP 200, and no horizontal overflow.
