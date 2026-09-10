@@ -6,11 +6,44 @@ import {
   updateCategory,
 } from "./category-service";
 import { POWERED_REQUIRED_SEMANTICS, SEMANTIC_FIELDS } from "./semantic-fields";
+import type { RecommendationProfile, SpecificationFieldDefinition } from "./types";
 
 const updatedAt = new Date("2026-09-01T00:00:00.000Z");
 
-function fakeDb(options: { publishedProducts?: any[]; createCategoryError?: unknown } = {}) {
-  const protectedFields = POWERED_REQUIRED_SEMANTICS.map((entry, index) => {
+type FakeField = Omit<SpecificationFieldDefinition, "options"> & {
+  id: string;
+  categoryId: string;
+  options: string[];
+};
+
+type FakeCategory = Record<string, unknown> & {
+  id: string;
+  name: string;
+  slug: string;
+  role: "PRODUCT" | "ACCESSORY";
+  recommendationProfile: RecommendationProfile;
+  status: "ACTIVE" | "ARCHIVED";
+  sortOrder: number;
+  templateVersion: number;
+  updatedAt: Date;
+  fields: FakeField[];
+  _count: { products: number };
+};
+
+type FakePublishedProduct = {
+  id: string;
+  specifications: Record<string, unknown>;
+  variants: Array<{
+    id: string;
+    isActive: boolean;
+    specifications: Record<string, unknown>;
+  }>;
+};
+
+type CategoryDbLike = NonNullable<Parameters<typeof createCategory>[1]>;
+
+function fakeDb(options: { publishedProducts?: FakePublishedProduct[]; createCategoryError?: unknown } = {}) {
+  const protectedFields: FakeField[] = POWERED_REQUIRED_SEMANTICS.map((entry, index) => {
     const semantic = SEMANTIC_FIELDS[entry.semanticKey];
     return {
       id: `field-${entry.semanticKey}`,
@@ -34,7 +67,7 @@ function fakeDb(options: { publishedProducts?: any[]; createCategoryError?: unkn
       sortOrder: index,
     };
   });
-  const categories: any[] = [{
+  const categories: FakeCategory[] = [{
     id: "cat-1",
     name: "Powered",
     slug: "powered",
@@ -51,63 +84,68 @@ function fakeDb(options: { publishedProducts?: any[]; createCategoryError?: unkn
   }];
   const fields = [...categories[0].fields];
   let sequence = 1;
-  const db: any = {
-    productCategory: {
-      findUnique: async ({ where }: any) => {
+  const productCategory = {
+      findUnique: async ({ where }: { where: { id?: string; slug?: string } }) => {
         if (where.id) return categories.find((item) => item.id === where.id) ?? null;
         if (where.slug) return categories.find((item) => item.slug === where.slug) ?? null;
         return null;
       },
-      findFirst: async ({ where }: any) => categories.find((item) => item.slug === where.slug) ?? null,
-      create: async ({ data }: any) => {
+      findFirst: async ({ where }: { where: { slug: string } }) => categories.find((item) => item.slug === where.slug) ?? null,
+      create: async ({ data }: { data: Record<string, unknown> }) => {
         if (options.createCategoryError) throw options.createCategoryError;
-        const row = { ...data, id: `cat-${++sequence}`, updatedAt, fields: [], products: [], _count: { products: 0 } };
+        const row = { ...data, id: `cat-${++sequence}`, updatedAt, fields: [], products: [], _count: { products: 0 } } as unknown as FakeCategory;
         categories.push(row);
         return row;
       },
-      update: async ({ where, data }: any) => {
+      update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         const row = categories.find((item) => item.id === where.id);
         if (!row) throw new Error("missing category");
         const nextData = { ...data };
-        if (nextData.templateVersion?.increment) {
-          nextData.templateVersion = row.templateVersion + nextData.templateVersion.increment;
+        const increment = (nextData.templateVersion as { increment?: number } | undefined)?.increment;
+        if (increment) {
+          nextData.templateVersion = row.templateVersion + increment;
         }
         Object.assign(row, nextData, { updatedAt: new Date() });
         return row;
       },
-      updateMany: async ({ where, data }: any) => {
+      updateMany: async ({ where, data }: { where: { id: string; updatedAt: Date }; data: Record<string, unknown> }) => {
         const row = categories.find((item) => item.id === where.id && item.updatedAt.getTime() === where.updatedAt.getTime());
         if (!row) return { count: 0 };
         const nextData = { ...data };
-        if (nextData.templateVersion?.increment) {
-          nextData.templateVersion = row.templateVersion + nextData.templateVersion.increment;
+        const increment = (nextData.templateVersion as { increment?: number } | undefined)?.increment;
+        if (increment) {
+          nextData.templateVersion = row.templateVersion + increment;
         }
         Object.assign(row, nextData, { updatedAt: new Date() });
         return { count: 1 };
       },
-    },
-    specificationField: {
-      create: async ({ data }: any) => {
-        const row = { ...data, id: `field-${++sequence}` };
+  };
+  const specificationField = {
+      create: async ({ data }: { data: Record<string, unknown> & { categoryId: string } }) => {
+        const row = { ...data, id: `field-${++sequence}` } as unknown as FakeField;
         fields.push(row);
         categories.find((category) => category.id === data.categoryId)?.fields.push(row);
         return row;
       },
-      update: async ({ where, data }: any) => {
+      update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         const row = fields.find((item) => item.id === where.id);
+        if (!row) throw new Error("missing specification field");
         Object.assign(row, data);
         return row;
       },
-    },
-    product: {
+  };
+  const product = {
       count: async () => 0,
       findMany: async () => options.publishedProducts ?? [],
-    },
-    $transaction: async (callback: (tx: any) => unknown) => callback(db),
+  };
+  const transactionClient = { productCategory, specificationField, product };
+  const db = {
+    ...transactionClient,
+    $transaction: async (callback: (tx: typeof transactionClient) => unknown) => callback(transactionClient),
     categories,
     fields,
   };
-  return db;
+  return db as typeof db & CategoryDbLike;
 }
 
 describe("category service", () => {
@@ -128,8 +166,8 @@ describe("category service", () => {
       fields: [],
     }, db);
 
-    expect(created.fields.some((field: any) => field.semanticKey === "effectiveSeatWidth")).toBe(true);
-    expect(created.fields.every((field: any) => field.semanticKey == null || field.isProtected)).toBe(true);
+    expect(created.fields.some((field) => field.semanticKey === "effectiveSeatWidth")).toBe(true);
+    expect(created.fields.every((field) => field.semanticKey == null || field.isProtected)).toBe(true);
   });
 
   it("rejects changing a protected field type", async () => {
@@ -160,7 +198,7 @@ describe("category service", () => {
 
   it("rejects archiving an existing protected field", async () => {
     const db = fakeDb();
-    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    const protectedField = db.categories[0].fields.find((field) => field.key === "maxUserWeight")!;
     await expect(updateCategory("cat-1", {
       name: "Powered",
       fields: [{ ...protectedField, status: "ARCHIVED" }],
@@ -299,19 +337,19 @@ describe("category service", () => {
 
   it("preserves protected field display metadata when it is omitted", async () => {
     const db = fakeDb();
-    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    const protectedField = db.categories[0].fields.find((field) => field.key === "maxUserWeight")!;
     protectedField.label = "Maximum supported user weight";
     protectedField.helpText = "Use the real occupant weight.";
     protectedField.sortOrder = 42;
 
     const updated = await updateCategory("cat-1", { name: "Powered", fields: [] }, updatedAt.toISOString(), db);
-    const result = updated.fields.find((field: any) => field.key === "maxUserWeight");
+    const result = updated.fields.find((field) => field.key === "maxUserWeight");
     expect(result).toMatchObject({ label: "Maximum supported user weight", helpText: "Use the real occupant weight.", sortOrder: 42 });
   });
 
   it("allows protected field display metadata to be edited", async () => {
     const db = fakeDb();
-    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    const protectedField = db.categories[0].fields.find((field) => field.key === "maxUserWeight")!;
     const { categoryId: _categoryId, ...editableProtectedField } = protectedField;
 
     const updated = await updateCategory("cat-1", {
@@ -324,7 +362,7 @@ describe("category service", () => {
       }],
     }, updatedAt.toISOString(), db);
 
-    expect(updated.fields.find((field: any) => field.key === "maxUserWeight")).toMatchObject({
+    expect(updated.fields.find((field) => field.key === "maxUserWeight")).toMatchObject({
       label: "Weight capacity",
       helpText: "Enter the manufacturer's verified maximum user weight.",
       sortOrder: 99,
@@ -333,7 +371,7 @@ describe("category service", () => {
 
   it("does not treat zero as equivalent to a null protected bound", async () => {
     const db = fakeDb();
-    const protectedField = db.categories[0].fields.find((field: any) => field.key === "maxUserWeight");
+    const protectedField = db.categories[0].fields.find((field) => field.key === "maxUserWeight")!;
     const { categoryId: _categoryId, ...submittedProtectedField } = protectedField;
 
     await expect(updateCategory("cat-1", {
@@ -348,7 +386,7 @@ describe("category service", () => {
   it("never writes a client-provided specification field id", async () => {
     const db = fakeDb();
     await createCategory({ name: "Custom", fields: [{ id: "attacker-id", key: "finish", label: "Finish", group: "Overview", scope: "PRODUCT", dataType: "TEXT", unitFamily: "NONE" }] }, db);
-    expect(db.fields.some((field: any) => field.id === "attacker-id")).toBe(false);
+    expect(db.fields.some((field) => field.id === "attacker-id")).toBe(false);
   });
 
   it("rejects malformed template field combinations", async () => {

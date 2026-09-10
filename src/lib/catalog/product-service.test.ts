@@ -14,12 +14,35 @@ type FakeOptions = {
   accessoryProducts?: Array<{ id: string; status: "DRAFT" | "PUBLISHED" | "UNPUBLISHED"; role: "PRODUCT" | "ACCESSORY" }>;
 };
 
+type ProductRow = Record<string, unknown> & {
+  id: string;
+  updatedAt: Date;
+};
+
+type VariantRow = Record<string, unknown> & {
+  id: string;
+  productId: string;
+  sku: string;
+};
+
+type InBoxRow = Record<string, unknown> & {
+  id: string;
+  productId: string;
+};
+
+type AccessoryRow = Record<string, unknown> & {
+  productId: string;
+  accessoryProductId: string;
+};
+
+type ProductDbLike = NonNullable<Parameters<typeof createProductDraft>[1]>;
+
 function fakeDb(options: FakeOptions = {}) {
   const calls: string[] = [];
-  const products: any[] = [];
-  const variants: any[] = [];
-  const inBoxItems: any[] = [];
-  const accessories: any[] = [];
+  const products: ProductRow[] = [];
+  const variants: VariantRow[] = [];
+  const inBoxItems: InBoxRow[] = [];
+  const accessories: AccessoryRow[] = [];
   const category = { id: "cat-1", status: options.categoryStatus ?? "ACTIVE", templateVersion: 1, recommendationProfile: "NONE", fields: [] };
   let sequence = 0;
   let transactionDepth = 0;
@@ -39,74 +62,82 @@ function fakeDb(options: FakeOptions = {}) {
       categoryRelation: category,
     };
   };
-  const db: any = {
-    productCategory: {
+  const productCategory = {
       findUnique: async () => { mark("category.findUnique"); return category; },
-    },
-    product: {
-      findUnique: async ({ where }: any) => { mark("product.findUnique"); return enrichedProduct(where.id); },
-      findMany: async ({ where }: any) => {
+  };
+  const product = {
+      findUnique: async ({ where }: { where: { id: string } }) => { mark("product.findUnique"); return enrichedProduct(where.id); },
+      findMany: async ({ where }: { where: { id: { in: string[] } } }) => {
         mark("product.findMany");
         return (options.accessoryProducts ?? []).filter((item) => where.id.in.includes(item.id)).map((item) => ({ id: item.id, status: item.status, categoryRelation: { role: item.role } }));
       },
-      create: async ({ data }: any) => {
+      create: async ({ data }: { data: Record<string, unknown> }) => {
         mark("product.create");
-        const row = { ...data, id: `p-${++sequence}`, updatedAt: new Date("2026-09-01T00:00:00.000Z") };
+        const row = { ...data, id: `p-${++sequence}`, updatedAt: new Date("2026-09-01T00:00:00.000Z") } as ProductRow;
         products.push(row);
         return row;
       },
-      updateMany: async ({ where, data }: any) => {
+      updateMany: async ({ where, data }: { where: { id: string; updatedAt?: Date }; data: Record<string, unknown> }) => {
         mark("product.updateMany");
         const row = products.find((item) => item.id === where.id && (!where.updatedAt || item.updatedAt.getTime() === where.updatedAt.getTime()));
         if (!row) return { count: 0 };
         Object.assign(row, data, { updatedAt: new Date("2026-09-01T00:00:01.000Z") });
         return { count: 1 };
       },
-    },
-    productVariant: {
-      findUnique: async ({ where }: any) => { mark("variant.findUnique"); return variants.find((item) => item.sku === where.sku) ?? null; },
-      findMany: async ({ where }: any) => { mark("variant.findMany"); return variants.filter((item) => item.productId === where.productId); },
-      update: async ({ where, data }: any) => {
+  };
+  const productVariant = {
+      findUnique: async ({ where }: { where: { sku: string } }) => { mark("variant.findUnique"); return variants.find((item) => item.sku === where.sku) ?? null; },
+      findMany: async ({ where }: { where: { productId: string } }) => { mark("variant.findMany"); return variants.filter((item) => item.productId === where.productId); },
+      update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         mark("variant.update");
         const row = variants.find((item) => item.id === where.id);
         if (!row) throw new Error("missing variant");
         Object.assign(row, data);
         return row;
       },
-      create: async ({ data }: any) => {
+      create: async ({ data }: { data: Record<string, unknown> & { productId: string; sku: string } }) => {
         mark("variant.create");
         if (options.variantCreateError) throw options.variantCreateError;
-        const row = { ...data, id: `v-${++sequence}` };
+        const row = { ...data, id: `v-${++sequence}` } as VariantRow;
         variants.push(row);
         return row;
       },
-      delete: async ({ where }: any) => { mark("variant.delete"); variants.splice(variants.findIndex((item) => item.id === where.id), 1); },
-    },
-    productInBoxItem: {
-      findMany: async ({ where }: any) => { mark("box.findMany"); return inBoxItems.filter((item) => item.productId === where.productId); },
-      update: async ({ where, data }: any) => {
+      delete: async ({ where }: { where: { id: string } }) => { mark("variant.delete"); variants.splice(variants.findIndex((item) => item.id === where.id), 1); },
+  };
+  const productInBoxItem = {
+      findMany: async ({ where }: { where: { productId: string } }) => { mark("box.findMany"); return inBoxItems.filter((item) => item.productId === where.productId); },
+      update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
         mark("box.update");
         const row = inBoxItems.find((item) => item.id === where.id);
         if (!row) throw new Error("missing in-box item");
         Object.assign(row, data);
         return row;
       },
-      create: async ({ data }: any) => { mark("box.create"); const row = { ...data, id: `box-${++sequence}` }; inBoxItems.push(row); return row; },
-      delete: async ({ where }: any) => { mark("box.delete"); inBoxItems.splice(inBoxItems.findIndex((item) => item.id === where.id), 1); },
-      deleteMany: async ({ where }: any) => { mark("box.deleteMany"); for (let index = inBoxItems.length - 1; index >= 0; index -= 1) if (inBoxItems[index].productId === where.productId) inBoxItems.splice(index, 1); },
-    },
-    productAccessory: {
-      create: async ({ data }: any) => { mark("accessory.create"); accessories.push(data); return data; },
-      deleteMany: async ({ where }: any) => { mark("accessory.deleteMany"); for (let index = accessories.length - 1; index >= 0; index -= 1) if (accessories[index].productId === where.productId) accessories.splice(index, 1); },
-    },
-    $transaction: async (callback: (tx: any) => unknown) => {
+      create: async ({ data }: { data: Record<string, unknown> & { productId: string } }) => { mark("box.create"); const row = { ...data, id: `box-${++sequence}` } as InBoxRow; inBoxItems.push(row); return row; },
+      delete: async ({ where }: { where: { id: string } }) => { mark("box.delete"); inBoxItems.splice(inBoxItems.findIndex((item) => item.id === where.id), 1); },
+      deleteMany: async ({ where }: { where: { productId: string } }) => { mark("box.deleteMany"); for (let index = inBoxItems.length - 1; index >= 0; index -= 1) if (inBoxItems[index].productId === where.productId) inBoxItems.splice(index, 1); },
+  };
+  const productAccessory = {
+      create: async ({ data }: { data: AccessoryRow }) => { mark("accessory.create"); accessories.push(data); return data; },
+      deleteMany: async ({ where }: { where: { productId: string } }) => { mark("accessory.deleteMany"); for (let index = accessories.length - 1; index >= 0; index -= 1) if (accessories[index].productId === where.productId) accessories.splice(index, 1); },
+  };
+  const transactionClient = { productCategory, product, productVariant, productInBoxItem, productAccessory };
+  const db = {
+    ...transactionClient,
+    $transaction: async (callback: (tx: typeof transactionClient) => unknown) => {
       calls.push("transaction");
-      const snapshots = [products, variants, inBoxItems, accessories].map((rows) => structuredClone(rows));
+      const productSnapshot = structuredClone(products);
+      const variantSnapshot = structuredClone(variants);
+      const inBoxSnapshot = structuredClone(inBoxItems);
+      const accessorySnapshot = structuredClone(accessories);
       transactionDepth += 1;
       try {
-        return await callback(db);
+        return await callback(transactionClient);
       } catch (error) {
-        [products, variants, inBoxItems, accessories].forEach((rows, index) => rows.splice(0, rows.length, ...snapshots[index]));
+        products.splice(0, products.length, ...productSnapshot);
+        variants.splice(0, variants.length, ...variantSnapshot);
+        inBoxItems.splice(0, inBoxItems.length, ...inBoxSnapshot);
+        accessories.splice(0, accessories.length, ...accessorySnapshot);
         throw error;
       } finally {
         transactionDepth -= 1;
@@ -118,7 +149,7 @@ function fakeDb(options: FakeOptions = {}) {
     inBoxItems,
     accessories,
   };
-  return db;
+  return db as typeof db & ProductDbLike;
 }
 
 describe("product service", () => {
@@ -202,7 +233,15 @@ describe("product service", () => {
   it("refuses to publish when the category was archived", async () => {
     const db = fakeDb();
     await createProductDraft(input, db);
-    db.productCategory.findUnique = async () => ({ ...db.products[0].categoryRelation, id: "cat-1", status: "ARCHIVED", templateVersion: 1, recommendationProfile: "NONE", fields: [] });
+    Object.assign(db.productCategory, {
+      findUnique: async () => ({
+        id: "cat-1",
+        status: "ARCHIVED",
+        templateVersion: 1,
+        recommendationProfile: "NONE",
+        fields: [],
+      }),
+    });
 
     await expect(publishProduct("p-1", "2026-09-01T00:00:00.000Z", db))
       .rejects.toMatchObject({ code: "CATEGORY_NOT_FOUND" });

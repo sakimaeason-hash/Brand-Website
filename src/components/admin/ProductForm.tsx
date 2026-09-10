@@ -2,8 +2,9 @@
 
 import { Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { SpecificationFieldDefinition, SpecificationInput, StoredSpecification } from "@/lib/catalog/types";
+import { ContentActions, type ContentActionError } from "./ContentActions";
 import { MediaUploader, type PendingMedia } from "./MediaUploader";
 import { ProductAccessoriesEditor } from "./ProductAccessoriesEditor";
 import type { ProductOverviewDraft } from "./ProductOverviewFields";
@@ -161,10 +162,11 @@ function isProductFieldError(value: unknown): value is ProductFieldError {
     && typeof error.fieldKey === "string" && typeof error.message === "string";
 }
 
-export function ProductForm({ initialData, categories = [], accessories = [] }: {
+export function ProductForm({ initialData, categories = [], accessories = [], actionStatus }: {
   initialData?: ProductFormData;
   categories?: readonly ProductCategoryOption[];
   accessories?: readonly AccessoryOption[];
+  actionStatus?: string;
 }) {
   const router = useRouter();
   const [overview, setOverview] = useState(() => initialOverview(initialData, categories));
@@ -178,16 +180,34 @@ export function ProductForm({ initialData, categories = [], accessories = [] }: 
   const [fieldErrors, setFieldErrors] = useState<ProductFieldError[]>([]);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [actionUpdatedAt, setActionUpdatedAt] = useState(initialData?.updatedAt ?? "");
 
   const category = useMemo(() => categories.find((item) => item.id === overview.categoryId), [categories, overview.categoryId]);
   const productFields = category?.fields.filter((field) => field.scope === "PRODUCT") ?? [];
   const variantFields = category?.fields.filter((field) => field.scope === "VARIANT") ?? [];
+
+  useEffect(() => {
+    if (initialData?.updatedAt) setActionUpdatedAt(initialData.updatedAt);
+  }, [initialData?.updatedAt]);
 
   function changeCategory(categoryId: string) {
     setOverview((current) => ({ ...current, categoryId }));
     setProductSpecifications({});
     setVariants((current) => current.map((variant) => ({ ...variant, specifications: {} })));
     setFieldErrors([]);
+  }
+
+  function showActionError(error: ContentActionError) {
+    const errors = error.fields.filter(isProductFieldError);
+    setFieldErrors(errors);
+    setMessage(error.message);
+    if (!errors[0]) return;
+    setActiveTab(errors[0].tab);
+    window.setTimeout(() => document.getElementById(
+      errors[0].variantId
+        ? `variant-${errors[0].variantId}-${errors[0].fieldKey}`
+        : `spec-${errors[0].fieldKey}`,
+    )?.focus(), 0);
   }
 
   async function submit(event: React.FormEvent) {
@@ -271,7 +291,10 @@ export function ProductForm({ initialData, categories = [], accessories = [] }: 
         return;
       }
       setMessage(initialData ? "Changes saved." : "Draft saved.");
-      if (initialData) router.refresh();
+      if (initialData) {
+        if (typeof result.updatedAt === "string") setActionUpdatedAt(result.updatedAt);
+        router.refresh();
+      }
       else if (typeof result.id === "string") router.push(`/admin/products/${result.id}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to save draft");
@@ -280,7 +303,8 @@ export function ProductForm({ initialData, categories = [], accessories = [] }: 
     }
   }
 
-  return <form onSubmit={submit} className="max-w-6xl space-y-6">
+  return <>
+  <form onSubmit={submit} className="max-w-6xl space-y-6">
     <div role="tablist" aria-label="Product editor" className="flex max-w-full gap-1 overflow-x-auto border-b border-[#D9D0C9]">
       {tabs.map((tab) => {
         const label = tab.id === "variants" ? `${tab.label} (${variants.length})` : tab.label;
@@ -304,5 +328,13 @@ export function ProductForm({ initialData, categories = [], accessories = [] }: 
       <button disabled={busy || images.some((item) => item.error)} className="inline-flex items-center gap-2 rounded bg-[#A66D45] px-5 py-3 font-semibold text-white hover:bg-[#8D5935] disabled:opacity-50"><Save aria-hidden="true" className="h-4 w-4" />{busy ? "Saving..." : initialData ? "Save changes" : "Save draft"}</button>
       {message && <p role="status" className="text-sm text-[#5C534E]">{message}</p>}
     </div>
-  </form>;
+  </form>
+  {initialData && actionStatus && <ContentActions
+    type="products"
+    id={initialData.id}
+    status={actionStatus}
+    updatedAt={actionUpdatedAt}
+    onActionError={showActionError}
+  />}
+  </>;
 }

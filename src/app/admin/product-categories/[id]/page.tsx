@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditProductCategoryPage({ params }: { params: { id: string } }) {
   const categories = await listAdminCategories();
-  const category = categories.find((item: any) => item.id === params.id) as any;
+  const category = categories.find((item) => item.id === params.id);
   if (!category) notFound();
   const initialData: CategoryFormData = {
     id: category.id,
@@ -20,7 +20,18 @@ export default async function EditProductCategoryPage({ params }: { params: { id
     sortOrder: category.sortOrder,
     templateVersion: category.templateVersion,
     productCount: category._count?.products ?? 0,
-    fields: category.fields.map((field: any) => ({ ...field, options: Array.isArray(field.options) ? field.options : [], minValue: field.minValue == null ? null : Number(field.minValue), maxValue: field.maxValue == null ? null : Number(field.maxValue) })),
+    fields: category.fields.map((field) => ({
+      ...field,
+      scope: field.scope as CategoryFormData["fields"][number]["scope"],
+      dataType: field.dataType as CategoryFormData["fields"][number]["dataType"],
+      unitFamily: field.unitFamily as CategoryFormData["fields"][number]["unitFamily"],
+      status: field.status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
+      options: Array.isArray(field.options)
+        ? field.options.filter((option): option is string => typeof option === "string")
+        : [],
+      minValue: field.minValue == null ? null : Number(field.minValue),
+      maxValue: field.maxValue == null ? null : Number(field.maxValue),
+    })),
   };
   return <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#C8956C]">Catalog</p><h2 className="mt-2 text-3xl font-bold text-[#3D3330]">Edit {category.name}</h2><p className="mt-2 mb-8 text-[#5C534E]">Template version {category.templateVersion} · {initialData.productCount} product{initialData.productCount === 1 ? "" : "s"}</p><CategoryForm initialData={initialData} /></div>;
 }

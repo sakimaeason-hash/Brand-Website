@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, type SpecificationField } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { MANUAL_REQUIRED_SEMANTICS, POWERED_REQUIRED_SEMANTICS, SEMANTIC_FIELDS } from "./semantic-fields";
 import { categoryInputSchema, protectedFieldForSemantic, slugifyCategoryName, type CategoryInput } from "./category-validation";
@@ -9,16 +9,70 @@ type CategoryDb = Pick<PrismaClient, "productCategory" | "product" | "specificat
   $transaction<T>(callback: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 };
 
-function hasValidProvidedSpecification(specifications: unknown, field: any): boolean {
+type ComparableProtectedField = {
+  dataType: unknown;
+  unitFamily: unknown;
+  scope: unknown;
+  semanticKey?: unknown;
+  isProtected?: unknown;
+  status?: unknown;
+  defaultDisplayUnit?: unknown;
+  group?: unknown;
+  requiredForPublish?: unknown;
+  requiredForRecommendation?: unknown;
+  minValue?: number | null;
+  maxValue?: number | null;
+  options?: unknown;
+};
+
+type SpecificationFieldSource = {
+  key: string;
+  label: string;
+  group: string;
+  scope: string;
+  dataType: string;
+  unitFamily: string;
+  defaultDisplayUnit?: string | null;
+  options?: unknown;
+  helpText?: string | null;
+  minValue?: unknown;
+  maxValue?: unknown;
+  requiredForPublish?: boolean;
+  requiredForRecommendation?: boolean;
+  semanticKey?: string | null;
+  isProtected?: boolean;
+  status?: string;
+  sortOrder?: number;
+};
+
+function hasValidProvidedSpecification(
+  specifications: unknown,
+  field: SpecificationFieldSource,
+): boolean {
   if (!specifications || typeof specifications !== "object" || Array.isArray(specifications)) return false;
   const value = (specifications as Record<string, StoredSpecification | undefined>)[field.key];
   if (value?.status !== "PROVIDED" || value.value == null) return false;
   try {
     const definition: SpecificationFieldDefinition = {
-      ...field,
-      options: Array.isArray(field.options) ? field.options : [],
+      key: field.key,
+      label: field.label,
+      group: field.group,
+      scope: field.scope as SpecificationFieldDefinition["scope"],
+      dataType: field.dataType as SpecificationFieldDefinition["dataType"],
+      unitFamily: field.unitFamily as SpecificationFieldDefinition["unitFamily"],
+      defaultDisplayUnit: field.defaultDisplayUnit ?? null,
+      options: Array.isArray(field.options)
+        ? field.options.filter((option): option is string => typeof option === "string")
+        : [],
+      helpText: field.helpText ?? null,
       minValue: field.minValue == null ? null : Number(field.minValue),
       maxValue: field.maxValue == null ? null : Number(field.maxValue),
+      requiredForPublish: field.requiredForPublish ?? false,
+      requiredForRecommendation: field.requiredForRecommendation ?? false,
+      semanticKey: field.semanticKey ?? null,
+      isProtected: field.isProtected ?? false,
+      status: field.status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
+      sortOrder: field.sortOrder ?? 0,
     };
     const input: SpecificationInput = value.inputValue !== undefined
       ? { ...value, value: value.inputValue, unit: value.inputUnit ?? value.unit }
@@ -141,7 +195,7 @@ function mergedFields(input: ReturnType<typeof normalizeInput>) {
   });
 }
 
-function persistedProtectedField(field: any) {
+function persistedProtectedField(field: SpecificationField) {
   return {
     key: field.key,
     label: field.label,
@@ -152,8 +206,8 @@ function persistedProtectedField(field: any) {
     defaultDisplayUnit: field.defaultDisplayUnit ?? null,
     options: Array.isArray(field.options) ? field.options : [],
     helpText: field.helpText ?? null,
-    minValue: field.minValue ?? null,
-    maxValue: field.maxValue ?? null,
+    minValue: field.minValue == null ? null : Number(field.minValue),
+    maxValue: field.maxValue == null ? null : Number(field.maxValue),
     requiredForPublish: field.requiredForPublish,
     requiredForRecommendation: field.requiredForRecommendation,
     semanticKey: field.semanticKey,
@@ -163,7 +217,11 @@ function persistedProtectedField(field: any) {
   };
 }
 
-function mergeProtectedFields(existingFields: any[], requestedFields: CategoryInput["fields"], incomingFields: ReturnType<typeof mergedFields>) {
+function mergeProtectedFields(
+  existingFields: readonly SpecificationField[],
+  requestedFields: CategoryInput["fields"],
+  incomingFields: ReturnType<typeof mergedFields>,
+) {
   const existingByKey = new Map(existingFields.filter((field) => field.isProtected).map((field) => [field.key, field]));
   const requestedByKey = new Map(requestedFields.map((field) => [field.key, field]));
   const merged = incomingFields.map((field) => {
@@ -222,7 +280,10 @@ export async function createCategory(input: CategoryInput, client: CategoryDb = 
   } catch (error) { mapCategoryWriteError(error); }
 }
 
-function assertProtectedField(existing: any, incoming: any) {
+function assertProtectedField(
+  existing: SpecificationField,
+  incoming: ComparableProtectedField,
+) {
   if (!existing.isProtected && !existing.semanticKey) return;
   const immutableChanged =
     incoming.dataType !== existing.dataType ||
@@ -251,7 +312,11 @@ export async function updateCategory(id: string, input: CategoryInput, updatedAt
   if (requestedProfile !== existing.recommendationProfile && existing.fields.some((field) => field.isProtected || field.semanticKey)) {
     throw new CatalogServiceError("RECOMMENDATION_PROFILE_LOCKED", "Recommendation profile cannot be changed after protected fields have been established.");
   }
-  const protectedByKey = new Map((existing.fields as any[]).filter((field) => field.isProtected).map((field) => [field.key, field]));
+  const protectedByKey = new Map(
+    existing.fields
+      .filter((field) => field.isProtected)
+      .map((field) => [field.key, field]),
+  );
   for (const incoming of input.fields) {
     const protectedField = protectedByKey.get(incoming.key);
     if ((incoming.isProtected || incoming.semanticKey) && !protectedField) throw new CatalogServiceError("PROTECTED_FIELD", "Only existing recommendation fields may be submitted as protected.");
@@ -265,23 +330,35 @@ export async function updateCategory(id: string, input: CategoryInput, updatedAt
   }, true);
   const duplicate = await client.productCategory.findUnique({ where: { slug: normalized.slug } });
   if (duplicate && duplicate.id !== id) throw new CatalogServiceError("SLUG_CONFLICT", "A category with this slug already exists.");
-  const incomingFields = mergeProtectedFields(existing.fields as any[], normalized.fields, mergedFields(normalized));
+  const incomingFields = mergeProtectedFields(
+    existing.fields,
+    normalized.fields,
+    mergedFields(normalized),
+  );
   for (const field of existing.fields) {
     const incoming = incomingFields.find((candidate) => candidate.key === field.key);
     if (!incoming && field.isProtected) throw new CatalogServiceError("PROTECTED_FIELD", "Protected recommendation fields cannot be removed.");
     if (incoming) assertProtectedField(field, incoming);
   }
   try { return await client.$transaction(async (tx) => {
-    const existingRequiredKeys = new Set((existing.fields as any[]).filter((field) => (field.requiredForPublish || field.requiredForRecommendation) && field.status === "ACTIVE").map((field) => field.key));
+    const existingRequiredKeys = new Set(
+      existing.fields
+        .filter(
+          (field) =>
+            (field.requiredForPublish || field.requiredForRecommendation) &&
+            field.status === "ACTIVE",
+        )
+        .map((field) => field.key),
+    );
     const requiredFields = incomingFields.filter((field) => (field.requiredForPublish || field.requiredForRecommendation) && field.status === "ACTIVE" && !existingRequiredKeys.has(field.key));
     if (requiredFields.length > 0) {
       const publishedProducts = await tx.product.findMany({ where: { categoryId: id, status: "PUBLISHED" }, include: { variants: true } });
       const errors: Array<{ fieldKey: string; productId: string; variantId?: string; message: string }> = [];
-      for (const product of publishedProducts as any[]) {
+      for (const product of publishedProducts) {
         for (const field of requiredFields.filter((candidate) => candidate.scope === "PRODUCT")) {
           if (!hasValidProvidedSpecification(product.specifications, field)) errors.push({ fieldKey: field.key, productId: product.id, message: "Published product is missing this required field." });
         }
-        for (const variant of (product.variants ?? []).filter((item: any) => item.isActive)) {
+        for (const variant of product.variants.filter((item) => item.isActive)) {
           for (const field of requiredFields.filter((candidate) => candidate.scope === "VARIANT")) {
             if (!hasValidProvidedSpecification(variant.specifications, field)) errors.push({ fieldKey: field.key, productId: product.id, variantId: variant.id, message: "Published SKU is missing this required field." });
           }
@@ -297,7 +374,7 @@ export async function updateCategory(id: string, input: CategoryInput, updatedAt
     const category = await tx.productCategory.findUnique({ where: { id } });
     if (!category) throw new CatalogServiceError("NOT_FOUND", "Category not found.", 404);
     for (const field of incomingFields) {
-      const current = existing.fields.find((item: any) => item.key === field.key);
+      const current = existing.fields.find((item) => item.key === field.key);
       const data = { ...field } as Record<string, unknown>;
       delete data.id;
       if (current) await tx.specificationField.update({ where: { id: current.id }, data: data as Prisma.SpecificationFieldUpdateInput });

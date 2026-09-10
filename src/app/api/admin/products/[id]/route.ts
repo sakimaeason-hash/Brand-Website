@@ -173,10 +173,13 @@ export async function PATCH(request: Request, { params }: Params) {
       return errorResponse("Image upload failed", 502, "IMAGE_UPLOAD_FAILED");
     }
 
-    let result: any = existing;
+    let result: unknown = existing;
+    let resultUpdatedAt = existing.updatedAt;
     if (aggregate.data) {
       try {
-        result = await saveProductDraft(params.id, aggregate.data, rawUpdatedAt);
+        const saved = await saveProductDraft(params.id, aggregate.data, rawUpdatedAt);
+        result = saved;
+        resultUpdatedAt = saved.updatedAt;
       } catch (error) {
         await cleanupUploads(uploaded.map((image) => image.storagePath));
         return adminErrorResponse(error);
@@ -189,7 +192,7 @@ export async function PATCH(request: Request, { params }: Params) {
         const created = await prisma.productImage.create({ data: { productId: params.id, ...image } });
         registeredImageIds.push(created.id);
       }
-    } catch (error) {
+    } catch {
       await cleanupRegisteredImages(registeredImageIds);
       await cleanupUploads(uploaded.map((image) => image.storagePath));
       return errorResponse("Image upload failed", 502, "IMAGE_UPLOAD_FAILED");
@@ -217,7 +220,7 @@ export async function PATCH(request: Request, { params }: Params) {
       }
     }
 
-    const actionTimestamp = isoDate(result.updatedAt, rawUpdatedAt);
+    const actionTimestamp = isoDate(resultUpdatedAt, rawUpdatedAt);
     if (action === "publish") {
       result = await publishProduct(params.id, actionTimestamp);
       revalidateCatalog();

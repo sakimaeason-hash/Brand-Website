@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getAmazonPurchaseLink } from "@/lib/amazon-links";
 
 const recommendedProducts = [
   {
@@ -53,8 +54,32 @@ const promoCodes = {
   FREESHIP: { discount: 0, freeShipping: true, message: "Free shipping applied" },
 };
 
+function CartPurchaseAction({ name, purchaseLink }: { name: string; purchaseLink?: string }) {
+  const amazonPurchaseLink = getAmazonPurchaseLink(purchaseLink);
+
+  return amazonPurchaseLink ? (
+    <a
+      href={amazonPurchaseLink}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`View ${name} on Amazon`}
+      className="text-sm font-semibold text-[#2AAAA0] underline-offset-4 hover:underline"
+    >
+      View on Amazon
+    </a>
+  ) : (
+    <Link
+      href="/products"
+      aria-label={`View ${name} in product catalog`}
+      className="text-sm font-semibold text-[#2AAAA0] underline-offset-4 hover:underline"
+    >
+      View Products
+    </Link>
+  );
+}
+
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalItems, totalPrice, clearCart, addItem } = useCart();
+  const { items, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; message: string; discount?: number; freeShipping?: boolean } | null>(null);
   const [promoError, setPromoError] = useState("");
@@ -82,14 +107,6 @@ export default function CartPage() {
       }
       setIsApplyingPromo(false);
     }, 500);
-  };
-
-  const handleAddRecommended = (product: (typeof recommendedProducts)[0]) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-    });
   };
 
   if (items.length === 0) {
@@ -182,6 +199,10 @@ export default function CartPage() {
                           <p className="text-sm text-[#6B6B6B]">${item.price.toLocaleString()} each</p>
                         </div>
                       </div>
+
+                      <div className="mt-3 flex justify-end">
+                        <CartPurchaseAction name={item.name} purchaseLink={item.purchaseLink} />
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -271,19 +292,6 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Button
-                  className="w-full bg-[#F5A623] text-[#2D2D2D] hover:bg-[#E09520] mb-3"
-                  asChild
-                >
-                  <a
-                    href="https://www.amazon.com/stores/Goldseasonelectricwheelchair/page/F424DE88-3CEC-4B90-BCEF-D0BAC8FCEA80"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Proceed to Checkout
-                  </a>
-                </Button>
-
                 <Button variant="outline" asChild className="w-full">
                   <Link href="/products">Continue Shopping</Link>
                 </Button>
@@ -344,12 +352,8 @@ export default function CartPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-[#F5A623]">${product.price}</span>
-                      <Button
-                        size="sm"
-                        className="bg-[#2D2D2D] text-white hover:bg-[#2AAAA0]"
-                        onClick={() => handleAddRecommended(product)}
-                      >
-                        Add
+                      <Button size="sm" asChild className="bg-[#2D2D2D] text-white hover:bg-[#2AAAA0]">
+                        <Link href="/products">View Products</Link>
                       </Button>
                     </div>
                   </CardContent>

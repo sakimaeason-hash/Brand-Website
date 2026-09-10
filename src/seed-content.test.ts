@@ -25,6 +25,24 @@ type VariantRow = Record<string, unknown> & {
   sku: string;
 };
 
+type CategoryUpsertArgs = {
+  where: { slug: string };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
+type FieldUpsertArgs = {
+  where: { categoryId_key: { categoryId: string; key: string } };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
+type VariantUpsertArgs = {
+  where: { sku: string };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
 function fakePrisma(initial: { products?: ProductRow[]; stories?: StoryRow[] } = {}) {
   const productRows = [...(initial.products ?? [])];
   const storyRows = [...(initial.stories ?? [])];
@@ -99,7 +117,7 @@ function fakePrisma(initial: { products?: ProductRow[]; stories?: StoryRow[] } =
   const productCategory = {
     findUnique: vi.fn(async ({ where }: { where: { slug: string } }) =>
       categories.find((row) => row.slug === where.slug) ?? null),
-    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+    upsert: vi.fn(async ({ where, create, update }: CategoryUpsertArgs) => {
       const existing = categories.find((row) => row.slug === where.slug);
       if (existing) {
         Object.assign(existing, update);
@@ -114,7 +132,7 @@ function fakePrisma(initial: { products?: ProductRow[]; stories?: StoryRow[] } =
     }),
   };
   const specificationField = {
-    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+    upsert: vi.fn(async ({ where, create, update }: FieldUpsertArgs) => {
       const existing = fields.find(
         (row) =>
           row.categoryId === where.categoryId_key.categoryId &&
@@ -130,7 +148,7 @@ function fakePrisma(initial: { products?: ProductRow[]; stories?: StoryRow[] } =
     }),
   };
   const productVariant = {
-    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+    upsert: vi.fn(async ({ where, create, update }: VariantUpsertArgs) => {
       const existing = variants.find((row) => row.sku === where.sku);
       if (existing) {
         Object.assign(existing, update);

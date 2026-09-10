@@ -48,6 +48,19 @@ npm run promote-admin
 
 公开注册始终创建 `USER`，即使提交的邮箱等于 `ADMIN_EMAIL` 或请求体伪造了 `role` 也不会获得后台权限。`promote-admin` 从 `ADMIN_EMAIL` 读取规范化邮箱，在一个事务中将其他 `ADMIN` 降为 `USER`，再提升指定账号；账号不存在或数据库不可用时以非零状态退出。页面中是否显示 Admin 入口、中间件放行和 API 数据库鉴权都会同时校验 `ADMIN` 角色与 `ADMIN_EMAIL`，因此误设出的第二个 `ADMIN` 账号也无法进入后台。
 
+动态产品目录迁移必须先在隔离的 Preview/测试数据库执行：
+
+```bash
+npx prisma migrate deploy
+npm run seed:catalog
+npm run seed:content
+npm run migrate:catalog -- --dry-run
+npm run migrate:catalog
+npm run migrate:catalog
+```
+
+先审查 dry-run 输出中的 `productsNeedingReview`，再运行正式迁移。第二次正式运行用于验证幂等性，不应新增重复 SKU。脚本会把 7 个官方电动轮椅产品和 17 个官方 SKU 映射到动态品类与规格，给代步车创建稳定的默认 SKU；缺失和冲突值保持 `NOT_PROVIDED`/`CONFLICTING`，不会猜测数据。跨产品 SKU 冲突会立即中止迁移。
+
 ## 导入静态内容
 
 运行 seed 前确保目标数据库已经完成迁移：
@@ -59,6 +72,8 @@ npm run seed:content
 ```
 
 `seed:content` 将当前 `src/data/products.ts` 和 `src/data/stories.ts` 的静态快照导入为已发布内容。产品优先按静态记录 ID 查找，并兼容按 `name/model` 查找旧记录；故事按稳定的 `displayName` 查找。产品的 `model` 使用产品名称，记录 ID 仍沿用静态产品 ID，因此重复运行不会创建重复记录。静态目录中的 `weight` 是整车运输重量，只写入 `productWeight`；不能据此推断用户承重，`weightCapacity` 默认留空，等待官方承重规格补充。
+
+`seed:content` 还会绑定内置品类并为每个产品 upsert 一个 `LEGACY-<产品ID>` 默认 SKU。它不会重新启用已经下线的默认 SKU；正式目录迁移会停用轮椅占位 SKU并写入官方 SKU。数据库中的 SKU 规格只是官方表格的运行时副本，审计来源仍是原始产品表、`src/data/wheelchair-specs.ts` 和 `docs/product-data/wheelchair-spec-quality.md`。
 
 脚本只登记仓库中已有的公开 URL `/products/...` 和 `/stories/...`，同时写入 `storagePath`、`publicUrl` 和文件元数据，不会把这些文件重新上传到 Blob Storage。任何 Prisma 连接、迁移或约束错误都会以清晰错误退出，不会静默跳过。
 
@@ -73,6 +88,13 @@ npm run seed:content
 - 公开 Products、Stories、首页精选和促销查询只读取 `PUBLISHED`。数据库查询成功但没有已发布记录时显示空结果，确保下线或删除不会让旧静态内容复活；仅在数据库不可用或迁移尚未建立内容表时回退到仓库静态快照。
 - `UNPUBLISHED` 内容不会出现在公开页面；删除操作需要显式确认，并按“先清理图片、再删除记录”的顺序执行。
 
+### 动态品类和产品发布规则
+
+- 已被产品使用的品类不能硬删除，只能归档。归档品类保留历史产品引用，但不能再用于新产品；公开目录只显示其中仍符合发布条件的内容。
+- 电动轮椅和手动轮椅用于推荐的受保护语义字段可以调整展示名称、帮助文字和顺序，但不能删除、停用、改数据类型、改单位族或重新绑定含义。
+- 草稿允许缺少 SKU、图片、Amazon 链接或规格，便于分阶段录入资料；保存草稿不会把不完整内容公开。
+- 发布时会重新验证活动品类、主图、至少一个有效且唯一的 SKU、必需规格、可继承或覆盖的有效价格和 Amazon 链接，以及已发布的兼容配件。失败时后台会切换到对应页签并定位具体 SKU/字段，线上版本保持不变。
+
 ## ET 促销时间
 
 促销表单输入和展示使用 `America/New_York`（Eastern Time），数据库统一保存 UTC。夏令时由时区库计算，不能用固定的 UTC-5 偏移；春季跳时中不存在的本地时间会被拒绝，秋季重复时间采用较早的 EDT 时刻。活动窗口采用半开区间 `[startAt, endAt)`：开始时刻生效，结束时刻立即失效。促销价优先于折扣百分比，价格四舍五入到两位小数。
@@ -84,22 +106,36 @@ npm run seed:content
 1. 配置 Supabase bucket 和 Vercel 私有环境变量。
 2. 在独立预览数据库执行 `npx prisma migrate deploy`。
 3. 注册或提升管理员，执行 `npm run promote-admin`、`npm run seed:catalog` 和 `npm run seed:content`。
-4. 部署 Preview，并在浏览器验收普通用户的 `/admin` 403、管理员的草稿/预览/发布、产品和故事多图顺序、促销 ET 边界及静态回退。
-5. 将 Preview URL、迁移输出、测试结果、环境变量清单和已知限制交给项目负责人复核。
-6. **在获得明确批准前，不执行生产迁移，不运行 `vercel deploy --prod`，也不切换 `goldseason.vip`。**
-7. 获得批准后，在确认项目为 `brand-website`、团队为 `ethan-sakima-project` 的前提下执行生产迁移、管理员提升、幂等 seed 和带项目/团队参数的生产部署：
+4. 执行 `npm run migrate:catalog -- --dry-run`，审查所有待复核项后运行 `npm run migrate:catalog` 两次，确认第二次没有重复记录。
+5. 部署 Preview，并在浏览器验收普通用户的 `/admin` 403、管理员的动态品类、SKU、配件、草稿/预览/发布，以及 Powered/Manual Finder 和 Amazon 链接。
+6. 将 Preview URL、迁移输出、测试结果、环境变量清单和已知限制交给项目负责人复核。
+7. **在获得明确批准前，不执行生产迁移，不运行 `vercel deploy --prod`，也不切换 `goldseason.vip`。**
+8. 获得批准后，在确认项目为 `brand-website`、团队为 `ethan-sakima-project` 的前提下严格执行以下生产顺序。必须先创建数据库快照并实际验证其可恢复性；任一步失败都立即停止，不能跳步继续部署：
 
 ```bash
+# 1. 在数据库供应商控制台创建快照，并在隔离恢复实例验证可恢复
+# 2. 仅执行已提交的增量迁移
 npx prisma migrate deploy
-npm run promote-admin
+# 3. 写入幂等品类模板与基础内容
 npm run seed:catalog
 npm run seed:content
+# 4. 只读预演，人工审查 productsNeedingReview
+npm run migrate:catalog -- --dry-run
+# 5. 审查通过后执行正式目录迁移
+npm run migrate:catalog
+# 6. 确认唯一管理员
+npm run promote-admin
+# 7. 最后部署应用
 npx vercel deploy --prod --yes --scope ethan-sakima-project --project brand-website
 ```
 
-只有当部署状态为 `READY`，并且通过 `goldseason.vip/admin` 的 USER/ADMIN 权限检查及三类前台内容线上检查后，才能报告生产发布完成。
+9. 应用部署为 `READY` 后，依次验收管理员发布流程、普通用户不可见/不可访问后台、Powered/Manual Finder 的承重与有效座宽硬筛选，以及每个 SKU 的 Amazon 链接。只有 `goldseason.vip` 上全部检查通过后，才能报告生产发布完成。
 
-完整 E2E 门禁必须连接独立 Preview/测试数据库和测试 Storage bucket，并设置 `E2E_ADMIN_EMAIL`、`E2E_ADMIN_PASSWORD`、`E2E_USER_EMAIL`、`E2E_USER_PASSWORD`。创建并清理测试内容的用例还要求显式设置 `E2E_ALLOW_MUTATIONS=1`；缺少这些变量时 `npm run test:e2e` 会失败，不能以跳过核心用例的方式形成假通过。只检查未登录重定向时可运行 `npm run test:e2e:smoke`，但该结果不能替代完整门禁。
+回滚时先停止后续步骤并保留失败日志。应用代码可回滚到上一个 Vercel READY 部署；数据库迁移是增量新增结构，不使用 `migrate reset`、`db push` 或手工删表。若已写入的目录数据需要整体恢复，必须使用部署前数据库快照；在恢复前不要再次运行 seed 或目录迁移。
+
+本期不接收站内支付。产品目录、Finder 与购物车中的购买动作继续跳转产品或 SKU 的 Amazon URL，不配置 Stripe 密钥，也不创建付款会话。
+
+完整 E2E 门禁必须连接独立 Preview/测试数据库和测试 Storage bucket，并设置 `E2E_ADMIN_EMAIL`、`E2E_ADMIN_PASSWORD`、`E2E_USER_EMAIL`、`E2E_USER_PASSWORD`。创建并清理测试内容的用例还要求显式设置 `E2E_ALLOW_MUTATIONS=1`；`npm run test:e2e:full` 会先运行环境预检，缺少任一变量时以非零状态停止，不能以跳过核心用例的方式形成假通过。公开 Finder 输入和响应式布局可用 `npm run test:e2e:finder` 验证；只检查未登录重定向时可运行 `npm run test:e2e:smoke`，两者都不能替代完整门禁。
 
 ## 常用检查
 
@@ -109,7 +145,8 @@ npm run lint
 npx tsc --noEmit
 npx prisma validate
 npm run build
-npm run test:e2e
+npm run test:e2e:finder
+npm run test:e2e:full
 ```
 
 <!-- Default Next.js links omitted; see the project documentation above. -->

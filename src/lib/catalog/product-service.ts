@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient, type SpecificationField } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { CatalogServiceError } from "./category-service";
 import { normalizeProductInput, type ProductAggregateInput } from "./product-validation";
@@ -53,12 +53,29 @@ function productData(input: ProductAggregateInput, status: "DRAFT" | "PUBLISHED"
   };
 }
 
-function specificationFields(fields: readonly any[]): SpecificationFieldDefinition[] {
+function specificationFields(
+  fields: readonly SpecificationField[],
+): SpecificationFieldDefinition[] {
   return fields.map((field) => ({
-    ...field,
-    options: Array.isArray(field.options) ? field.options : [],
+    key: field.key,
+    label: field.label,
+    group: field.group,
+    scope: field.scope as SpecificationFieldDefinition["scope"],
+    dataType: field.dataType as SpecificationFieldDefinition["dataType"],
+    unitFamily: field.unitFamily as SpecificationFieldDefinition["unitFamily"],
+    defaultDisplayUnit: field.defaultDisplayUnit,
+    options: Array.isArray(field.options)
+      ? field.options.filter((option): option is string => typeof option === "string")
+      : [],
+    helpText: field.helpText,
     minValue: field.minValue == null ? null : Number(field.minValue),
     maxValue: field.maxValue == null ? null : Number(field.maxValue),
+    requiredForPublish: field.requiredForPublish,
+    requiredForRecommendation: field.requiredForRecommendation,
+    semanticKey: field.semanticKey,
+    isProtected: field.isProtected,
+    status: field.status === "ARCHIVED" ? "ARCHIVED" : "ACTIVE",
+    sortOrder: field.sortOrder,
   }));
 }
 
@@ -193,7 +210,7 @@ async function writeRelations(tx: ProductClient, productId: string, input: Retur
   await writeAccessories(tx, productId, input.accessoryProductIds);
 }
 
-async function loadAggregate(client: ProductClient, id: string): Promise<any> {
+async function loadAggregate(client: ProductClient, id: string) {
   return client.product.findUnique({
     where: { id },
     include: {
@@ -259,11 +276,13 @@ async function changeStatus(id: string, expectedUpdatedAt: string, status: "PUBL
       if (status === "PUBLISHED") {
         const category = await loadActiveCategory(tx, existing.categoryId, existing.categoryTemplateVersion);
         const errors = validateForPublish(existing as ProductForPublish, category, {
-          accessoryProducts: existing.compatibleAccessories.flatMap((relation: any) => relation.accessoryProduct ? [{
-            id: relation.accessoryProduct.id,
-            status: relation.accessoryProduct.status,
-            role: relation.accessoryProduct.categoryRelation?.role,
-          }] : []),
+          accessoryProducts: existing.compatibleAccessories.flatMap((relation) => {
+            const accessory = relation.accessoryProduct;
+            const role = accessory?.categoryRelation?.role;
+            return accessory && (role === "PRODUCT" || role === "ACCESSORY")
+              ? [{ id: accessory.id, status: accessory.status, role }]
+              : [];
+          }),
         });
         if (errors.length) throw new CatalogServiceError("PUBLISH_VALIDATION", "Publish validation failed", 400, errors);
       }

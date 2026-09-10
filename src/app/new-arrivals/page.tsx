@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { RevealOnScroll, HoverScale } from "@/components/animations";
 import { CountdownTimer } from "@/components/CountdownTimer";
-import { useCart } from "@/context/CartContext";
 
 const newProducts = [
   {
@@ -71,7 +71,6 @@ const bundleDeals = [
 const flashSaleProduct = { name: "GoldSeason Lite", tagline: "Lightweight & Portable", price: 1299, originalPrice: 1599, discount: "20% Off", remaining: 12 };
 
 export default function NewArrivalsPage() {
-  const { addItem } = useCart();
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -82,10 +81,6 @@ export default function NewArrivalsPage() {
       setSubscribed(true);
       setEmail("");
     }
-  };
-
-  const handleAddBundle = (bundle: (typeof bundleDeals)[0]) => {
-    addItem({ id: `bundle-${bundle.name.toLowerCase().replace(/\s+/g, '-')}`, name: bundle.name, price: bundle.price });
   };
 
   return (
@@ -282,12 +277,12 @@ export default function NewArrivalsPage() {
                     <span className="text-sm text-white/50 line-through">${bundle.originalPrice.toLocaleString()}</span>
                   </div>
 
-                  <button
-                    onClick={() => handleAddBundle(bundle)}
-                    className="w-full py-3 bg-white text-[#3D3330] rounded-lg font-medium hover:bg-[#C8956C] hover:text-white transition-colors"
+                  <Link
+                    href="/products"
+                    className="block w-full py-3 bg-white text-center text-[#3D3330] rounded-lg font-medium hover:bg-[#C8956C] hover:text-white transition-colors"
                   >
-                    Add to Cart
-                  </button>
+                    Choose products
+                  </Link>
                 </div>
               </RevealOnScroll>
             ))}

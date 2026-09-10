@@ -8,16 +8,23 @@ import { Eye, Send, Trash2, Undo2 } from "lucide-react";
 type ContentType = "products" | "stories" | "promotions";
 type Action = "publish" | "unpublish" | "delete";
 
+export type ContentActionError = {
+  message: string;
+  fields: unknown[];
+};
+
 export function ContentActions({
   type,
   id,
   status,
   updatedAt,
+  onActionError,
 }: {
   type: ContentType;
   id: string;
   status: string;
   updatedAt: string;
+  onActionError?: (error: ContentActionError) => void;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -37,7 +44,12 @@ export function ContentActions({
       const response = await fetch(`/api/admin/${type}/${id}`, { method: "PATCH", body: form });
       const result = await response.json();
       if (!response.ok) {
-        setMessage(result.error || "Action failed");
+        const error = {
+          message: typeof result?.error === "string" ? result.error : "Action failed",
+          fields: Array.isArray(result?.fields) ? result.fields : [],
+        };
+        if (onActionError) onActionError(error);
+        else setMessage(error.message);
         return;
       }
 

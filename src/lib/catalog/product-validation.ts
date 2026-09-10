@@ -1,8 +1,15 @@
 import { z } from "zod";
 import type { SpecificationInput } from "./types";
 
-const httpsUrl = z.string().url().refine((value) => value.startsWith("https://"), "URL must use HTTPS");
-const nullableHttpsUrl = httpsUrl.nullable().optional();
+const amazonHttpsUrl = z.string().url().refine((value) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && (url.hostname === "amazon.com" || url.hostname.endsWith(".amazon.com"));
+  } catch {
+    return false;
+  }
+}, "URL must be an HTTPS Amazon URL");
+const nullableAmazonHttpsUrl = amazonHttpsUrl.nullable().optional();
 
 export const specificationInputSchema: z.ZodType<SpecificationInput> = z.object({
   status: z.enum(["PROVIDED", "NOT_PROVIDED", "CONFLICTING"]),
@@ -20,7 +27,7 @@ export const variantInputSchema = z.object({
   colorHex: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Color must be a six-digit hex value").nullable().optional(),
   priceOverride: z.coerce.number().finite().nonnegative().nullable().optional(),
   originalPriceOverride: z.coerce.number().finite().nonnegative().nullable().optional(),
-  purchaseLinkOverride: nullableHttpsUrl,
+  purchaseLinkOverride: nullableAmazonHttpsUrl,
   specifications: z.record(specificationInputSchema).default({}),
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().nonnegative().default(0),
@@ -54,7 +61,7 @@ export const productAggregateInputSchema = z.object({
   description: z.string().trim().max(5000).nullable().optional(),
   price: z.coerce.number().finite().nonnegative(),
   originalPrice: z.coerce.number().finite().nonnegative().nullable().optional(),
-  amazonLink: nullableHttpsUrl,
+  amazonLink: nullableAmazonHttpsUrl,
   weightCapacity: z.string().trim().max(500).nullable().optional(),
   seatWidth: z.string().trim().max(500).nullable().optional(),
   range: z.string().trim().max(500).nullable().optional(),

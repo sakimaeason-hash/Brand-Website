@@ -1,7 +1,9 @@
 "use client";
 
-import { ExternalLink, SlidersHorizontal, X } from "lucide-react";
+import { ExternalLink, ShoppingCart, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useCart } from "@/context/CartContext";
+import { getAmazonPurchaseLink } from "@/lib/amazon-links";
 import type { PublicCategorySummary, PublicProduct } from "@/lib/catalog/types";
 import { ProductAccessories } from "./ProductAccessories";
 import { ProductCategoryNav } from "./ProductCategoryNav";
@@ -18,6 +20,7 @@ export default function ProductsCatalog({ initialProducts = [], categories }: {
   initialProducts?: readonly PublicProduct[];
   categories?: readonly PublicCategorySummary[];
 }) {
+  const { addItem } = useCart();
   const publicCategories = categories ?? uniqueCategories(initialProducts);
   const [activeCategoryId, setActiveCategoryId] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("featured");
@@ -66,15 +69,15 @@ export default function ProductsCatalog({ initialProducts = [], categories }: {
 
       {visibleProducts.length === 0 && <div className="py-20 text-center"><h2 className="text-xl font-semibold">No published products</h2><p className="mt-2 text-sm text-[#6B625D]">Please check back after the catalog is updated.</p></div>}
 
-      {productItems.length > 0 && <CatalogSection title="Products" products={productItems} selectedVariant={selectedVariant} onVariantChange={(productId, variantId) => setSelectedVariantIds((current) => ({ ...current, [productId]: variantId }))} onDetails={setDetailProductId} />}
-      {accessoryItems.length > 0 && <CatalogSection title="Accessories" products={accessoryItems} selectedVariant={selectedVariant} onVariantChange={(productId, variantId) => setSelectedVariantIds((current) => ({ ...current, [productId]: variantId }))} onDetails={setDetailProductId} />}
+      {productItems.length > 0 && <CatalogSection title="Products" products={productItems} selectedVariant={selectedVariant} onVariantChange={(productId, variantId) => setSelectedVariantIds((current) => ({ ...current, [productId]: variantId }))} onDetails={setDetailProductId} onAddToCart={addItem} />}
+      {accessoryItems.length > 0 && <CatalogSection title="Accessories" products={accessoryItems} selectedVariant={selectedVariant} onVariantChange={(productId, variantId) => setSelectedVariantIds((current) => ({ ...current, [productId]: variantId }))} onDetails={setDetailProductId} onAddToCart={addItem} />}
     </div>
 
     {detailProduct && (() => {
       const variant = selectedVariant(detailProduct);
       if (!variant) return null;
       return <div role="dialog" aria-modal="true" aria-labelledby="product-detail-title" className="fixed inset-0 z-50 overflow-y-auto bg-black/55 p-4 sm:p-8">
-        <div className="mx-auto max-w-4xl rounded bg-white shadow-xl">
+        <div data-testid="product-detail-panel" className="mx-auto max-w-4xl rounded bg-white shadow-xl">
           <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-[#DED7D1] bg-white p-5">
             <div><p className="text-xs font-semibold uppercase text-[#8C5936]">{detailProduct.category.name}</p><h2 id="product-detail-title" className="mt-1 text-2xl font-bold">{detailProduct.name}</h2></div>
             <button type="button" title="Close product details" aria-label="Close product details" onClick={() => setDetailProductId(null)} className="rounded p-2 text-[#514A45] hover:bg-[#F3EFEC]"><X aria-hidden="true" className="h-5 w-5" /></button>
@@ -84,7 +87,7 @@ export default function ProductsCatalog({ initialProducts = [], categories }: {
             <div>
               {detailProduct.description && <p className="text-sm leading-6 text-[#5E5651]">{detailProduct.description}</p>}
               <div className="mt-5"><ProductVariantSelector variants={detailProduct.variants} selectedId={variant.id} onChange={(variantId) => setSelectedVariantIds((current) => ({ ...current, [detailProduct.id]: variantId }))} /></div>
-              <PriceAndPurchase product={detailProduct} variant={variant} />
+              <PriceAndPurchase product={detailProduct} variant={variant} onAddToCart={addItem} />
               {detailProduct.features.length > 0 && <ul className="mt-5 list-disc space-y-1 pl-5 text-sm text-[#514A45]">{detailProduct.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>}
             </div>
           </div>
@@ -98,12 +101,13 @@ export default function ProductsCatalog({ initialProducts = [], categories }: {
   </main>;
 }
 
-function CatalogSection({ title, products, selectedVariant, onVariantChange, onDetails }: {
+function CatalogSection({ title, products, selectedVariant, onVariantChange, onDetails, onAddToCart }: {
   title: string;
   products: readonly PublicProduct[];
   selectedVariant: (product: PublicProduct) => PublicProduct["variants"][number] | undefined;
   onVariantChange: (productId: string, variantId: string) => void;
   onDetails: (productId: string) => void;
+  onAddToCart: ReturnType<typeof useCart>["addItem"];
 }) {
   return <section aria-labelledby={`catalog-${title.toLowerCase()}`} className="py-10">
     <div className="flex items-end justify-between gap-4"><h2 id={`catalog-${title.toLowerCase()}`} className="text-2xl font-bold">{title}</h2><p className="text-sm text-[#6B625D]">{products.length} {products.length === 1 ? "item" : "items"}</p></div>
@@ -119,7 +123,7 @@ function CatalogSection({ title, products, selectedVariant, onVariantChange, onD
             <h3 className="mt-1 text-xl font-bold">{product.name}</h3>
             {product.tagline && <p className="mt-1 text-sm text-[#6B625D]">{product.tagline}</p>}
             <div className="mt-4"><ProductVariantSelector variants={product.variants} selectedId={variant.id} onChange={(variantId) => onVariantChange(product.id, variantId)} /></div>
-            <PriceAndPurchase product={product} variant={variant} />
+            <PriceAndPurchase product={product} variant={variant} onAddToCart={onAddToCart} />
             <button type="button" onClick={() => onDetails(product.id)} className="mt-3 w-full rounded border border-[#A66D45] px-4 py-2.5 text-sm font-semibold text-[#75482C] hover:bg-[#FBF5F0]">View details</button>
           </div>
         </article>;
@@ -128,12 +132,30 @@ function CatalogSection({ title, products, selectedVariant, onVariantChange, onD
   </section>;
 }
 
-function PriceAndPurchase({ product, variant }: {
+function PriceAndPurchase({ product, variant, onAddToCart }: {
   product: PublicProduct;
   variant: PublicProduct["variants"][number];
+  onAddToCart: ReturnType<typeof useCart>["addItem"];
 }) {
+  const amazonPurchaseLink = getAmazonPurchaseLink(variant.purchaseLink);
   return <div className="mt-5">
     <div className="flex items-baseline gap-2"><span className="text-2xl font-bold">${variant.price.toFixed(2)}</span>{variant.originalPrice != null && variant.originalPrice > variant.price && <span className="text-sm text-[#7C746F] line-through">${variant.originalPrice.toFixed(2)}</span>}</div>
-    {variant.purchaseLink ? <a href={variant.purchaseLink} target="_blank" rel="noopener noreferrer" aria-label={`Buy ${variant.sku} on Amazon`} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded bg-[#A66D45] px-4 py-3 text-sm font-semibold text-white hover:bg-[#8D5935]">Buy on Amazon<ExternalLink aria-hidden="true" className="h-4 w-4" /></a> : <a href={`/contact?product=${encodeURIComponent(product.id)}&sku=${encodeURIComponent(variant.sku)}`} className="mt-3 inline-flex w-full items-center justify-center rounded bg-[#4D4743] px-4 py-3 text-sm font-semibold text-white">Contact us</a>}
+    {amazonPurchaseLink ? <>
+      <a href={amazonPurchaseLink} target="_blank" rel="noopener noreferrer" aria-label={`Buy ${variant.sku} on Amazon`} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded bg-[#A66D45] px-4 py-3 text-sm font-semibold text-white hover:bg-[#8D5935]">Buy on Amazon<ExternalLink aria-hidden="true" className="h-4 w-4" /></a>
+      <button
+        type="button"
+        aria-label={`Add ${variant.sku} to cart`}
+        onClick={() => onAddToCart({
+          id: `${product.id}:${variant.id}`,
+          name: `${product.name} - ${variant.label ?? variant.sku}`,
+          price: variant.price,
+          image: product.images[0]?.url,
+          purchaseLink: amazonPurchaseLink,
+        })}
+        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded border border-[#A66D45] px-4 py-2.5 text-sm font-semibold text-[#75482C] hover:bg-[#FBF5F0]"
+      >
+        <ShoppingCart aria-hidden="true" className="h-4 w-4" /> Add to cart
+      </button>
+    </> : <a href={`/contact?product=${encodeURIComponent(product.id)}&sku=${encodeURIComponent(variant.sku)}`} className="mt-3 inline-flex w-full items-center justify-center rounded bg-[#4D4743] px-4 py-3 text-sm font-semibold text-white">Contact us</a>}
   </div>;
 }

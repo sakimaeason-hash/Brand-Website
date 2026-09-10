@@ -1,4 +1,3 @@
-import { ContentActions } from "@/components/admin/ContentActions";
 import { ProductForm, type ProductFormData } from "@/components/admin/ProductForm";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { loadProductEditorOptions } from "@/lib/catalog/admin-product-editor";
@@ -86,7 +85,6 @@ export default async function AdminProductDetail({ params }: { params: { id: str
       <StatusBadge status={product.status} />
     </div>
     <p className="mb-8 mt-2 text-[#5C534E]">Update product details, SKUs, specifications, accessories, image order, and storefront visibility.</p>
-    <ProductForm initialData={productFormData(product)} categories={options.categories} accessories={options.accessories} />
-    <ContentActions type="products" id={product.id} status={product.status} updatedAt={product.updatedAt.toISOString()} />
+    <ProductForm initialData={productFormData(product)} categories={options.categories} accessories={options.accessories} actionStatus={product.status} />
   </article>;
 }

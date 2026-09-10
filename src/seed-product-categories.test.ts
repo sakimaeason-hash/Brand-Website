@@ -21,13 +21,25 @@ type FieldRow = Record<string, unknown> & {
   semanticKey?: string | null;
 };
 
+type CategoryUpsertArgs = {
+  where: { slug: string };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
+type FieldUpsertArgs = {
+  where: { categoryId_key: { categoryId: string; key: string } };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
 function fakePrisma() {
   const categories: CategoryRow[] = [];
   const fields: FieldRow[] = [];
   let sequence = 0;
 
   const productCategory = {
-    upsert: async ({ where, create, update }: any) => {
+    upsert: async ({ where, create, update }: CategoryUpsertArgs) => {
       const current = categories.find((item) => item.slug === where.slug);
       if (current) {
         Object.assign(current, update);
@@ -39,7 +51,7 @@ function fakePrisma() {
     },
   };
   const specificationField = {
-    upsert: async ({ where, create, update }: any) => {
+    upsert: async ({ where, create, update }: FieldUpsertArgs) => {
       const current = fields.find(
         (item) => item.categoryId === where.categoryId_key.categoryId && item.key === where.categoryId_key.key,
       );
@@ -53,7 +65,12 @@ function fakePrisma() {
     },
   };
   const client = {
-    $transaction: async (callback: (tx: any) => unknown) => callback({ productCategory, specificationField }),
+    $transaction: async (
+      callback: (tx: {
+        productCategory: typeof productCategory;
+        specificationField: typeof specificationField;
+      }) => unknown,
+    ) => callback({ productCategory, specificationField }),
     productCategory,
     specificationField,
     categories,

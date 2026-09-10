@@ -29,6 +29,29 @@ type VariantRow = Record<string, unknown> & {
   sku: string;
 };
 
+type CategoryUpsertArgs = {
+  where: { slug: string };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
+type FieldUpsertArgs = {
+  where: { categoryId_key: { categoryId: string; key: string } };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
+type VariantUpsertArgs = {
+  where: { sku: string };
+  create: Record<string, unknown>;
+  update: Record<string, unknown>;
+};
+
+type VariantUpdateManyArgs = {
+  where: { productId: string; sku: string };
+  data: Record<string, unknown>;
+};
+
 function fakeMigrationDb(options: { categoriesSeeded?: boolean } = {}) {
   const categories: CategoryRow[] = options.categoriesSeeded
     ? [
@@ -69,7 +92,7 @@ function fakeMigrationDb(options: { categoriesSeeded?: boolean } = {}) {
       categories.find((category) => category.slug === where.slug) ?? null,
     ),
     upsert: vi.fn(
-      async ({ where, create, update }: Record<string, any>) => {
+      async ({ where, create, update }: CategoryUpsertArgs) => {
         const existing = categories.find(
           (category) => category.slug === where.slug,
         );
@@ -87,7 +110,7 @@ function fakeMigrationDb(options: { categoriesSeeded?: boolean } = {}) {
     ),
   };
   const specificationField = {
-    upsert: vi.fn(async ({ where, create, update }: Record<string, any>) => {
+    upsert: vi.fn(async ({ where, create, update }: FieldUpsertArgs) => {
       const existing = fields.find(
         (field) =>
           field.categoryId === where.categoryId_key.categoryId &&
@@ -120,7 +143,7 @@ function fakeMigrationDb(options: { categoriesSeeded?: boolean } = {}) {
       variants.find((variant) => variant.sku === where.sku) ?? null,
     ),
     upsert: vi.fn(
-      async ({ where, create, update }: Record<string, any>) => {
+      async ({ where, create, update }: VariantUpsertArgs) => {
         const existing = variants.find((variant) => variant.sku === where.sku);
         if (existing) {
           Object.assign(existing, update);
@@ -135,7 +158,7 @@ function fakeMigrationDb(options: { categoriesSeeded?: boolean } = {}) {
       },
     ),
     updateMany: vi.fn(
-      async ({ where, data }: Record<string, any>) => {
+      async ({ where, data }: VariantUpdateManyArgs) => {
         const matching = variants.filter(
           (variant) =>
             variant.productId === where.productId && variant.sku === where.sku,

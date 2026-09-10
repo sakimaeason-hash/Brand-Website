@@ -43,4 +43,13 @@ describe("product aggregate validation", () => {
     const parsed = productAggregateInputSchema.safeParse({ ...validInput, status: "PUBLISHED" });
     expect(parsed.success).toBe(false);
   });
+
+  it("accepts only Amazon HTTPS URLs for product and SKU purchase links", () => {
+    const parsed = productAggregateInputSchema.safeParse({
+      ...validInput,
+      amazonLink: "https://example.com/product",
+      variants: [{ ...validInput.variants[0], purchaseLinkOverride: "https://example.com/sku", specifications: {} }],
+    });
+    expect(parsed.success).toBe(false);
+  });
 });

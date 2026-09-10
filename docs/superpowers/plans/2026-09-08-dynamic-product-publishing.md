@@ -1041,7 +1041,7 @@ git commit -m "feat: migrate official products into dynamic catalog"
 
 - Create: `e2e/admin-product-catalog.spec.ts`
 - Create: `e2e/dynamic-wheelchair-finder.spec.ts`
-- Create: `src/app/cart/amazon-checkout.test.ts`
+- Create: `src/app/cart/amazon-checkout.test.tsx` (JSX test harness)
 - Modify: `src/app/cart/page.tsx` only if the Amazon regression test exposes a broken link
 - Modify: `README.md`
 - Modify: `.env.example`
@@ -1102,7 +1102,7 @@ npm.cmd test
 npx.cmd tsc --noEmit
 npm.cmd run build
 git diff --check
-git add e2e src/app/cart/amazon-checkout.test.ts README.md .env.example .gitignore
+git add e2e src/app/cart/amazon-checkout.test.tsx README.md .env.example .gitignore
 git commit -m "test: verify dynamic product publishing workflows"
 ```
 
