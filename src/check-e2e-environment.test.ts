@@ -42,6 +42,7 @@ describe("full E2E environment preflight", () => {
       "e2e/admin-content-management.spec.ts",
       "e2e/admin-content-permissions.spec.ts",
       "e2e/promotion-timezone.spec.ts",
+      "e2e/wheelchair-finder-entrypoints.spec.ts",
     ]) {
       expect(command).toContain(spec);
     }

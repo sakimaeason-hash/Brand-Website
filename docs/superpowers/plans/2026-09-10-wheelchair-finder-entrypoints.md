@@ -254,7 +254,7 @@ npm.cmd run test:e2e:entrypoints
 
 Expected: 2 tests PASS, one for `desktop-chrome` and one for `mobile-chrome`.
 
-- [ ] **Step 4: Run regression checks**
+- [x] **Step 4: Run regression checks**
 
 Run:
 
@@ -268,7 +268,7 @@ git diff --check
 
 Expected: all unit tests and type checking pass; lint and production build exit with code 0, allowing only the repository's existing `<img>` performance warnings; `git diff --check` prints no errors.
 
-- [ ] **Step 5: Commit browser coverage**
+- [x] **Step 5: Commit browser coverage**
 
 ```powershell
 git add e2e/wheelchair-finder-entrypoints.spec.ts package.json

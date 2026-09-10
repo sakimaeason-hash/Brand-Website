@@ -246,7 +246,7 @@ export default function HomePage({
                 <Magnetic>
                   <Button
                     size="lg"
-                    className="bg-[#C8956C] text-white hover:brightness-110 text-lg px-8 shadow-warm"
+                    className="bg-[#76553F] text-white hover:bg-[#5C534E] hover:brightness-100 text-lg px-8 shadow-warm"
                     asChild
                   >
                     <Link href="/wheelchair-finder">Find Your Perfect Fit</Link>
@@ -502,7 +502,7 @@ export default function HomePage({
       </section>
 
       {/* Easy to Learn - Premium Warm Section */}
-      <section className="py-20 lg:py-28 bg-gradient-to-br from-[#8B7355] to-[#5C534E] text-white">
+      <section className="overflow-hidden py-20 lg:py-28 bg-gradient-to-br from-[#8B7355] to-[#5C534E] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -603,7 +603,7 @@ export default function HomePage({
       </section>
 
       {/* Travel Ready Highlight */}
-      <section className="py-20 lg:py-28 bg-white">
+      <section className="overflow-hidden py-20 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
@@ -679,7 +679,7 @@ export default function HomePage({
       </section>
 
       {/* Why GoldSeason */}
-      <section className="py-20 lg:py-28 bg-[#FAF7F4]">
+      <section className="overflow-hidden py-20 lg:py-28 bg-[#FAF7F4]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div

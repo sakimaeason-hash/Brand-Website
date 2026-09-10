@@ -96,13 +96,13 @@ export default function Header() {
                 href={link.href}
                 className={
                   link.featured
-                    ? "relative rounded-md bg-[#C8956C] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A96F47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
-                    : "relative text-[#5C534E] hover:text-[#3D3330] transition-colors text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
+                    ? "relative inline-flex items-center gap-1.5 rounded-md bg-[#76553F] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#5C534E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#76553F] focus-visible:ring-offset-2"
+                    : "relative inline-flex items-center gap-1.5 text-[#5C534E] hover:text-[#3D3330] transition-colors text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
                 }
               >
                 {link.label}
                 {link.badge && (
-                  <span className="absolute -top-2 -right-6 bg-[#C8956C] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="bg-[#C8956C] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                     {link.badge}
                   </span>
                 )}
@@ -245,7 +245,7 @@ export default function Header() {
                   href={link.href}
                   className={
                     link.featured
-                      ? "mx-4 flex items-center justify-center gap-2 rounded-md bg-[#C8956C] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#A96F47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
+                      ? "mx-4 flex items-center justify-center gap-2 rounded-md bg-[#76553F] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#5C534E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#76553F] focus-visible:ring-offset-2"
                       : "flex items-center gap-2 px-4 py-3 text-[#3D3330] hover:bg-[#E8D5C4] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
                   }
                   onClick={() => setMobileMenuOpen(false)}
