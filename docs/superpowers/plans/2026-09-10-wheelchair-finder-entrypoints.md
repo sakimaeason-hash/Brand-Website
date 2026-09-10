@@ -24,7 +24,7 @@
 - Create: `src/components/layout/Header.test.tsx`
 - Modify: `src/components/layout/Header.tsx`
 
-- [ ] **Step 1: Write the failing Header test**
+- [x] **Step 1: Write the failing Header test**
 
 Create a Testing Library test that supplies deterministic unauthenticated session and empty cart state, renders `Header`, and checks both navigation modes:
 
@@ -61,7 +61,7 @@ describe("Header wheelchair finder entrypoint", () => {
 });
 ```
 
-- [ ] **Step 2: Run the Header test and verify RED**
+- [x] **Step 2: Run the Header test and verify RED**
 
 Run:
 
@@ -71,7 +71,7 @@ npm.cmd test -- src/components/layout/Header.test.tsx
 
 Expected: FAIL because the navigation landmarks have no accessible names, the menu button has no accessible name, and `Find Your Fit` does not exist.
 
-- [ ] **Step 3: Implement the minimal shared navigation change**
+- [x] **Step 3: Implement the minimal shared navigation change**
 
 Add the Finder to the beginning of `navLinks` and allow a featured style:
 
@@ -97,7 +97,7 @@ Add `id="mobile-navigation"` to the mobile menu container. For `featured` links,
 className="hidden lg:flex items-center gap-4 xl:gap-7"
 ```
 
-- [ ] **Step 4: Run the Header test and verify GREEN**
+- [x] **Step 4: Run the Header test and verify GREEN**
 
 Run:
 
@@ -107,7 +107,7 @@ npm.cmd test -- src/components/layout/Header.test.tsx
 
 Expected: PASS with one Finder link in the desktop landmark and one in the opened mobile landmark.
 
-- [ ] **Step 5: Commit the navigation entrypoint**
+- [x] **Step 5: Commit the navigation entrypoint**
 
 ```powershell
 git add src/components/layout/Header.tsx src/components/layout/Header.test.tsx
@@ -120,7 +120,7 @@ git commit -m "feat: expose wheelchair finder in navigation"
 - Create: `src/components/HomePageClient.test.tsx`
 - Modify: `src/components/HomePageClient.tsx`
 
-- [ ] **Step 1: Write the failing homepage test**
+- [x] **Step 1: Write the failing homepage test**
 
 Render the real homepage client with empty published-content arrays so the test does not require the database, then assert the direct Finder CTA:
 
@@ -138,7 +138,7 @@ describe("homepage wheelchair finder entrypoint", () => {
 });
 ```
 
-- [ ] **Step 2: Run the homepage test and verify RED**
+- [x] **Step 2: Run the homepage test and verify RED**
 
 Run:
 
@@ -148,7 +148,7 @@ npm.cmd test -- src/components/HomePageClient.test.tsx
 
 Expected: FAIL because no hero link named `Find Your Perfect Fit` exists.
 
-- [ ] **Step 3: Implement the minimal hero CTA**
+- [x] **Step 3: Implement the minimal hero CTA**
 
 Add a prominent first CTA in the existing hero action group:
 
@@ -166,7 +166,7 @@ Add a prominent first CTA in the existing hero action group:
 
 Preserve `Shop on Amazon` and `Explore Products`, use `flex-wrap` for the desktop row, and change the two existing buttons to secondary treatments so the Finder is the single primary action. Do not change their URLs or behavior.
 
-- [ ] **Step 4: Run the homepage test and verify GREEN**
+- [x] **Step 4: Run the homepage test and verify GREEN**
 
 Run:
 
@@ -176,7 +176,7 @@ npm.cmd test -- src/components/HomePageClient.test.tsx
 
 Expected: PASS and the direct link has the correct destination.
 
-- [ ] **Step 5: Run both focused component suites**
+- [x] **Step 5: Run both focused component suites**
 
 Run:
 
@@ -186,7 +186,7 @@ npm.cmd test -- src/components/layout/Header.test.tsx src/components/HomePageCli
 
 Expected: both test files PASS.
 
-- [ ] **Step 6: Commit the homepage entrypoint**
+- [x] **Step 6: Commit the homepage entrypoint**
 
 ```powershell
 git add src/components/HomePageClient.tsx src/components/HomePageClient.test.tsx
@@ -199,7 +199,7 @@ git commit -m "feat: add wheelchair finder hero action"
 - Create: `e2e/wheelchair-finder-entrypoints.spec.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: Write the responsive browser test**
+- [x] **Step 1: Write the responsive browser test**
 
 Use the existing desktop and mobile Playwright projects. The test chooses the appropriate visible navigation mode, verifies the hero CTA, follows it, and checks layout width:
 
@@ -236,7 +236,7 @@ test("makes the wheelchair finder discoverable without layout overflow", async (
 });
 ```
 
-- [ ] **Step 2: Add a focused E2E script**
+- [x] **Step 2: Add a focused E2E script**
 
 Add this script to `package.json` without changing the existing full-suite definitions:
 
@@ -244,7 +244,7 @@ Add this script to `package.json` without changing the existing full-suite defin
 "test:e2e:entrypoints": "playwright test e2e/wheelchair-finder-entrypoints.spec.ts"
 ```
 
-- [ ] **Step 3: Run the responsive E2E test**
+- [x] **Step 3: Run the responsive E2E test**
 
 Run:
 

@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:entrypoints": "playwright test e2e/wheelchair-finder-entrypoints.spec.ts",
     "test:e2e:finder": "playwright test e2e/dynamic-wheelchair-finder.spec.ts --grep \"supports powered and manual assessment inputs\"",
     "test:e2e:full": "tsx scripts/check-e2e-environment.ts && playwright test e2e/admin-product-catalog.spec.ts e2e/dynamic-wheelchair-finder.spec.ts e2e/admin-content-management.spec.ts e2e/admin-content-permissions.spec.ts e2e/promotion-timezone.spec.ts",
     "test:e2e:smoke": "playwright test --grep \"redirects unauthenticated\"",
