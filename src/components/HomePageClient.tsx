@@ -238,7 +238,7 @@ export default function HomePage({
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                className="flex flex-col sm:flex-row sm:flex-wrap gap-4 justify-center lg:justify-start"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
@@ -247,6 +247,16 @@ export default function HomePage({
                   <Button
                     size="lg"
                     className="bg-[#C8956C] text-white hover:brightness-110 text-lg px-8 shadow-warm"
+                    asChild
+                  >
+                    <Link href="/wheelchair-finder">Find Your Perfect Fit</Link>
+                  </Button>
+                </Magnetic>
+                <Magnetic>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="text-lg px-8 border-[#8B7355] text-[#8B7355] hover:bg-[#8B7355] hover:text-white"
                     asChild
                   >
                     <a
