@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
+  { href: "/wheelchair-finder", label: "Find Your Fit", featured: true },
   { href: "/products", label: "Products" },
   { href: "/new-arrivals", label: "New Arrivals", badge: "NEW" },
   { href: "/guides", label: "Home Guides" },
@@ -85,12 +86,19 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-10">
+          <nav
+            aria-label="Primary navigation"
+            className="hidden lg:flex items-center gap-4 xl:gap-7"
+          >
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="relative text-[#5C534E] hover:text-[#3D3330] transition-colors text-sm font-medium"
+                className={
+                  link.featured
+                    ? "relative rounded-md bg-[#C8956C] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#A96F47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
+                    : "relative text-[#5C534E] hover:text-[#3D3330] transition-colors text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
+                }
               >
                 {link.label}
                 {link.badge && (
@@ -210,6 +218,9 @@ export default function Header() {
             <button
               className="lg:hidden p-2 text-[#5C534E] hover:text-[#3D3330] transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
             >
               {mobileMenuOpen ? (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,13 +237,17 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-[#D4CCC5]">
-            <nav className="flex flex-col gap-2">
+          <div id="mobile-navigation" className="lg:hidden py-4 border-t border-[#D4CCC5]">
+            <nav aria-label="Mobile navigation" className="flex flex-col gap-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="flex items-center gap-2 px-4 py-3 text-[#3D3330] hover:bg-[#E8D5C4] rounded-lg transition-colors"
+                  className={
+                    link.featured
+                      ? "mx-4 flex items-center justify-center gap-2 rounded-md bg-[#C8956C] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#A96F47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
+                      : "flex items-center gap-2 px-4 py-3 text-[#3D3330] hover:bg-[#E8D5C4] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8B7355] focus-visible:ring-offset-2"
+                  }
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {link.label}
