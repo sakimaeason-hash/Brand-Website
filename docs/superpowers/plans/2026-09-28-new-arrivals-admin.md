@@ -14,6 +14,8 @@
 
 **后续授权（2026-09-28）：** 用户同意提交 GitHub 并部署至 `ethan-sakima-project/brand-website`、`goldseason.vip`。此前“不提交、不部署”的边界仅适用于已完成的本地实施阶段。上线顺序为：重新验证 → 核对生产目标及迁移历史 → 提交修复分支 → 在暂不绑定域名的生产部署中执行受检查迁移与构建 → 验证 → 切换正式域名。独立 PostgreSQL 迁移验证和 9 项迁移保护测试已通过；实际发布结果另记操作文档。
 
+**发布完成（2026-09-28）：** 应用提交 `72af209` 已推送 GitHub 并部署到正确生产项目，数据库增量迁移成功，域名 `goldseason.vip` 已绑定部署 `dpl_CiM1mCKmVp43xiUeAtZQZWd5hqjY`。12 项上线保护测试通过，正式站点 HTTP、内容读取、登录跳转及未登录接口拒绝均已验证。详见 `docs/new-arrivals-admin.md` 的生产发布记录和验证边界。
+
 - 2026-09-24 用户确认：新品标记、复用促销、真实前台数据、保留样式、无内容空状态。
 - 2026-09-28 继续实施。独立工作树 `C:/Users/PC/.config/superpowers/worktrees/website/new-arrivals-admin`，基线 `b04f48e`，分支 `codex/new-arrivals-admin`。
 - 不接触生产数据库、环境密钥、线上媒体；不部署、不推送；不混入欧洲支付开发改动。

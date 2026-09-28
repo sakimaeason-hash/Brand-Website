@@ -42,7 +42,21 @@
 
 生产敏感环境变量无法从 Vercel 拉取，部署不依赖本地复制这些密钥。首次发布使用 Vercel 的生产环境，在切换域名前运行 `scripts/deploy-new-arrivals.mjs`：核对完整迁移历史和校验和，只允许新增新品字段这一项待执行迁移；异常时停止，不能自动重置或重新基线化数据库。历史记录的 LF/CRLF 校验和均明确验证。脚本执行后再次确认字段类型、非空约束及默认值。该一次性部署命令不会改变日常 `npm run build`。
 
-新增上线检查：`node --test scripts/deploy-new-arrivals.test.mjs`，9 项通过。隔离 PGlite PostgreSQL 实例加载原有两项迁移后，验证新字段迁移、默认 false、非空约束、Add/Remove，以及原商品/SKU/图片保留；负对照在省略迁移时按预期失败。此验证不连接生产，也不代替真实登录后的端到端验收。
+新增上线检查：`node --test scripts/deploy-new-arrivals.test.mjs`，12 项通过。隔离 PGlite PostgreSQL 实例加载原有两项迁移后，验证新字段迁移、默认 false、非空约束、Add/Remove，以及原商品/SKU/图片保留；负对照在省略迁移时按预期失败。此验证不连接生产，也不代替真实登录后的端到端验收。
+
+## 生产发布记录（2026-09-28）
+
+- GitHub 分支：`codex/new-arrivals-admin`；功能提交 `e78b208`，最终应用提交 `72af209`。
+- Vercel 项目：`brand-website`（`prj_tjdfAeSDOUOOfpxXpru1dhmd7tGP`）。
+- 正式部署：`dpl_CiM1mCKmVp43xiUeAtZQZWd5hqjY`，状态 READY；https://vercel.com/ethan-sakima-project/brand-website/CiM1mCKmVp43xiUeAtZQZWd5hqjY 。
+- 正式域名：https://goldseason.vip 。通过 Vercel 域名接口再次确认该域名直接绑定上述部署。
+- 管理页：https://goldseason.vip/admin/new-arrivals ；前台：https://goldseason.vip/new-arrivals 。
+- 生产迁移在 07:02 UTC 完成。原有两项迁移均已成功且校验和一致，仅执行 `20260928000000_add_product_new_arrival`；随后验证新字段为 boolean、NOT NULL、默认 false。
+- 迁移后数据库读取：15 个商品、19 个 SKU、17 张产品图片、0 个促销。未修改真实商品的新品选择、状态、价格或图片，未创建测试商品或活动。
+- 发布采用 `vercel deploy --prod --skip-domain --build-env GS_NEW_ARRIVALS_ROLLOUT=1`，根目录构建配置运行受检查迁移；验证新部署后通过 `vercel promote` 切换域名。普通构建不设置此开关，不会执行数据库迁移。
+- 线上检查：首页、产品页、新品页均 HTTP 200；新品页显示正确空状态，无数据库错误；后台未登录 HTTP 307 跳转登录；不存在测试 ID 的未登录 PATCH 返回 401，无数据库写入。
+- 验证边界：未取得真实管理员登录会话，因此没有声称已在生产后台点击 Add/Remove。该操作由 API/组件测试和隔离数据库验证覆盖。
+- 依赖审计另有既有告警：生产依赖 Next.js 为 critical，PostCSS、xlsx 为 high。此次修复未升级这些依赖，也未混入欧洲支付工作树的升级改动，需要单独处理升级兼容性。
 
 ## 本地验证
 
