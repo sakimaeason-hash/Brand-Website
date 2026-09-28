@@ -29,6 +29,10 @@ export function validateMigrationHistory(history, columns, known) {
 }
 
 async function main() {
+  if (process.argv.includes('--if-requested') && process.env.GS_NEW_ARRIVALS_ROLLOUT !== '1') {
+    console.log('New arrivals database migration not requested; continuing normal build.');
+    return;
+  }
   if (process.env.VERCEL_ENV !== 'production') throw new Error('This rollout requires the verified Vercel production environment');
   if (process.env.VERCEL_PROJECT_ID && process.env.VERCEL_PROJECT_ID !== 'prj_tjdfAeSDOUOOfpxXpru1dhmd7tGP') throw new Error('Wrong Vercel project');
   const names = ['20260902000000_add_admin_content_management', '20260908000000_add_dynamic_product_catalog', '20260928000000_add_product_new_arrival'];
