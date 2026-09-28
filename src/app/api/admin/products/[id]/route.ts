@@ -80,6 +80,8 @@ function isoDate(value: unknown, fallback: string): string {
 }
 
 function revalidateCatalog() {
+  revalidatePath("/new-arrivals");
+  revalidatePath("/admin/new-arrivals");
   revalidatePath("/");
   revalidatePath("/products");
   revalidatePath("/wheelchair-finder");
@@ -178,6 +180,7 @@ export async function PATCH(request: Request, { params }: Params) {
     if (aggregate.data) {
       try {
         const saved = await saveProductDraft(params.id, aggregate.data, rawUpdatedAt);
+        revalidateCatalog();
         result = saved;
         resultUpdatedAt = saved.updatedAt;
       } catch (error) {
@@ -229,6 +232,7 @@ export async function PATCH(request: Request, { params }: Params) {
       revalidateCatalog();
     } else if (!aggregate.data || removed.length > 0 || uploaded.length > 0 || entries) {
       result = await prisma.product.findUnique({ where: { id: params.id }, include: productInclude });
+      revalidateCatalog();
     }
     return NextResponse.json(result);
   } catch (error) {

@@ -186,6 +186,7 @@ model Product {
   features                Json
   status                  ContentStatus @default(DRAFT)
   isFeatured              Boolean       @default(false)
+  isNewArrival            Boolean       @default(false)
   sortOrder               Int           @default(0)
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt

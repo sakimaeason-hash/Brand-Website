@@ -52,7 +52,7 @@ describe("admin content edit pages", () => {
       id: "p1", updatedAt, name: "Travel Air", model: "PA22", category: "wheelchair",
       tagline: null, description: "Compact", price: { toString: () => "899.95" }, originalPrice: null,
       amazonLink: null, weightCapacity: "300 lb", seatWidth: "18 in", range: "15 mi",
-      maxSpeed: "4 mph", productWeight: "40 lb", features: ["Foldable"], isFeatured: true,
+      maxSpeed: "4 mph", productWeight: "40 lb", features: ["Foldable"], isFeatured: true, isNewArrival: true,
       categoryId: "cat-powered", categoryTemplateVersion: 2, specifications: {},
       sortOrder: 1, status: "DRAFT", images: [],
       variants: [{ id: "v1", sku: "PA22-A", factoryModel: "PA22", label: null, colorName: "Black", colorHex: "#111111", priceOverride: { toString: () => "849.00" }, originalPriceOverride: null, purchaseLinkOverride: null, specifications: {}, isActive: true, sortOrder: 0 }],
@@ -67,6 +67,7 @@ describe("admin content edit pages", () => {
     expect(value.price).toBe(899.95);
     expect(value.updatedAt).toBe(updatedAt.toISOString());
     expect(value.features).toEqual(["Foldable"]);
+    expect(value.isNewArrival).toBe(true);
     expect(value.variants[0].priceOverride).toBe(849);
     expect(value.accessoryProductIds).toEqual(["a1"]);
     expect(props.categories[0].fields[0].minValue).toBe(1);

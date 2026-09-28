@@ -21,6 +21,11 @@ export type PublicPromotion = {
   discountPercent?: number;
 };
 
+export type PublicNewArrivalsContent = {
+  products: readonly PublicProduct[];
+  offers: readonly { promotion: PublicPromotion; product: PublicProduct }[];
+};
+
 type PromotionRow = {
   id?: string;
   name?: string;
@@ -146,6 +151,29 @@ export async function listPublishedProductsStrict(): Promise<
   ReadonlyArray<PublicProduct>
 > {
   return publicProductsFromRows(await queryPublishedProducts());
+}
+
+// Do not use the static catalog fallback here: removed placements must stay removed.
+export async function listNewArrivalsContent(): Promise<PublicNewArrivalsContent> {
+  const rows = await queryPublishedProducts();
+  const now = new Date();
+  const products: PublicProduct[] = [];
+  const offers: Array<PublicNewArrivalsContent["offers"][number]> = [];
+
+  for (const row of rows) {
+    const product = toPublicProduct(row, now);
+    if (!product) continue;
+    if (row.isNewArrival) products.push(product);
+
+    for (const candidate of row.promotions) {
+      if (!isPromotionActive(now, candidate)) continue;
+      const promotion = toPromotion({ ...candidate, product: { name: row.name } });
+      const offerProduct = toPublicProduct({ ...row, promotions: [candidate] }, now);
+      if (promotion && offerProduct) offers.push({ promotion, product: offerProduct });
+    }
+  }
+
+  return { products, offers };
 }
 
 export async function listFeaturedProducts(): Promise<ReadonlyArray<PublicProduct>> {

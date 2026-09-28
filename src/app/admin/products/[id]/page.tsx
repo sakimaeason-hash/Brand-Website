@@ -33,6 +33,7 @@ function productFormData(product: NonNullable<Awaited<ReturnType<typeof findProd
     productWeight: product.productWeight,
     features: Array.isArray(product.features) ? product.features.filter((item): item is string => typeof item === "string") : [],
     isFeatured: product.isFeatured,
+    isNewArrival: product.isNewArrival,
     sortOrder: product.sortOrder,
     specifications: specificationMap(product.specifications),
     variants: product.variants.map((variant) => ({

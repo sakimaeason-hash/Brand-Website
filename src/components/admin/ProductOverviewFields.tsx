@@ -11,6 +11,7 @@ export type ProductOverviewDraft = {
   amazonLink: string;
   features: string;
   isFeatured: boolean;
+  isNewArrival: boolean;
   sortOrder: string;
 };
 
@@ -34,5 +35,9 @@ export function ProductOverviewFields({ value, categories, onChange, onCategoryC
     <label className="text-sm font-medium text-[#3D3330] sm:col-span-2">Features, one per line<textarea value={value.features} onChange={(event) => update("features", event.target.value)} className={`${inputClass} min-h-24`} /></label>
     <label className="text-sm font-medium text-[#3D3330]">Sort order<input type="text" inputMode="numeric" value={value.sortOrder} onChange={(event) => update("sortOrder", event.target.value)} className={inputClass} /></label>
     <label className="flex items-center gap-2 self-end pb-2 text-sm text-[#3D3330]"><input type="checkbox" checked={value.isFeatured} onChange={(event) => update("isFeatured", event.target.checked)} />Feature on homepage</label>
+    <div className="sm:col-span-2">
+      <label className="flex items-center gap-2 text-sm text-[#3D3330]"><input type="checkbox" checked={value.isNewArrival} onChange={(event) => update("isNewArrival", event.target.checked)} aria-describedby="new-arrival-help" />Show in New Arrivals</label>
+      <p id="new-arrival-help" className="mt-2 text-sm text-[#5C534E]">Independent of homepage featuring. Saving changes saves a draft; publish the product to show it in New Arrivals. An active product category and active SKU are also required.</p>
+    </div>
   </div>;
 }

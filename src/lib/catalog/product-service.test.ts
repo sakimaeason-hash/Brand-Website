@@ -153,6 +153,30 @@ function fakeDb(options: FakeOptions = {}) {
 }
 
 describe("product service", () => {
+  it.each([true, false])("persists isNewArrival=%s independently of homepage featuring", async (isNewArrival) => {
+    const db = fakeDb();
+    const created = await createProductDraft({ ...input, isNewArrival }, db);
+    expect(created).toMatchObject({ isNewArrival, isFeatured: false });
+  });
+
+  it("updates a new-arrival flag from true to false", async () => {
+    const db = fakeDb();
+    const created = await createProductDraft({ ...input, isNewArrival: true }, db);
+    const saved = await saveProductDraft(created.id, {
+      ...input, isNewArrival: false, variants: [{ ...input.variants[0], id: created.variants[0].id }],
+    }, created.updatedAt.toISOString(), db);
+    expect(saved.isNewArrival).toBe(false);
+  });
+
+  it("preserves the new-arrival flag when a legacy update omits it", async () => {
+    const db = fakeDb();
+    const created = await createProductDraft({ ...input, isNewArrival: true }, db);
+    const saved = await saveProductDraft(created.id, {
+      ...input, name: "Updated name", variants: [{ ...input.variants[0], id: created.variants[0].id }],
+    }, created.updatedAt.toISOString(), db);
+    expect(saved).toMatchObject({ name: "Updated name", isNewArrival: true });
+  });
+
   it("creates a draft aggregate with every read and write inside one transaction", async () => {
     const db = fakeDb();
     const created = await createProductDraft(input, db);

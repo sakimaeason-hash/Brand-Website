@@ -46,6 +46,7 @@ function initialOverview(record: ProductFormData | undefined, categories: readon
     amazonLink: record?.amazonLink ?? "",
     features: record?.features.join("\n") ?? "",
     isFeatured: record?.isFeatured ?? false,
+    isNewArrival: record?.isNewArrival ?? false,
     sortOrder: String(record?.sortOrder ?? 0),
   };
 }
@@ -244,6 +245,7 @@ export function ProductForm({ initialData, categories = [], accessories = [], ac
         productWeight: initialData?.productWeight ?? null,
         features: overview.features.split("\n").map((item) => item.trim()).filter(Boolean),
         isFeatured: overview.isFeatured,
+        isNewArrival: overview.isNewArrival,
         sortOrder: Number(overview.sortOrder),
         specifications: serializeSpecifications(productFields, productSpecifications),
         variants: variants.map((variant, sortOrder) => ({

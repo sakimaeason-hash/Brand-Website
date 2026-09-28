@@ -69,6 +69,7 @@ export const productAggregateInputSchema = z.object({
   productWeight: z.string().trim().max(500).nullable().optional(),
   features: z.array(z.string().trim().min(1).max(200)).max(30).default([]),
   isFeatured: z.boolean().default(false),
+  isNewArrival: z.boolean().optional(),
   sortOrder: z.number().int().nonnegative().default(0),
   specifications: z.record(specificationInputSchema).default({}),
   variants: variantsSchema,

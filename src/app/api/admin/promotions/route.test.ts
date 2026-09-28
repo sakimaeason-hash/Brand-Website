@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { revalidatePath } from "next/cache";
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 const { requireAdmin, promotionFindUnique, promotionUpdate, promotionDelete, productFindUnique } = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
@@ -49,6 +51,14 @@ beforeEach(() => {
 });
 
 describe("admin promotion item route", () => {
+  it.each(["save-draft", "publish", "unpublish", "delete"])("refreshes new arrivals after promotion %s", async (action) => {
+    const response = await PATCH(new Request("http://test", {
+      method: "PATCH", body: form({ action, updatedAt: updatedAt.toISOString(), confirm: "true" }),
+    }), { params: { id: "promo-1" } });
+    expect(response.status).toBe(200);
+    expect(revalidatePath).toHaveBeenCalledWith("/new-arrivals");
+    expect(revalidatePath).toHaveBeenCalledWith("/products");
+  });
   it("returns 409 when updatedAt does not match", async () => {
     const response = await PATCH(new Request("http://test", {
       method: "PATCH",

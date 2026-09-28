@@ -13,6 +13,18 @@ const validInput = {
 };
 
 describe("product aggregate validation", () => {
+  it.each([true, false])("accepts an independent new-arrival value of %s", (isNewArrival) => {
+    expect(productAggregateInputSchema.parse({ ...validInput, isNewArrival }).isNewArrival).toBe(isNewArrival);
+  });
+
+  it("leaves an omitted new-arrival flag absent for legacy updates", () => {
+    expect(productAggregateInputSchema.parse(validInput)).not.toHaveProperty("isNewArrival");
+  });
+
+  it("rejects non-boolean new-arrival flags", () => {
+    expect(productAggregateInputSchema.safeParse({ ...validInput, isNewArrival: "true" }).success).toBe(false);
+  });
+
   it("normalizes SKU values to an uppercase catalog key", () => {
     expect(normalizeProductInput(validInput as never).variants[0].sku).toBe("PA22-A");
   });

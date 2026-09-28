@@ -54,6 +54,26 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(() => cleanup());
 
 describe("ProductForm", () => {
+  it("defaults the new-arrival selection to off without changing homepage featuring", () => {
+    render(<ProductForm initialData={initialData as never} categories={categories as never} accessories={accessories as never} />);
+    expect(screen.getByRole("checkbox", { name: "Show in New Arrivals" })).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Feature on homepage" })).toBeChecked();
+    expect(screen.getByText(/save.*draft.*publish/i)).toBeInTheDocument();
+  });
+
+  it.each([true, false])("loads the initial new-arrival flag and sends its edited value %s", async (isNewArrival) => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ id: "p1" }), { status: 200 }));
+    render(<ProductForm initialData={{ ...initialData, isNewArrival: !isNewArrival } as never} categories={categories as never} accessories={accessories as never} />);
+    const checkbox = screen.getByRole("checkbox", { name: "Show in New Arrivals" });
+    expect(checkbox).toHaveProperty("checked", !isNewArrival);
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const body = fetchMock.mock.calls[0][1]?.body as FormData;
+    expect(JSON.parse(String(body.get("payload")))).toMatchObject({ isNewArrival, isFeatured: true });
+    fetchMock.mockRestore();
+  });
+
   it("renders five accessible tabs and allows direct numeric entry for specifications", () => {
     render(<ProductForm categories={categories as never} accessories={accessories as never} />);
 

@@ -48,6 +48,7 @@ function productData(input: ProductAggregateInput, status: "DRAFT" | "PUBLISHED"
     features: input.features,
     specifications: input.specifications,
     isFeatured: input.isFeatured,
+    ...(input.isNewArrival === undefined ? {} : { isNewArrival: input.isNewArrival }),
     sortOrder: input.sortOrder,
     status,
   };

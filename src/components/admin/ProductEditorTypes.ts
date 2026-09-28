@@ -80,6 +80,7 @@ export type ProductFormData = {
   productWeight: string | null;
   features: string[];
   isFeatured: boolean;
+  isNewArrival: boolean;
   sortOrder: number;
   specifications: Record<string, StoredSpecification>;
   variants: ProductVariantFormData[];

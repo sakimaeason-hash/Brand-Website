@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/authorization";
 import { adminErrorResponse, parseJsonField } from "@/lib/admin/http";
@@ -7,6 +8,13 @@ import { promotionInputSchema } from "@/lib/content/validation";
 type Params = { params: { id: string } };
 
 const actions = new Set(["save-draft", "publish", "unpublish", "delete"]);
+
+function revalidatePromotionPages() {
+  revalidatePath("/new-arrivals");
+  revalidatePath("/products");
+  revalidatePath("/");
+  revalidatePath("/admin/promotions");
+}
 
 function errorResponse(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
@@ -79,6 +87,7 @@ export async function PATCH(request: Request, { params }: Params) {
     if (action === "delete") {
       if (form.get("confirm") !== "true") return errorResponse("Confirmation required");
       await prisma.promotion.delete({ where: { id: params.id } });
+      revalidatePromotionPages();
       return NextResponse.json({ success: true });
     }
 
@@ -115,7 +124,9 @@ export async function PATCH(request: Request, { params }: Params) {
       status: action === "publish" ? "PUBLISHED" : action === "unpublish" ? "UNPUBLISHED" : "DRAFT",
     };
 
-    return NextResponse.json(await prisma.promotion.update({ where: { id: params.id }, data: data as never }));
+    const result = await prisma.promotion.update({ where: { id: params.id }, data: data as never });
+    revalidatePromotionPages();
+    return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error && (/payload|updatedAt/.test(error.message))) return errorResponse(error.message);
     return adminErrorResponse(error);

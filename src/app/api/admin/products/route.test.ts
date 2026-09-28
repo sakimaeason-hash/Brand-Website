@@ -64,6 +64,13 @@ beforeEach(() => {
 });
 
 describe("admin product collection route", () => {
+  it.each(["save-draft", "publish", "unpublish", "delete"])("refreshes new arrivals after product %s", async (action) => {
+    const body = form({ action, updatedAt: updatedAt.toISOString(), confirm: "true" });
+    if (action === "save-draft") body.set("payload", JSON.stringify(aggregatePayload()));
+    const response = await PATCH(requestWith(body), { params: { id: "p1" } });
+    expect(response.status).toBe(200);
+    expect(revalidatePath).toHaveBeenCalledWith("/new-arrivals");
+  });
   it("uses the dynamic product service for SKU and accessory payloads", async () => {
     const body = form({
       payload: JSON.stringify(aggregatePayload()),
@@ -267,6 +274,7 @@ describe("admin product item route", () => {
     expect(removeContentImage).toHaveBeenCalledWith("products/p1/abc-0-chair.jpg");
     expect(productImageDelete).toHaveBeenCalledWith({ where: { id: "img1" } });
     expect(productImageUpdate).toHaveBeenCalledWith({ where: { id: "img2" }, data: { sortOrder: 0 } });
+    expect(revalidatePath).toHaveBeenCalledWith("/new-arrivals");
   });
 
   it("removes repository images from the database without calling Storage", async () => {
